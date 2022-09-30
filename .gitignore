@@ -1,0 +1,67 @@
+*~
+*.swp
+
+*.pyc
+*.pyo
+*.so
+
+.mypy_cache/
+*.egg-info/
+
+build/
+dist/
+
+# Pytest verbose output
+test-results/
+
+# Coverage reports
+.coverage
+.coverage.*
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.vscode/*
+xformers/benchmarks/LRA/datasets
+xformers/benchmarks/LRA/logs
+
+my_runs.md
+
+# Triton cache
+.cache
+
+# JetBrains PyCharm IDE
+.idea/
+
+# Pyre cache
+.pyre/
+
+# Watchman task files
+.watchmanconfig
+
+results/
+outputs
+/plots/*
+/spmm_benchmarks/plots/*
+geckodriver.log
+/cmake-build-debug/
+/cmake-build-release/
+*.csv
+*_lucas.py
+/dis.txt
+/spmm_benchmarks/SOP/_C/generated/*
+*.pickle
+*.png
+/spmm_benchmarks/SOP/speacialized_mappings/*.txt
+/spmm_benchmarks/SOP/mappings/*.txt
+/spmm_benchmarks/ilp_pad/output/*.txt
+/tools/experiments/generated/*
+tools/latex_drawings/tex/
+tools/paper/experiments/generated/
+tools/paper/plotting/plots/
+tools/paper/plotting/.cache/

@@ -1,0 +1,169 @@
+options:
+  profile: False
+  scalar_type: float
+  n_threads: [ 1 ]
+  b_cols: 256 # -1 means use from filelist
+  output_file: transformer_rr_results.csv
+  save_tuning_results: False
+  expand_config_parameters: [ m_tile, k_tile, n_tile, tiling_strategy, sparse_a, beta_10x ]
+
+matrices:
+  filelist: ../../tools/filelists/random_sweep_30_100.txt
+
+
+methods:
+  - method_id: mkl_dense
+    name: MKL_Dense
+
+  - method_id: mkl
+    name: MKL_Sparse
+    options:
+      inspector: false
+
+  - method_id: mkl
+    name: MKL_Sparse_IE
+    options:
+      inspector: true
+
+  - method_id: taco
+    name: TACO
+    options:
+      vec_width: not-supported
+
+#  - config:
+#      tiling_strategy: 1
+#      nr_tile: 32
+#    method_id: gecsb
+#    name: CSB_CSR
+#    options:
+#      storage: CSR
+#      vec_width: 512
+#
+#  - config:
+#      tiling_strategy: 1
+#      nr_tile: 32
+#    method_id: gecsb
+#    name: CSB_CSR
+#    options:
+#      storage: CSC
+#      vec_width: 512
+#
+#
+#  - config:
+#      tiling_strategy: 1
+#      nr_tile: 64
+#    method_id: gecsb
+#    name: CSB_CSR
+#    options:
+#      storage: CSC
+#      vec_width: 512
+#
+#  - config:
+#      beta_10x: 10
+#      sparse_a: 0
+#      tiling_strategy: 1
+#    method_id: nano
+#    name: N4_identity
+#    options:
+#      load_balance: false
+#      mapping_id: 61fee
+#      packed: false
+#      vec_width: 512
+#
+#  - config:
+#      beta_10x: 10
+#      sparse_a: 0
+#      tiling_strategy: 1
+#    method_id: nano
+#    name: N4_LB_orig
+#    options:
+#      load_balance: false
+#      mapping_id: da01e
+#      packed: false
+#      vec_width: 512
+#
+#  - config:
+#      beta_10x: 10
+#      sparse_a: 0
+#      tiling_strategy: 1
+#    method_id: nano
+#    name: N4_LB_identity
+#    options:
+#      load_balance: true
+#      mapping_id: 61fee
+#      packed: false
+#      vec_width: 256
+#
+#  - config:
+#      beta_10x: 10
+#      sparse_a: 1
+#      tiling_strategy: 1
+#    method_id: nano
+#    name: N4_LB_SA_identity
+#    options:
+#      load_balance: true
+#      mapping_id: 61fee
+#      packed: false
+#      vec_width: 256
+#
+#  - config:
+#      beta_10x: 10
+#      sparse_a: 1
+#      tiling_strategy: 2
+#    method_id: nano
+#    name: N4_LB_TLB_SA_identity
+#    options:
+#      load_balance: true
+#      mapping_id: 61fee
+#      packed: false
+#      vec_width: 256
+#
+#  - config:
+#      beta_10x: 20
+#      sparse_a: 1
+#      tiling_strategy: 2
+#    method_id: nano
+#    name: N4_LB_TLB_SA_B20_identity
+#    options:
+#      load_balance: true
+#      mapping_id: 61fee
+#      packed: false
+#      vec_width: 256
+#
+#  - config:
+#      beta_10x: 30
+#      sparse_a: 1
+#      tiling_strategy: 2
+#    method_id: nano
+#    name: N4_LB_TLB_SA_B30_identity
+#    options:
+#      load_balance: true
+#      mapping_id: 61fee
+#      packed: false
+#      vec_width: 256
+#
+#  - config:
+#      beta_10x: 10
+#      sparse_a: 1
+#      tiling_strategy: 2
+#    method_id: nano
+#    name: N4_LB_TLB_SA_orig
+#    options:
+#      load_balance: true
+#      mapping_id: da01e
+#      packed: false
+#      vec_width: 256
+#
+##  - name: DCSB_CSR_16BIT
+##    method_id: dcsb
+##    options:
+##      vec_width: 512
+##      8bit_row_ptrs: False
+##      storage: CSR
+##    tune:
+##      grid: MKN_Grid_DCSB
+#
+#  - name: ASpT
+#    method_id: aspt
+#    options:
+#      vec_width: not-supported

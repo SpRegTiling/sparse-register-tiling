@@ -1,0 +1,144 @@
+options:
+  profile: False
+  scalar_type: float
+  n_threads: 1
+  b_cols: 128
+  output_file: rn50_magnitude_results_csb.csv
+  save_tuning_results: True
+  expand_config_parameters: [ m_tile, k_tile, n_tile ]
+
+tuning:
+  parameter_grids:
+    - name: MKN_Grid
+      m_tile: [ 8, 16, 32, 64 ]
+      k_tile: [ 64, 128, 256, 512, 1024 ]
+      n_tile: [ 64, 128 ]
+
+    - name: MN_Grid
+      m_tile: [ 8, 16, 32, 64 ]
+      n_tile: [ 64, 128 ]
+
+    - name: MKN_Grid_DCSB
+      m_tile: [ 8, 16, 32, 64 ]
+      k_tile: [ 64, 128, 256, 512, 1024 ]
+      n_tile: [ 64, 128 ]
+
+    - name: MKN_Grid_DCSB_CSC
+      m_tile: [ 8, 16, 32, 64 ]
+      k_tile: [ 64, 128, 256, 512, 1024 ]
+      n_tile: [ 64, 128 ]
+
+methods:
+  - name: MKL_Executor_Only
+    method_id: mkl
+    options:
+      inspector: False
+
+  - name: MKL_Dense
+    method_id: mkl_dense
+
+  - name: DCSB_CSC_8BIT
+    method_id: dcsb
+    options:
+      vec_width: 512
+      8bit_row_ptrs: False
+      storage: CSC
+    tune:
+      grid: MKN_Grid_DCSB_CSC
+
+  - name: DCSB_CSC_8BIT_256
+    method_id: dcsb
+    options:
+      vec_width: 256
+      8bit_row_ptrs: True
+      storage: CSC
+    tune:
+      grid: MKN_Grid_DCSB_CSC
+
+  - name: DCSB_CSR_8BIT
+    method_id: dcsb
+    options:
+      vec_width: 512
+      8bit_row_ptrs: True
+      storage: CSR
+    tune:
+      grid: MKN_Grid_DCSB
+
+  - name: DCSB_CSR_8BIT_256
+    method_id: dcsb
+    options:
+      vec_width: 256
+      8bit_row_ptrs: True
+      storage: CSR
+    tune:
+      grid: MKN_Grid_DCSB
+
+  - name: DCSB_CSR_16BIT
+    method_id: dcsb
+    options:
+      vec_width: 512
+      8bit_row_ptrs: False
+      storage: CSR
+    tune:
+      grid: MKN_Grid_DCSB
+
+  - name: CSR_C_2D
+    method_id: csr_c_2d
+    options:
+      vec_width: 512
+    tune:
+      grid: MN_Grid
+
+  - name: CSR_C_2D_B
+    method_id: csr_c_2d_b
+    options:
+      vec_width: 512
+    tune:
+      grid: MKN_Grid
+
+  - name: CSR_C_1D
+    method_id: csr_c_1d
+    options:
+      vec_width: 512
+
+  - name: CSR_C_1D_256
+    method_id: csr_c_1d
+    options:
+      vec_width: 256
+
+  - name: CSR_C_2D_256
+    method_id: csr_c_2d
+    options:
+      vec_width: 256
+    tune:
+      grid: MN_Grid
+
+  - name: CSR_C_2D_B
+    method_id: csr_c_2d_b
+    options:
+      vec_width: 512
+    tune:
+      grid: MKN_Grid
+
+  - name: CSR_C_2D_B_256
+    method_id: csr_c_2d_b
+    options:
+      vec_width: 256
+    tune:
+      grid: MKN_Grid
+
+  - name: CSR_A_2D_256
+    method_id: csr_a_2d
+    options:
+      vec_width: 256
+    tune:
+      grid: MKN_Grid
+
+  - name: ASpT
+    method_id: aspt
+    options:
+      vec_width: not-supported
+
+
+matrices:
+  filelist: ../../tools/filelists/rn50_magnitude.txt

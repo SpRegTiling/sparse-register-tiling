@@ -1,0 +1,181 @@
+options:
+  profile: False
+  scalar_type: float
+  n_threads: [ 8 ]
+  b_cols: [ 128, 200, 512 ]
+  output_file: transformer_magnitude_80_hybrid_ie_packed_results.csv
+  save_tuning_results: False
+  expand_config_parameters: [ m_tile, k_tile, n_tile, density_threshold, agg, pct_nnz ]
+
+matrices:
+  #paths:
+  #- dlmc/transformer/random_pruning/0.8/body_decoder_layer_0_ffn_conv2_fully_connected.smtx
+  filelist: ../../tools/filelists/transformer_magnitude_90.txt
+
+tuning:
+  parameter_grids:
+    - name: MKN_Grid_DCSB
+      m_tile: [ 8, 32, 64 ]
+      k_tile: [ 32, 64 ]
+      n_tile: [ 64, 128 ]
+
+    - name: MKN_Grid_SOP
+      m_tile: [ 4, 8, 32, 64 ]
+      k_tile: [ 256, 128, 64 ]
+      n_tile: [ 64, 128 ]
+      use_cake_tiling: [ 0 ]
+
+    - name: MKN_Grid_SOP_2
+      m_tile: [ 8, 32, 64 ]
+      k_tile: [ 256, 128, 64 ]
+      n_tile: [ 32, 64, 128 ]
+      use_cake_tiling: [ 0 ]
+
+    - name: MKN_Grid_Hybrid
+      m_tile: [ 16, 32, 64 ]
+      k_tile: [ 256, 128, 64 ]
+      n_tile: [ 64, 128 ]
+      density_threshold: [ 20, 30, 33, 50 ]
+
+    - name: MKN_Grid_Hybrid_Merged_SOP
+      m_tile: [ 16, 32, 64 ]
+      k_tile: [ 64 ]
+      n_tile: [ 64, 128 ]
+      density_threshold: [ 30, 33, 40, 100 ]
+      sop_density_threshold: [ 10, 15, 20 ]
+
+
+methods:
+  - name: MKL_Dense
+    method_id: mkl_dense
+
+  - name: MKL_Sparse
+    method_id: mkl
+    options:
+      inspector: False
+
+  - name: MKL_Sparse_IE
+    method_id: mkl
+    options:
+      inspector: True
+
+  #  - name: TILED_CSR_RESTORE_CAKE
+  #    method_id: hyb_ie
+  #    options:
+  #      vec_width: 512
+  #      sop_vec_height: 4
+  #      dense_strategy: ALL_SPARSE
+  #      sparse_strategy: ALL_CSR
+  #      execution_strategy: TILED_SPARSE
+  #    config:
+  #      use_cake_tiling: 1
+
+  - name: SOP_4_CAKE_PACKED
+    method_id: hyb_ie
+    options:
+      packed: True
+      vec_width: 512
+      sop_vec_height: 4
+      dense_strategy: ALL_SPARSE
+      sparse_strategy: ALL_SOP
+      execution_strategy: TILED_SPARSE
+    config:
+      m_tile: 64
+      k_tile: 128
+      n_tile: 64
+
+
+  - name: SOP_4_CAKE_NOT_PACKED
+    method_id: hyb_ie
+    options:
+      packed: False
+      vec_width: 512
+      sop_vec_height: 4
+      dense_strategy: ALL_SPARSE
+      sparse_strategy: ALL_SOP
+      execution_strategy: TILED_SPARSE
+    config:
+      m_tile: 64
+      k_tile: 128
+      n_tile: 64
+
+  - name: SOP_4_CAKE_OLD
+    method_id: hyb_ie
+    options:
+      packed: False
+      old_hybrid: True
+      vec_width: 512
+      sop_vec_height: 4
+      dense_strategy: ALL_SPARSE
+      sparse_strategy: ALL_SOP
+      execution_strategy: TILED_SPARSE
+    config:
+      use_cake_tiling: 1
+#
+#  - name: SOP_4_TUNED_PACKED
+#    method_id: hyb_ie
+#    options:
+#      packed: True
+#      vec_width: 512
+#      sop_vec_height: 4
+#      dense_strategy: ALL_SPARSE
+#      sparse_strategy: ALL_SOP
+#      execution_strategy: TILED_SPARSE
+#    tune:
+#      grid: MKN_Grid_SOP
+#
+#  - name: SOP_4_CAKE
+#    method_id: hyb_ie
+#    options:
+#      vec_width: 512
+#      sop_vec_height: 4
+#      dense_strategy: ALL_SPARSE
+#      sparse_strategy: ALL_SOP
+#      execution_strategy: TILED_SPARSE
+#    config:
+#      use_cake_tiling: 1
+#
+#  - name: SOP_8_CAKE_PACKED
+#    method_id: hyb_ie
+#    options:
+#      packed: True
+#      vec_width: 512
+#      sop_vec_height: 8
+#      dense_strategy: ALL_SPARSE
+#      sparse_strategy: ALL_SOP
+#      execution_strategy: TILED_SPARSE
+#    config:
+#      use_cake_tiling: 1
+
+#  - name: SOP_8_CAKE
+#    method_id: hyb_ie
+#    options:
+#      vec_width: 512
+#      sop_vec_height: 8
+#      dense_strategy: ALL_SPARSE
+#      sparse_strategy: ALL_SOP
+#      execution_strategy: TILED_SPARSE
+#    config:
+#      use_cake_tiling: 1
+
+#  - name: SOP_4_TUNED
+#    method_id: hyb_ie
+#    options:
+#      vec_width: 512
+#      sop_vec_height: 4
+#      dense_strategy: ALL_SPARSE
+#      sparse_strategy: ALL_SOP
+#      execution_strategy: TILED_SPARSE
+#    tune:
+#      grid: MKN_Grid_SOP
+#
+#  - name: SOP_8_TUNED
+#    method_id: hyb_ie
+#    options:
+#      vec_width: 512
+#      sop_vec_height: 8
+#      dense_strategy: ALL_SPARSE
+#      sparse_strategy: ALL_SOP
+#      execution_strategy: TILED_SPARSE
+#    tune:
+#      grid: MKN_Grid_SOP_2

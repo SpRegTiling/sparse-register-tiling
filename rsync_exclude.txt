@@ -1,0 +1,14 @@
+*.csv
+build/
+cmake-build-debug/
+cmake-build-release/
+results/
+plots/
+docs/
+notebooks/
+data/
+spmm_benchmarks/*.pickle
+spmm_benchmarks/ilp_pad/output/
+spmm_benchmarks/plots/
+spmm_benchmarks/SOP/_C/generated/
+.git

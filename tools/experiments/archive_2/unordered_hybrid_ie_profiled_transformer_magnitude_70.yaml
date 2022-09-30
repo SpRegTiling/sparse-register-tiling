@@ -1,0 +1,144 @@
+options:
+  profile: True
+  scalar_type: float
+  n_threads: [ 1, 8, 16, 20 ]
+  b_cols: [ 128, 256 ]
+  output_file: unordered_hybrid_profiled_ie_transformer_magnitude_results_70_2.csv
+  save_tuning_results: True
+  expand_config_parameters: [ m_tile, k_tile, n_tile, density_threshold, agg, pct_nnz ]
+
+tuning:
+  parameter_grids:
+    - name: MKN_Grid_DCSB
+      m_tile: [ 8, 32, 64 ]
+      k_tile: [ 32, 64, 128 ]
+      n_tile: [ 64, 128 ]
+
+    - name: MKN_Grid_SOP
+      m_tile: [ 4, 8, 32, 64 ]
+      k_tile: [ 4096, 256, 128, 64 ]
+      n_tile: [ 64, 128 ]
+
+    - name: MKN_Grid_SOP_2
+      m_tile: [ 8, 32, 64 ]
+      k_tile: [ 4096, 256, 128, 64 ]
+      n_tile: [ 64, 128 ]
+
+    - name: MKN_Grid_Hybrid
+      m_tile: [ 8, 16, 32, 64 ]
+      k_tile: [ 64, 128, 256 ]
+      n_tile: [ 64, 128 ]
+      density_threshold: [ 20, 30, 33, 50, 100 ]
+
+    - name: MKN_Grid_Hybrid_Merged_SOP
+      m_tile: [ 8, 16, 32, 64 ]
+      k_tile: [ 64, 128, 256 ]
+      n_tile: [ 64, 128 ]
+      density_threshold: [ 30, 33, 40, 100 ]
+      sop_density_threshold: [ 10, 15, 20 ]
+
+
+methods:
+  - name: MKL_Dense
+    method_id: mkl_dense
+
+  - name: MKL_Sparse
+    method_id: mkl
+    options:
+      inspector: False
+
+  - name: MKL_Sparse_IE
+    method_id: mkl
+    options:
+      inspector: True
+
+  - name: TILED_CSR
+    method_id: hyb_ie
+    options:
+      vec_width: 512
+      sop_vec_height: 4
+      dense_strategy: ALL_SPARSE
+      sparse_strategy: ALL_CSR
+      execution_strategy: TILED_SPARSE
+    tune:
+      grid: MKN_Grid_DCSB
+
+  - name: SOP_4
+    method_id: hyb_ie
+    options:
+      vec_width: 512
+      sop_vec_height: 4
+      dense_strategy: ALL_SPARSE
+      sparse_strategy: ALL_SOP
+      execution_strategy: TILED_SPARSE
+    tune:
+      grid: MKN_Grid_SOP
+
+  - name: SOP_8
+    method_id: hyb_ie
+    options:
+      vec_width: 512
+      sop_vec_height: 8
+      dense_strategy: ALL_SPARSE
+      sparse_strategy: ALL_SOP
+      execution_strategy: TILED_SPARSE
+    tune:
+      grid: MKN_Grid_SOP_2
+
+  - name: HYBRID_TILED_ROW_BASED_ALL_CSR
+    method_id: hyb_ie
+    options:
+      vec_width: 512
+      sop_vec_height: 4
+      dense_strategy: UNREORDERED_ROW_BASED
+      sparse_strategy: ALL_CSR
+      execution_strategy: TILED_SPARSE
+    tune:
+      grid: MKN_Grid_Hybrid
+
+  - name: HYBRID_TILED_ROW_BASED_ALL_SOP
+    method_id: hyb_ie
+    options:
+      vec_width: 512
+      sop_vec_height: 4
+      dense_strategy: UNREORDERED_ROW_BASED
+      sparse_strategy: ALL_SOP
+      execution_strategy: TILED_SPARSE
+    tune:
+      grid: MKN_Grid_Hybrid
+
+  - name: HYBRID_TILED_ROW_BASED_MERGE_SOP
+    method_id: hyb_ie
+    options:
+      vec_width: 512
+      sop_vec_height: 4
+      dense_strategy: UNREORDERED_ROW_BASED
+      sparse_strategy: MERGE_SOP
+      execution_strategy: TILED_SPARSE
+    tune:
+      grid: MKN_Grid_Hybrid_Merged_SOP
+
+  - name: HYBRID_TILED_ROW_BASED_ALL_SOP_8
+    method_id: hyb_ie
+    options:
+      vec_width: 512
+      sop_vec_height: 8
+      dense_strategy: UNREORDERED_ROW_BASED
+      sparse_strategy: ALL_SOP
+      execution_strategy: TILED_SPARSE
+    tune:
+      grid: MKN_Grid_Hybrid
+
+  - name: HYBRID_TILED_ROW_BASED_MERGE_SOP_8
+    method_id: hyb_ie
+    options:
+      vec_width: 512
+      sop_vec_height: 8
+      dense_strategy: UNREORDERED_ROW_BASED
+      sparse_strategy: MERGE_SOP
+      execution_strategy: TILED_SPARSE
+    tune:
+      grid: MKN_Grid_Hybrid_Merged_SOP
+
+matrices:
+  filelist: ../../tools/filelists/transformer_magnitude_70.txt

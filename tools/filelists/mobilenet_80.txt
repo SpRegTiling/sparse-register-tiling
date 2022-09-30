@@ -1,0 +1,12 @@
+mobilenet/80/conv1x1_0_3136.smtx,3136
+mobilenet/80/conv1x1_1_3136.smtx,3136
+mobilenet/80/conv1x1_2_784.smtx,784
+mobilenet/80/conv1x1_3_784.smtx,784
+mobilenet/80/conv1x1_4_196.smtx,196
+mobilenet/80/conv1x1_5_196.smtx,196
+mobilenet/80/conv1x1_6_196.smtx,196
+mobilenet/80/conv1x1_7_196.smtx,196
+mobilenet/80/conv1x1_8_196.smtx,196
+mobilenet/80/conv1x1_9_196.smtx,196
+mobilenet/80/conv1x1_10_49.smtx,49
+mobilenet/80/conv1x1_11_49.smtx,49

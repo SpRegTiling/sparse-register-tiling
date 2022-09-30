@@ -1,0 +1,1 @@
+taco "C(i,k)=A(i,j)*B(j,k)" -f=C:dd:0,1 -f=A:ds:0,1 -f=B:dd:0,1 -s="split(i,i0,i1,16)" -s="pos(j,jpos,A)" -s="split(jpos,jpos0,jpos1,16)" -s="reorder(i0,i1,jpos0,k,jpos1)" -s="parallelize(i0,CPUThread,NoRaces)" -s="parallelize(k,CPUVector,IgnoreRaces)" -write-source=taco_kernel.c -write-compute=taco_compute.c -write-assembly=taco_assembly.c

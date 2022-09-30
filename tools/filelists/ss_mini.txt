@@ -1,0 +1,4 @@
+ss_mini/delaunay_n10/delaunay_n10.mtx
+ss_mini/dw2048/dw2048.mtx
+ss_mini/dw256A/dw256A.mtx
+ss_mini/gre_512/gre_512.mtx

@@ -1,0 +1,5 @@
+dlmc/rn50/variational_dropout/0.9/bottleneck_2_block_group_projection_block_group1.smtx
+dlmc/rn50/variational_dropout/0.5/bottleneck_2_block_group4_2_1.smtx
+dlmc/rn50/variational_dropout/0.8/bottleneck_3_block_group3_5_1.smtx
+dlmc/rn50/variational_dropout/0.8/bottleneck_2_block_group2_3_1.smtx
+dlmc/rn50/variational_dropout/0.8/bottleneck_3_block_group2_3_1.smtx

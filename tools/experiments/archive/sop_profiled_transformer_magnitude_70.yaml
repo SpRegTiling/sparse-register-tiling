@@ -1,0 +1,54 @@
+options:
+  profile: True
+  scalar_type: float
+  n_threads: 1
+  b_cols: 128
+  output_file: hybrid_profiled_transformer_magnitude_results_70.csv
+  save_tuning_results: False
+  expand_config_parameters: [ m_tile, k_tile, n_tile ]
+
+tuning:
+  parameter_grids:
+    - name: MKN_Grid_DCSB
+      m_tile: [ 8, 16, 32, 64 ]
+      k_tile: [ 32, 64, 128, 256, 1024, 2048 ]
+      n_tile: [ 32, 64 ]
+
+    - name: MKN_Grid_SOP
+      m_tile: [ 16, 32, 64 ]
+      k_tile: [ 512, 256, 128, 64 ]
+      n_tile: [ 64 ]
+
+methods:
+  - name: MKL_Dense
+    method_id: mkl_dense
+
+  - name: MKL_Sparse
+    method_id: mkl
+    options:
+      inspector: False
+
+  - name: MKL_Sparse_IE
+    method_id: mkl
+    options:
+      inspector: True
+
+  - name: SOP
+    method_id: sop
+    options:
+      vec_width: 512
+    tune:
+      grid: MKN_Grid_SOP
+
+  - name: DCSB_CSR_8BIT_TUNED
+    method_id: dcsb
+    options:
+      vec_width: 512
+      8bit_row_ptrs: True
+      storage: CSR
+    tune:
+      grid: MKN_Grid_DCSB
+
+
+matrices:
+  filelist: ../../tools/filelists/transformer_magnitude_70.txt

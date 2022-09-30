@@ -1,0 +1,415 @@
+//
+// Created by lwilkinson on 7/20/22.
+//
+
+#include <assert.h>
+#include <chrono>
+#include <iostream>
+#include <vector>
+#include <string>
+
+#include <ATen/ATen.h>
+#include <ATen/SparseCsrTensorUtils.h>
+#include <torch/script.h>
+#include <torch/types.h>
+#include <torch/custom_class.h>
+
+#include <torch/extension.h>
+#include <torch/library.h>
+
+#include "utils/misc.h"
+
+#include "utils/algorithmic.h"
+#include "utils/Vec.h"
+
+#include "KernelDesc.h"
+#include "ExecutorFactory.h"
+
+#define ENABLE_PACKED_C_KERNELS
+#include "template_KERNEL_ID.h"
+
+#include "sop.h"
+#include "Tile.h"
+
+#define CHECK_CONTIGUOUS(x) TORCH_CHECK(x.is_contiguous(), #x " must be contiguous")
+#define CHECK_SIZE_(x, y, z) TORCH_CHECK(x.size(y) == z, #x " size mismatch for " #z)
+#define CHECK_SIZE(x, y) TORCH_CHECK(x == y, #x " size mismatch with " #y)
+
+namespace template_NAMESPACE {
+
+using VecType = Vec<float, 512>;
+using MicroKernel = template_MICROKERNEL_TYPENAME;
+using _MicroKernelDesc = MicroKernelDesc<MicroKernel>;
+
+static int num_nkern = MicroKernel::num_nkern_patterns();
+
+template<typename V>
+void permute(const torch::Tensor &order, torch::Tensor &v) {
+    TORCH_CHECK(order.dim() == 1);
+    TORCH_CHECK(v.dim() == 1);
+    TORCH_CHECK(order.numel() == v.numel());
+
+    auto order_ptr = order.data_ptr<int>();
+    auto v_ptr = v.data_ptr<V>();
+
+    // Inplace permute: https://medium.com/@kevingxyz/permutation-in-place-8528581a5553
+    for (int i = 0; i < v.numel(); i++) {
+        int index_to_swap = order_ptr[i];
+
+        while(index_to_swap < i) {
+            index_to_swap = order_ptr[index_to_swap];
+        }
+
+        TORCH_CHECK(index_to_swap < v.numel());
+        V tmp = v_ptr[i];
+        v_ptr[i] = v_ptr[index_to_swap];
+        v_ptr[index_to_swap] = tmp;
+    }
+}
+
+template <typename T>
+torch::Tensor sort_encoded_patterns(torch::Tensor &v) {
+    auto sorted_order = torch::arange(v.numel(), torch::kInt);
+    auto sorted_order_ptr = sorted_order.data_ptr<int>();
+    auto v_ptr = v.data_ptr<int>();
+
+    std::stable_sort(sorted_order_ptr, &sorted_order_ptr[v.numel()], [&v_ptr](size_t i1, size_t i2) {
+        return (v_ptr[i2] == sop::ZERO_PATTERN_ID || v_ptr[i1] < v_ptr[i2]) && (v_ptr[i1] != sop::ZERO_PATTERN_ID);
+    });
+
+    permute<int>(sorted_order, v);
+    return sorted_order;
+}
+
+std::tuple<torch::Tensor, torch::Tensor> sort_and_encode_patterns(const torch::Tensor pat_codes) {
+    CHECK_CONTIGUOUS(pat_codes);
+
+    auto encoded = torch::zeros_like(pat_codes);
+
+    pat_codes.scalar_type() == c10::ScalarType::Int;
+    auto pat_codes_ptr = pat_codes.data_ptr<int>();
+    auto encoded_ptr = encoded.data_ptr<int>();
+
+    std::transform(pat_codes_ptr, &pat_codes_ptr[pat_codes.numel()], encoded_ptr,
+                   [](int pat_code) -> int { return MicroKernel::encode_nkern_pattern(pat_code); });
+    auto order = sort_encoded_patterns<int>(encoded);
+
+    return { encoded, order };
+}
+
+
+struct SOPTile : torch::CustomClassHolder {
+    std::vector<sop::MicroKernelPackedData> panel_descs;
+    std::vector<bool> panel_packed;
+    int64_t rows;
+    int64_t cols;
+
+    bool tile_packed = false;
+    int num_panels;
+    void *buffer = nullptr;
+    int64_t padding_total = 0;
+
+    SOPTile(int64_t rows, int64_t cols, int64_t num_panels)
+        : panel_descs(num_panels), panel_packed(num_panels),
+          num_panels(num_panels), rows(rows), cols(cols) { }
+
+    ~SOPTile() {
+        if (tile_packed) free(buffer);
+        else {
+            for (int panel_id = 0; panel_id < num_panels; panel_id++) {
+                if (panel_packed[panel_id]) panel_descs[panel_id].free();
+            }
+        }
+    }
+
+    int64_t padding() {
+        return padding_total;
+    }
+
+    void pack_panel(
+        int64_t panel_id,
+        int64_t col_offset,
+        torch::Tensor pat_codes,
+        torch::Tensor col_indices,
+        torch::Tensor dense_panel
+    ) {
+        TORCH_CHECK(panel_id < num_panels);
+        TORCH_CHECK(panel_packed[panel_id] == false);
+        TORCH_CHECK(dense_panel.dim() == 2);
+        TORCH_CHECK(dense_panel.size(1) == MicroKernel::M_r);
+
+        auto dense_values_accessor = dense_panel.packed_accessor32<float, 2>();
+
+        auto [encoded_patterns, order] = sort_and_encode_patterns(pat_codes);
+        permute<int>(order, col_indices);
+
+        auto encoded_patterns_ptr = encoded_patterns.data_ptr<int>();
+
+        int start_of_zero_patterns = encoded_patterns.numel();
+        for (int p = 0; p < encoded_patterns.numel(); p++) {
+            if (encoded_patterns_ptr[p] == sop::ZERO_PATTERN_ID) {
+                start_of_zero_patterns = p;
+                break;
+            }
+        }
+
+        encoded_patterns.resize_(start_of_zero_patterns);
+        col_indices.resize_(start_of_zero_patterns);
+        order.resize_(start_of_zero_patterns);
+
+        encoded_patterns_ptr = encoded_patterns.data_ptr<int>();
+        auto order_ptr = order.data_ptr<int>();
+        auto col_indices_ptr = col_indices.data_ptr<int>();
+
+        int num_values = 0;
+        for (int p = 0; p < encoded_patterns.numel(); p++) {
+            num_values += MicroKernel::nnz_count_for_nkern_code((uint16_t) encoded_patterns_ptr[p]);
+        }
+
+        auto& panel_desc = panel_descs[panel_id];
+        panel_desc.num_nkern = num_nkern;
+
+        panel_desc.nkern_counts = new int[num_nkern]();
+        panel_desc.col_indices = new int[col_indices.numel()]();
+        panel_desc.values = new float[num_values]();
+
+        std::fill(panel_desc.nkern_counts, &panel_desc.nkern_counts[num_nkern], 0);
+
+        int curr_value_offset = 0;
+        int curr_col_indices_offset = 0;
+        int panel_padding = 0;
+        for (int p = 0; p < encoded_patterns.numel(); p++) {
+            const auto encoded_pattern = encoded_patterns_ptr[p];
+            const auto& values = dense_values_accessor[col_indices_ptr[p]];
+
+            TORCH_CHECK(encoded_pattern != sop::ZERO_PATTERN_ID);
+            TORCH_CHECK(encoded_pattern < num_nkern);
+            TORCH_CHECK(curr_col_indices_offset < col_indices.numel());
+
+            panel_desc.nkern_counts[encoded_pattern]++;
+            panel_desc.col_indices[curr_col_indices_offset++] = col_indices_ptr[p] + col_offset;
+
+            auto pattern = MicroKernel::decode_nkern_pattern(encoded_pattern);
+
+            int row = 0;
+            while (pattern) {
+                if (pattern & 1) {
+                    TORCH_CHECK(curr_value_offset < num_values);
+                    if (values[row] == 0) {
+                        padding_total++;
+                        panel_padding++;
+                    }
+                    panel_desc.values[curr_value_offset++] = values[row];
+                }
+
+                pattern >>= 1;
+                row++;
+            }
+        }
+
+        panel_desc.num_col_indices = curr_col_indices_offset;
+        panel_desc.num_nkern = num_nkern;
+        panel_desc.num_nnz = curr_value_offset;
+
+        TORCH_CHECK((panel_desc.num_nnz == panel_padding + torch::count_nonzero(dense_panel).item<int64_t>()));
+
+        panel_packed[panel_id] = true;
+    }
+
+    void pack_tile() {
+        TORCH_CHECK(std::all_of(panel_packed.begin(), panel_packed.end(), [](bool x){ return x; }));
+
+        size_t required_storage_bytes = 0;
+
+        for (const auto& p : panel_descs) {
+            required_storage_bytes += p.num_nnz * sizeof(p.values[0]);
+            required_storage_bytes += p.num_col_indices * sizeof(p.col_indices[0]);
+            required_storage_bytes += p.num_nkern * sizeof(p.nkern_counts[0]);
+            required_storage_bytes += 3*64;
+        }
+
+        buffer = aligned_alloc(64, required_storage_bytes);
+        void* t_buffer = buffer;
+
+        for (auto& p : panel_descs) {
+            {
+                auto prev_ptr = p.values;
+                p.values = (decltype(p.values)) t_buffer;
+                t_buffer = std::copy(prev_ptr, &prev_ptr[p.num_nnz], p.values);
+                t_buffer = cacheline_align_ptr(t_buffer);
+                delete[] prev_ptr;
+            }
+
+            {
+                auto prev_ptr = p.col_indices;
+                p.col_indices = (decltype(p.col_indices)) t_buffer;
+                t_buffer = std::copy(prev_ptr, &prev_ptr[p.num_col_indices], p.col_indices);
+                t_buffer = cacheline_align_ptr(t_buffer);
+                delete[] prev_ptr;
+            }
+
+            {
+                auto prev_ptr = p.nkern_counts;
+                p.nkern_counts = (decltype(p.nkern_counts)) t_buffer;
+                t_buffer = std::copy(prev_ptr, &prev_ptr[p.num_nkern], p.nkern_counts);
+                t_buffer = cacheline_align_ptr(t_buffer);
+                delete[] prev_ptr;
+            }
+        }
+
+        tile_packed = true;
+    }
+};
+
+
+template<typename Scalar>
+__ALWAYS_INLINE static void sop_multiple_panel_executor(
+    int N_c,
+    uint32_t m, uint32_t k, uint32_t n,
+    const sop::MicroKernelPackedData* panel_descs, uint32_t num_panels,
+    const Scalar *__restrict__ B,
+    Scalar *__restrict__ C,
+    const bool load_c
+) {
+    static const int N_r = MicroKernel::N_r;
+    int clean_up = N_c % N_r;
+
+    MicroKernel::Mask clean_up_mask = MicroKernel::precomp_mask(N_c);
+    //std::cout << N_c << " " << n << " " << clean_up_mask << std::endl;
+
+    for (int t = 0; t < num_panels; t++) {
+        const auto& panel_desc = panel_descs[t];
+
+        uint32_t* __restrict__  col_indices = (uint32_t*) panel_desc.col_indices;
+        float* __restrict__     values = panel_desc.values;
+        int* __restrict__       pattern_counts = panel_desc.nkern_counts;
+        int                     num_col_indices = panel_desc.num_col_indices;
+
+        for (int j = 0; j < N_c - (N_r - 1); j += N_r) {
+            MicroKernel::_microkernel_max_acc(
+                m, k, n,
+                pattern_counts, col_indices, values, num_col_indices,
+                B + j , C + j + (t * MicroKernel::M_r) * n,
+                load_c
+            );
+        }
+
+        if (clean_up) {
+            std::cerr << "reimplement clean up" << std::endl;
+            exit(-1);
+
+//            MicroKernel::panel_executor_cleanup(
+//                clean_up,
+//                m, k, n,
+//                panel_descs[t],
+//                B + (N_c - clean_up),
+//                C + (t * MicroKernel::M_r) * n + (N_c - clean_up),
+//                clean_up_mask, load_c
+//            );
+        }
+    }
+}
+
+
+template<typename Scalar>
+double profile(
+    int64_t N_c,
+    uint32_t m, uint32_t k, uint32_t n,
+    const sop::MicroKernelPackedData* panel_descs, uint32_t num_panels,
+    const Scalar *__restrict__ B,
+    Scalar *__restrict__ C,
+    int64_t num_runs
+) {
+    static int MEASURED_ITERATIONS = 150;
+    std::chrono::time_point<std::chrono::high_resolution_clock> start_time, end_time;
+
+    // Warmup runs
+    for(int runs = 0; runs < num_runs; runs++) {
+        sop_multiple_panel_executor(
+            N_c,
+            m, k, n,
+            panel_descs, num_panels,
+            B, C, true
+        );
+    }
+
+    vector<double> timings(MEASURED_ITERATIONS);
+
+    for (int iter = 0; iter < MEASURED_ITERATIONS; iter++) {
+        start_time = std::chrono::high_resolution_clock::now();
+        for (int runs = 0; runs < num_runs; runs++) {
+            sop_multiple_panel_executor(
+                N_c,
+                m, k, n,
+                panel_descs, num_panels,
+                B, C, true
+            );
+        }
+        end_time = std::chrono::high_resolution_clock::now();
+        timings[iter] = (end_time - start_time).count();
+    }
+
+    zero(C, m * n);
+
+    return median(timings) / double(num_runs);
+}
+
+std::tuple<double, torch::Tensor> execute_tile(
+    int64_t N_c,
+    const SOPTile& tile,
+    const torch::Tensor B,
+    int64_t num_runs
+) {
+    auto rows = tile.rows;
+    auto cols = tile.cols;
+    auto bCols = B.size(1);
+
+    TORCH_CHECK(tile.tile_packed);
+
+    CHECK_SIZE(cols, B.size(0));
+    CHECK_CONTIGUOUS(B);
+
+    if (bCols % (VecType::Type::size() * MicroKernel::max_acc_width_in_vecs()) != 0) {
+        std::cout << "Warning bCols % (VecType::Type::size() * MicroKernel::max_acc_width_in_vecs()),";
+        std::cout << " will fall back on accumulator of width 1" << std::endl;
+    }
+
+    if (bCols % VecType::Type::size() != 0) {
+        std::cout << "Warning bCols % VecType::Type::size() != 0, will used masked registers" << std::endl;
+    }
+
+    auto C = torch::zeros({ rows, bCols }, torch::kFloat32);
+    CHECK_CONTIGUOUS(C);
+
+    auto B_ptr = B.data_ptr<float>();
+    auto C_ptr = C.data_ptr<float>();
+
+    double timing = profile(N_c, rows, cols, bCols, tile.panel_descs.data(), tile.num_panels, B_ptr, C_ptr, num_runs);
+
+    sop_multiple_panel_executor(
+        N_c,
+        rows, cols, bCols,
+        tile.panel_descs.data(), tile.num_panels,
+        B_ptr,
+        C_ptr, true
+    );
+
+    return { timing, C };
+}
+
+}
+
+#ifdef USE_JIT
+PYBIND11_MODULE(sop_template_KERNEL_ID, m) {
+#else
+TORCH_LIBRARY(sop_template_KERNEL_ID, m) {
+#endif
+    m.def("execute_tile", template_NAMESPACE::execute_tile);
+    m.def("sort_and_encode_patterns", template_NAMESPACE::sort_and_encode_patterns);
+
+    py::class_<template_NAMESPACE::SOPTile>(m, "SOPTile_template_KERNEL_ID")
+    .def(py::init<int64_t, int64_t, int64_t>())
+    .def("pack_panel", &template_NAMESPACE::SOPTile::pack_panel)
+    .def("pack_tile", &template_NAMESPACE::SOPTile::pack_tile)
+    .def("padding", &template_NAMESPACE::SOPTile::padding);
+}
