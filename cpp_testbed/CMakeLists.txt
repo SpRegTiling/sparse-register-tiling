@@ -27,7 +27,6 @@ endif()
 set(MIS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lib/")
 
 find_package(METIS OPTIONAL_COMPONENTS)
-find_package(MKL REQUIRED OPTIONAL_COMPONENTS)
 find_package(PAPI OPTIONAL_COMPONENTS)
 
 add_definitions(-DUSE_GLOP)
@@ -51,10 +50,6 @@ FetchContent_Declare(ryml
 )
 FetchContent_MakeAvailable(ryml)
 
-if (MKL_FOUND)
-    add_definitions(-DMKL)
-endif()
-
 if (PAPI_FOUND)
     add_definitions(-DPAPI)
 endif()
@@ -74,7 +69,6 @@ include_directories("${CMAKE_CURRENT_LIST_DIR}/lib/cxxopts/include")
 aux_source_directory("${CMAKE_CURRENT_LIST_DIR}/src" SRC)
 aux_source_directory("${CMAKE_CURRENT_LIST_DIR}/src/row_reordering" SRC)
 aux_source_directory("${CMAKE_CURRENT_LIST_DIR}/src/row_reordering/distance_functions" SRC)
-
 
 add_subdirectory(src)
 add_subdirectory(demo)

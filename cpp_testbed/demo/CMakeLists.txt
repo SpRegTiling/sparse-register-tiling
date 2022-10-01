@@ -1,16 +1,6 @@
 include(../cmake/LinkVtune.cmake)
 include(../cmake/LinkCake.cmake)
 
-
-message(STATUS "MKL_LIBRARIES: ${MKL_LIBRARIES}")
-
-if (MKL_FOUND)
-    set(SPMM_DEMO_LIBS ${SPMM_DEMO_LIBS} ${MKL_LIBRARIES})
-    if(UNIX AND APPLE)
-        set(IOMP_DIR_MAC ${INTEL_COMPILER_DIR}/compilers_and_libraries/mac/lib/)
-    endif()
-endif()
-
 if (PAPI_FOUND)
     set(SPMM_DEMO_LIBS ${SPMM_DEMO_LIBS} ${PAPI_LIBRARIES})
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DPAPI_AVAILABLE")
@@ -45,7 +35,12 @@ target_include_directories(SPMM_demo PUBLIC
         ${ASpT_INCLUDE_DIRS}
         ${SOP_ALL_INCLUDES}
 )
-target_link_libraries(SPMM_demo ${SPMM_DEMO_LIBS} -lstdc++fs ryml::ryml) # stdc++fs for c++ filesystem
+target_link_libraries(SPMM_demo
+        ${SPMM_METHODS_LIBRARIES}
+        ${SPMM_DEMO_LIBS}
+        -lstdc++fs
+        ryml::ryml
+) # stdc++fs for c++ filesystem
 link_vtune_if_available(SPMM_demo)
 
 #add_executable(SPMM_analyze SPMM_analyze.cpp ${SRC} ${SPMM_SOURCES})
