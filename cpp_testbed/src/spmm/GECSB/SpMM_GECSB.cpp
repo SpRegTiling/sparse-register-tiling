@@ -13,7 +13,6 @@
 #include "utils/error.h"
 
 #include "SpMM_GECSB.h"
-#include "spmm.h"
 
 
 using std::vector;

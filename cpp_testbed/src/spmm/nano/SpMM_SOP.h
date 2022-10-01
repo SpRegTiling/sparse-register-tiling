@@ -7,16 +7,11 @@
 #include "utils/Vec.h"
 #include "utils/algorithmic.h"
 
-#include "SpMM_HYB_Utils.h"
 #include "../SpMMFunctor.h"
 #include "../MKL/MKL_utils.h"
 #include "COO.h"
 
 #include "sop.h"
-
-#include "spmm.h"
-#include "spmm_config.h"
-
 #include "cake_block_dims.h"
 
 #include <math.h>

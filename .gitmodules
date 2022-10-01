@@ -1,0 +1,3 @@
+[submodule "spmm-nano-kernels"]
+	path = spmm-nano-kernels
+	url = git@github.com:LucasWilkinson/spmm-nano-kernels.git

@@ -55,7 +55,7 @@ methods:
     options:
       inspector: true
 
-  - method_id: taco
-    name: TACO
-    options:
-      vec_width: not-supported
+#  - method_id: taco
+#    name: TACO
+#    options:
+#      vec_width: not-supported

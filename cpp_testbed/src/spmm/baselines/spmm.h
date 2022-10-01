@@ -1,6 +1,6 @@
 #pragma once
 
-#include "spmm_config.h"
+#include "spmm/spmm_config.h"
 #include <optional>
 
 struct NullConfig: ConfigBase {};

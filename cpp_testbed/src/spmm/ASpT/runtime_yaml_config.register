@@ -2,4 +2,4 @@
     return [](additional_options_t options, SpMMTask<S>& task) -> SpMMFunctor<S>* {
     return new SpMMASpT<S>(task);
     };
-}}}
+}}

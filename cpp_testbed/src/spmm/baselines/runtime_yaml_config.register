@@ -1,0 +1,4 @@
+SPMM_GENERIC_WITH_VEC_WIDTH("csr_c_1d",   spmm_csr_c,       CSR_C_Config),
+SPMM_GENERIC_WITH_VEC_WIDTH("csr_c_2d",   spmm_csr_c_2d,    CSR_C_2D_Config),
+SPMM_GENERIC_WITH_VEC_WIDTH("csr_c_2d_b", spmm_csr_c_2d_b,  CSR_C_2D_B_Config),
+SPMM_GENERIC_WITH_VEC_WIDTH("csr_a_2d",   spmm_csr_a_2d,    CSR_A_2D_Config)

@@ -1,0 +1,44 @@
+{"nano", [](c4::yml::ConstNodeRef options) -> method_factory_t<S> {
+    std::string arch; options["arch"] >> arch;
+    std::string mapping_id; options["mapping_id"] >> mapping_id;
+
+    int nr = -1;
+    if (options.has_child("nr"))
+      options["nr"] >> nr;
+
+    bool packed = false;
+    if (options.has_child("packed"))
+      options["packed"] >> packed;
+
+    bool load_balance = false;
+    if (options.has_child("load_balance"))
+      options["load_balance"] >> load_balance;
+
+    return [arch, nr, packed, load_balance, mapping_id](
+      additional_options_t options, SpMMTask<S>& task)
+        -> SpMMFunctor<S>* {
+
+      std::string mapping_id_mut = mapping_id;
+
+      if (mapping_id == "filelist") {
+        mapping_id_mut = options["mapping_id"];
+      }
+
+      ERROR_AND_EXIT_IF(packed && load_balance,
+        "Packing and load-balance are not currently "
+        "supported together");
+
+      if (load_balance) {
+        return new SpMM_SOP<sop::KDFloatNoPackingLoadBalanced>
+          (get_executor_id(mapping_id_mut, arch, nr), mapping_id_mut, task);
+      } else if (packed) {
+        return new SpMM_SOP<sop::KDFloatCPartialPacking>
+          (get_executor_id(mapping_id_mut, arch, nr), mapping_id_mut, task);
+      } else {
+        return new SpMM_SOP<sop::KDFloatNoPacking>
+          (get_executor_id(mapping_id_mut, arch, nr), mapping_id_mut, task);
+      }
+
+      return nullptr;
+    };
+}}

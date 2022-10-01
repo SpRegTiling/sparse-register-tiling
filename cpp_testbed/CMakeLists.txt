@@ -65,6 +65,7 @@ if ($ENV{PROFILE})
 endif()
 
 include_directories("${CMAKE_CURRENT_LIST_DIR}/../SOP/include")
+include_directories("${CMAKE_CURRENT_LIST_DIR}/src/")
 include_directories("${CMAKE_CURRENT_LIST_DIR}/src/row_reordering")
 include_directories("${CMAKE_CURRENT_LIST_DIR}/src/row_reordering/distance_functions")
 include_directories("${CMAKE_CURRENT_LIST_DIR}/include")
@@ -74,6 +75,6 @@ aux_source_directory("${CMAKE_CURRENT_LIST_DIR}/src" SRC)
 aux_source_directory("${CMAKE_CURRENT_LIST_DIR}/src/row_reordering" SRC)
 aux_source_directory("${CMAKE_CURRENT_LIST_DIR}/src/row_reordering/distance_functions" SRC)
 
-message(STATUS ${SRC})
 
+add_subdirectory(src)
 add_subdirectory(demo)

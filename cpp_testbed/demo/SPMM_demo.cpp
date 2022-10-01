@@ -23,14 +23,12 @@
 #include "csv_log_io.h"
 #include "def.h"
 #include "row_reordering_algos.h"
-#include "spmm.h" // From xformers/sparse/backends/cpu/spmm/
 
-#include "SpMMTask.h"
-#include "SpMMFunctor.h"
-#include "SpMMGeneric.h"
-#include "SpMM_MKL.h"
+#include "spmm/runtime_yaml_config.h"
+#include "spmm/SpMMTask.h"
+#include "spmm/SpMMFunctor.h"
 
-#include "experiment_mapping.h"
+#include "row_reordering_runtime_mapping.h"
 
 #ifdef MKL
 #include <cmath>
@@ -416,8 +414,16 @@ class SpMMExperiment {
                 std::cout << " Runs per iter: " << runs_per_iteration << " nnz_per_bcol " <<  runs_per_iteration << std::endl;
 
                 { // compute correct C
-                    auto verification_baseline = SpMMMKL<Scalar, false>(spmm_task);
-                    verification_baseline();
+                    if (get_method_id_mapping<Scalar>().count(BASELINE_METHOD) == 0) {
+                        std::cerr << "Baseline method_id " << BASELINE_METHOD << " not registered" << std::endl;
+                        exit(-1);
+                    }
+                    c4::yml::ConstNodeRef no_options;
+                    additional_options_t no_additional_options;
+
+                    auto baseline_factory = get_method_id_mapping<Scalar>()[BASELINE_METHOD](no_options);
+                    auto verification_baseline = baseline_factory(no_additional_options, spmm_task);
+                    (*verification_baseline)();
                     std::memcpy(spmm_task.correct_C, spmm_task.C, spmm_task.cNumel() * sizeof(Scalar));
                 }
 

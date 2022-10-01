@@ -14,14 +14,9 @@
 #include "row_reordering_algos.h"
 #include "RowDistance.h"
 
-// Distance Mapping
-using distance_factory_t = std::function<RowDistance* (SparsityPattern& pattern)>;
-extern std::map<std::string, distance_factory_t> distance_mapping;
-
-// Row-Reordering Algo Mapping
-extern std::map<std::string, row_reordering_algo_t*> algo_mapping;
-
 using additional_options_t = std::map<std::string, std::string>;
+
+#define BASELINE_METHOD "mkl_dense"
 
 // Method mapping
 template<typename S> using method_factory_t = std::function<SpMMFunctor<S>* (additional_options_t options, SpMMTask<S>&)>;

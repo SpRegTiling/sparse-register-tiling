@@ -9,9 +9,9 @@
 #include <vector>
 
 
-#include "../SpMMFunctor.h"
-#include "spmm.h"
+#include "SpMMFunctor.h"
 #include "spmm_config.h"
+
 #include "COO.h"
 #include "cake_block_dims.h"
 

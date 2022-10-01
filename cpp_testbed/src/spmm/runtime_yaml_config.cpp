@@ -3,43 +3,54 @@
 //
 #include "runtime_yaml_config.h"
 
-#include "HammingRowDistance.h"
-#include "SpMMELL.h"
-#include "baselines/SpMMGeneric.h"
-#include "SpMM_ASpT.h"
-#include "SpMM_DCSB.h"
-#include "SpMM_GECSB.h"
-#include "SpMM_Dense.h"
-#include "SpMM_MKL.h"
-#include "SpMM_TACO.h"
-#include "SpMM_SOP.h"
-#include "ryml.hpp"
-#include "ryml_std.hpp"
-#include "spmm.h"
-
-#include "mapping_to_executor.h"
-
 using namespace cpp_testbed;
 
-std::map<std::string, distance_factory_t> distance_mapping = {
-        {"hamming", [](SparsityPattern& pattern) { return new HammingRowDistance(pattern); }}
-};
+#if defined(SPMM_ASpT_ENABLED) && SPMM_ASpT_ENABLED
+#include "ASpT/runtime_yaml_config.h"
+#endif
 
-std::map<std::string, row_reordering_algo_t*> algo_mapping = {
-        {"greedy", greedy_row_reordering}
-};
+#if defined(SPMM_MKL_ENABLED) && SPMM_MKL_ENABLED
+#include "MKL/runtime_yaml_config.h"
+#endif
 
+#if defined(SPMM_baselines_ENABLED) && SPMM_baselines_ENABLED
+#include "baselines/runtime_yaml_config.h"
+#endif
 
-// Util, todo cleanup
-using CSRTypes = sop::CSRStorageTypes<int, int>;
-using NO_PACKING = sop::PackingDesc<sop::NO_PACKING, sop::NO_PACKING>;
-using C_PARTIALY_PACKED = sop::PackingDesc<sop::PARTIAL_PACKING, sop::NO_PACKING>;
+#if defined(SPMM_GECSB_ENABLED) && SPMM_GECSB_ENABLED
+#include "GECSB/runtime_yaml_config.h"
+#endif
+
+#if defined(SPMM_nano_ENABLED) && SPMM_GECSB_ENABLED
+#include "nano/runtime_yaml_config.h"
+#endif
 
 template<typename S>
 method_mapping_t<S>& get_method_id_mapping() {
     static std::map <std::string, method_factory_factory_t<S>> method_id_mapping = {
+#if defined(SPMM_ASpT_ENABLED) && SPMM_ASpT_ENABLED
+#include "ASpT/runtime_yaml_config.register"
+,
+#endif
+#if defined(SPMM_MKL_ENABLED) && SPMM_MKL_ENABLED
+#include "MKL/runtime_yaml_config.register"
+,
+#endif
+#if defined(SPMM_baselines_ENABLED) && SPMM_baselines_ENABLED
+#include "baselines/runtime_yaml_config.register"
+,
+#endif
+#if defined(SPMM_GECSB_ENABLED) && SPMM_GECSB_ENABLED
+#include "GECSB/runtime_yaml_config.register"
+,
+#endif
+#if defined(SPMM_nano_ENABLED) && SPMM_nano_ENABLED
+#include "nano/runtime_yaml_config.register"
+,
+#endif
+    };
 
-    }
+    return method_id_mapping;
 };
 
 
@@ -47,35 +58,6 @@ method_mapping_t<S>& get_method_id_mapping() {
 
 template<typename S>
 method_mapping_t<S>& get_method_id_mapping() {
-    // NOLINTBEGIN
-    #define SPMM_GENERIC_WITH_VEC_WIDTH(id, func, Config)                                                          \
-        {id, [](c4::yml::ConstNodeRef options) -> method_factory_t<S> {                                            \
-            int i; options["vec_width"] >> i;                                                                      \
-            std::string storage_config = "int_int";                                                                \
-            if (options.has_child("storage_config")) { options["storage_config"] >>  storage_config; }             \
-            return [i, storage_config](additional_options_t options, SpMMTask<S>& task) -> SpMMFunctor<S>* {       \
-                if (storage_config == "int_int") {                                                                 \
-                    if (i == 512) return new SpMMGeneric<StorageTypes<S, int, int>, Config>                        \
-                        (task, &func<StorageTypes<S, int, int>, 512>);                                             \
-                    if (i == 256) return new SpMMGeneric<StorageTypes<S, int, int>, Config>                        \
-                        (task, &func<StorageTypes<S, int, int>,  256>);                                            \
-                } else if (storage_config == "uint8_t_uint16_t") {                                                 \
-                    if (i == 512) return new SpMMGeneric<StorageTypes<S, uint16_t, uint8_t>, Config>               \
-                        (task, &func<StorageTypes<S, uint16_t, uint8_t>, 512>);                                    \
-                    if (i == 256) return new SpMMGeneric<StorageTypes<S, uint16_t, uint8_t>, Config>               \
-                        (task, &func<StorageTypes<S, uint16_t, uint8_t>, 256>);                                    \
-                } else if (storage_config == "uint8_t_int") {                                                      \
-                    if (i == 512) return new SpMMGeneric<StorageTypes<S, int, uint8_t>, Config>                    \
-                        (task, &func<StorageTypes<S, int, uint8_t>, 512>);                                         \
-                    if (i == 256) return new SpMMGeneric<StorageTypes<S, int, uint8_t>, Config>                    \
-                        (task, &func<StorageTypes<S, int, uint8_t>, 256>);                                         \
-                }                                                                                                  \
-                return nullptr;                                                                                    \
-            };                                                                                                     \
-        }}
-    // NOLINTEND
-
-
     static std::map<std::string, method_factory_factory_t<S>> method_id_mapping = {
         SPMM_GENERIC_WITH_VEC_WIDTH("csr_c_1d",   spmm_csr_c,       CSR_C_Config),
         SPMM_GENERIC_WITH_VEC_WIDTH("csr_c_2d",   spmm_csr_c_2d,    CSR_C_2D_Config),

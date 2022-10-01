@@ -1,0 +1,15 @@
+{"gecsb", [](c4::yml::ConstNodeRef options) -> method_factory_t<S> {
+   int i; options["vec_width"] >> i;
+   std::string storage; options["storage"] >> storage;
+   return [storage, i](additional_options_t options, SpMMTask<S>& task) -> SpMMFunctor<S>* {
+     if (storage == "CSR") {
+       if (i == 512) return new SpMM_GECSB<512, S, int, GECSB_CSR>(task);
+       if (i == 256) return new SpMM_GECSB<256, S, int, GECSB_CSR>(task);
+       return nullptr;
+     } else if (storage == "CSC") {
+       if (i == 512) return new SpMM_GECSB<512, S, int, GECSB_CSC>(task);
+       if (i == 256) return new SpMM_GECSB<256, S, int, GECSB_CSC>(task);
+     }
+     return nullptr;
+   };
+}}
