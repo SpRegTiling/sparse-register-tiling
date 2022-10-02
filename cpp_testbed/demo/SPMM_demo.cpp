@@ -13,7 +13,6 @@
 #include <omp.h>
 #include <ryml_std.hpp>
 #include <ryml.hpp>
-#include <malloc.h>
 
 #include "utils/misc.h"
 #include "utils/error.h"

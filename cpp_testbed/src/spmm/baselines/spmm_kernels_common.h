@@ -51,7 +51,7 @@
 
 #define A_ROW_TIMES_B_COL_PANEL_TEMPLATE(TILE_SIZE_IN_VECTORS)                                              \
 template<typename VecType, typename StorageTypes, bool row_swizzle, bool load_c>                            \
-__always_inline int _a_row_times_b_col_panel_##TILE_SIZE_IN_VECTORS (                                       \
+__attribute__((always_inline)) int _a_row_times_b_col_panel_##TILE_SIZE_IN_VECTORS (                                       \
     int m, int k, int n,                                                                                    \
     int i, int j,                                                                                           \
     const int* __restrict__ row_indices,                                                                    \
@@ -123,7 +123,7 @@ A_ROW_TIMES_B_COL_PANEL_TEMPLATE(1)
 
 #define A_TILE_TIMES_B_TILE_TEMPLATE(TILE_SIZE_IN_VECTORS)                                                      \
 template<typename VecType, typename StorageTypes, bool row_swizzle, bool load_c>                                \
-__always_inline int _a_tile_times_b_tile_##TILE_SIZE_IN_VECTORS (                                               \
+int _a_tile_times_b_tile_##TILE_SIZE_IN_VECTORS (                                                               \
     int m, int k, int n,                                                                                        \
     int i, int ik, int j,                                                                                       \
     int mTile, int kTile,                                                                                       \

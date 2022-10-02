@@ -31,7 +31,7 @@ using Config = GECSBConfig;
 
 #define INNER_LOOP_CSR_TEMPLATE(TILE_SIZE_IN_VECTORS)                                                        \
 template<typename VecType, typename Scalar, typename PtrsType, enum GECSB_BLOCK_STORAGE storage, bool row_swizzle> \
-static __always_inline int _inner_loop_csr_tiled_##TILE_SIZE_IN_VECTORS(                                        \
+static int _inner_loop_csr_tiled_##TILE_SIZE_IN_VECTORS(                                        \
     int m, int k, int n,                                                                                        \
     int j,                                                                                                      \
     int blk_i, int blk_k,                                                                                       \
@@ -77,7 +77,7 @@ INNER_LOOP_CSR_TEMPLATE(1)
 
 #define INNER_LOOP_CSC_TEMPLATE(TILE_SIZE_IN_VECTORS)                                                           \
 template<typename VecType, typename Scalar, typename PtrsType, enum GECSB_BLOCK_STORAGE storage, bool row_swizzle> \
-static __always_inline int _inner_loop_csc_tiled_##TILE_SIZE_IN_VECTORS(                                        \
+static int _inner_loop_csc_tiled_##TILE_SIZE_IN_VECTORS(                                                        \
     int m, int k, int n,                                                                                        \
     int j,                                                                                                      \
     int blk_i, int blk_k,                                                                                       \

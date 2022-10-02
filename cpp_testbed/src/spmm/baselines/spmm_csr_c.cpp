@@ -38,7 +38,7 @@ using Config = CSR_C_Config;
 
 #define INNER_LOOP_CSR_TEMPLATE(TILE_SIZE_IN_VECTORS)                                                           \
 template<typename VecType, typename StorageTypes, bool row_swizzle>                                             \
-static __always_inline int _inner_loop_tiled_##TILE_SIZE_IN_VECTORS (                                           \
+static int _inner_loop_tiled_##TILE_SIZE_IN_VECTORS (                                                           \
     int m, int k, int n,                                                                                        \
     int i, int j,                                                                                               \
     const int* __restrict__ row_indices,                                                                        \
