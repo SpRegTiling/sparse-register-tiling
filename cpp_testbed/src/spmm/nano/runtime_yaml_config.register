@@ -1,4 +1,5 @@
 {"nano", [](c4::yml::ConstNodeRef options) -> method_factory_t<S> {
+    int vec_width_bits; options["vec_width_bits"] >> vec_width_bits;
     std::string arch; options["arch"] >> arch;
     std::string mapping_id; options["mapping_id"] >> mapping_id;
 
@@ -14,7 +15,7 @@
     if (options.has_child("load_balance"))
       options["load_balance"] >> load_balance;
 
-    return [arch, nr, packed, load_balance, mapping_id](
+    return [arch, vec_width_bits,  nr, packed, load_balance, mapping_id](
       additional_options_t options, SpMMTask<S>& task)
         -> SpMMFunctor<S>* {
 
@@ -30,13 +31,13 @@
 
       if (load_balance) {
         return new SpMM_SOP<sop::KDFloatNoPackingLoadBalanced>
-          (get_executor_id(mapping_id_mut, arch, nr), mapping_id_mut, task);
+          (get_executor_id(mapping_id_mut, arch, vec_width_bits, nr), mapping_id_mut, task);
       } else if (packed) {
         return new SpMM_SOP<sop::KDFloatCPartialPacking>
-          (get_executor_id(mapping_id_mut, arch, nr), mapping_id_mut, task);
+          (get_executor_id(mapping_id_mut, arch, vec_width_bits, nr), mapping_id_mut, task);
       } else {
         return new SpMM_SOP<sop::KDFloatNoPacking>
-          (get_executor_id(mapping_id_mut, arch, nr), mapping_id_mut, task);
+          (get_executor_id(mapping_id_mut, arch, vec_width_bits, nr), mapping_id_mut, task);
       }
 
       return nullptr;

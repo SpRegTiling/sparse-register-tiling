@@ -9,6 +9,12 @@ def nano(arch, size, mapping, packed=False, load_balance=False, tune=None, tlb_c
     name = f"N{size}"
     beta_10x = int(round(beta * 10))
 
+    default_arch_vec_width = {
+        "AVX2": 256,
+        "AVX512": 512,
+        "NEON": 128
+    }
+
     mapping_name = mapping
     mapping = {
         4: {"identity": "61fee", "orig": "da01e"},
@@ -33,6 +39,7 @@ def nano(arch, size, mapping, packed=False, load_balance=False, tune=None, tlb_c
             "load_balance": load_balance,
             "mapping_id": mapping,
             "arch": arch,
+            "vec_width_bits": default_arch_vec_width[arch],
         }
     }
 
