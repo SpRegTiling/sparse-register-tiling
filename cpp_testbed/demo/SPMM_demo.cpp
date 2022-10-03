@@ -408,6 +408,7 @@ class SpMMExperiment {
 
                 int runs_per_iteration = std::max((int) std::ceil(2e8 / (spmm_task.A->nz * spmm_task.bCols)), 1);
                 runs_per_iteration *= std::max(1, spmm_task.nThreads);
+                //int runs_per_iteration = 1;
 
                 std::cout << "Begin Testing, nThreads: " << nThreads << " BCols: " << bCols;
                 std::cout << " Runs per iter: " << runs_per_iteration << " nnz_per_bcol " <<  runs_per_iteration << std::endl;
@@ -431,16 +432,19 @@ class SpMMExperiment {
 
                 double baseline_time = 0;
                 for (const auto &method: methods) {
+#ifdef MKL
                     // Configure everytime to just make sure nothing gets messed up
                     mkl_set_num_threads(nThreads);
                     mkl_set_num_threads_local(nThreads);
-                    omp_set_num_threads(nThreads);
                     mkl_set_dynamic(1);
 
                     if (nThreads != mkl_get_max_threads()) {
                         std::cerr << "Max threads does not match" << std::endl;
                         exit(-1);
                     }
+#endif
+                    omp_set_num_threads(nThreads);
+
 
                     csv_row_t csv_row;
                     auto name = method.name;

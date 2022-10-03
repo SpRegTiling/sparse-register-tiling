@@ -5,17 +5,25 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native -fopenmp -std=c++2a -ffast-math")
+
+##
+# Intel
+##
+set(TUNE intel)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mprefer-vector-width=512")
 
+##
+# ARM
+##
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__ARM_ARCH_8__ -mfpu=neon-fp-armv8")
+#set(TUNE cortex-a72)
 
 ## GCC
-
-
 if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     # using Clang
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fconcepts")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native -mtune=intel ${CMAKE_ARCH_FLAGS}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native -mtune=${TUNE} ${CMAKE_ARCH_FLAGS}")
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
     message(STATUS "Using intel compiler")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DC4_CPP=20 -DC4_CPP20")

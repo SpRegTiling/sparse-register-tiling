@@ -3,11 +3,13 @@ set(SPMM_METHODS_INCLUDE_DIRS "${CMAKE_CURRENT_LIST_DIR}")
 set(SPMM_METHODS_CXX_FLAGS "")
 set(SPMM_METHODS_LIBRARIES "")
 
-set(SPMM_ASpT       ON)
 set(SPMM_MKL        ON)
+set(SPMM_ARMCL      OFF)
 set(SPMM_baselines  ON)
+set(SPMM_ASpT       ON)
 set(SPMM_nano       ON)
 set(SPMM_GECSB      ON)
+
 
 macro(check_spmm_method NAME)
     IF(SPMM_${NAME})
@@ -22,6 +24,7 @@ check_spmm_method(MKL)
 check_spmm_method(baselines)
 check_spmm_method(GECSB)
 check_spmm_method(nano)
+check_spmm_method(ARMCL)
 
 message(STATUS "SPMM_METHODS_SOURCES: ${SPMM_METHODS_SOURCES}")
 message(STATUS "SPMM_METHODS_INCLUDE_DIRS: ${SPMM_METHODS_INCLUDE_DIRS}")

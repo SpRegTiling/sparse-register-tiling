@@ -42,8 +42,8 @@ namespace cpp_testbed {
             for (auto & result : results_) {
 
                 switch(result.storage) {
-                    case PapiEvent::INTEGER: csv_row_insert(csv_row, result.alt_name, result.result.i); break;
-                    case PapiEvent::DOUBLE:  csv_row_insert(csv_row, result.alt_name, result.result.d); break;
+                    case PapiEvent::INTEGER: csv_row_insert(csv_row, result.alt_name, (int) result.result.i); break;
+                    case PapiEvent::DOUBLE:  csv_row_insert(csv_row, result.alt_name, (int) result.result.d); break;
                 }
             }
         }

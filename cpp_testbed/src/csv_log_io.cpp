@@ -95,9 +95,9 @@ void csv_row_insert(csv_row_t &csv_row, const std::string& name, int value) {
   csv_row[name] = std::to_string(value);
 }
 
-void csv_row_insert(csv_row_t &csv_row, const std::string& name, std::ptrdiff_t value) {
-  csv_row[name] = std::to_string(value);
-}
+//void csv_row_insert(csv_row_t &csv_row, const std::string& name, std::ptrdiff_t value) {
+//  csv_row[name] = std::to_string(value);
+//}
 
 void csv_row_insert(csv_row_t &csv_row, const std::string& name, size_t value) {
   csv_row[name] = std::to_string(value);

@@ -22,7 +22,7 @@ public:
     double dist(int row1, int row2) override;
     double panel_dist(int start_row, int end_row) override;
 
-    std::string name() { return "overlap_pct"; }
+    std::string name() override { return "overlap_pct"; }
 };
 
 #endif //DNN_SPMM_BENCH_OVERLAPCOUNTROWDISTANCE_H

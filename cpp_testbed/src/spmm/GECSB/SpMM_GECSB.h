@@ -365,7 +365,7 @@ public:
 
     // This operator overloading enables calling
     // operator function () on objects of increment
-    void operator()() {
+    void operator()() override {
         typename Super::Task& t = this->task;
         if (!packed) pack_csb();
 

@@ -4,22 +4,22 @@
 
 #pragma once
 
-#include "utils/Vec.h"
-#include "utils/algorithmic.h"
-
-#include "../SpMMFunctor.h"
-#include "../MKL/MKL_utils.h"
-#include "COO.h"
-
-#include "sop.h"
-#include "cake_block_dims.h"
-
 #include <math.h>
 #include <memory>
 #include <numeric>
 #include <iostream>
 #include <fstream>
 #include <sstream>
+
+#include "utils/Vec.h"
+#include "utils/algorithmic.h"
+
+#include "SpMMFunctor.h"
+#include "COO.h"
+
+#include "spmm_config.h"
+#include "sop.h"
+#include "cake_block_dims.h"
 
 
 //#define PACK_B

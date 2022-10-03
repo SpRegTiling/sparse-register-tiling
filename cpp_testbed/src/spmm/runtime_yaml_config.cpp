@@ -21,7 +21,7 @@ using namespace cpp_testbed;
 #include "GECSB/runtime_yaml_config.h"
 #endif
 
-#if defined(SPMM_nano_ENABLED) && SPMM_GECSB_ENABLED
+#if defined(SPMM_nano_ENABLED) && SPMM_nano_ENABLED
 #include "nano/runtime_yaml_config.h"
 #endif
 

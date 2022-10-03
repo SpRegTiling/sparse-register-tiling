@@ -39,18 +39,18 @@ tuning:
 
 
 methods:
-  - name: MKL_Dense
-    method_id: mkl_dense
-
-  - name: MKL_Sparse
-    method_id: mkl
-    options:
-      inspector: False
-
-  - name: MKL_Sparse_IE
-    method_id: mkl
-    options:
-      inspector: True
+#  - name: MKL_Dense
+#    method_id: mkl_dense
+#
+#  - name: MKL_Sparse
+#    method_id: mkl
+#    options:
+#      inspector: False
+#
+#  - name: MKL_Sparse_IE
+#    method_id: mkl
+#    options:
+#      inspector: True
 
   - name: NANO_4_CAKE_identity
     method_id: nano

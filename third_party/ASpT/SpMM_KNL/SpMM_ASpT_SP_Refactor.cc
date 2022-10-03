@@ -4,8 +4,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <xmmintrin.h>
-#include "mkl.h"
+//#include <xmmintrin.h>
+//#include "mkl.h"
 #include <time.h>
 #include <omp.h>
 #include <sys/time.h>

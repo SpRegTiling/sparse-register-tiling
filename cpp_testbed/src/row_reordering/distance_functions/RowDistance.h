@@ -16,6 +16,8 @@ protected:
     RowDistance(int rows, int cols): rows(rows), cols(cols) {}
 
 public:
+    virtual ~RowDistance() = default;
+
     virtual std::string name() = 0;
     int num_rows() { return rows; }
 

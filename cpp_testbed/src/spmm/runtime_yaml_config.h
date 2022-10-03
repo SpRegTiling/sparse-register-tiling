@@ -16,7 +16,7 @@
 
 using additional_options_t = std::map<std::string, std::string>;
 
-#define BASELINE_METHOD "mkl_dense"
+#define BASELINE_METHOD "aspt"
 
 // Method mapping
 template<typename S> using method_factory_t = std::function<SpMMFunctor<S>* (additional_options_t options, SpMMTask<S>&)>;

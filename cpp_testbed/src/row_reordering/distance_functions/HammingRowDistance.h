@@ -20,7 +20,7 @@ class HammingRowDistance: public RowDistance {
 public:
     HammingRowDistance(SparsityPattern &pattern);
     double dist(int row1, int row2) override;
-    std::string name() { return "hamming"; }
+    std::string name() override { return "hamming"; }
 };
 
 

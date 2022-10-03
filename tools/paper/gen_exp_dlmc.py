@@ -1,5 +1,3 @@
-from spmm_benchmarks.loaders.dlmc import DLMCPathIterator
-
 from tools.paper.configs import nano, csb
 from tools.paper.clusters import gen_cluster_scripts
 
@@ -10,6 +8,22 @@ import yaml
 sub_dir = 'dlmc'
 run_all_script_name = 'all_dlmc'
 
+#
+# from spmm_benchmarks.loaders.dlmc import DLMCPathIterator
+#
+# with open(SCRIPT_DIR + "/../filelists/all_dlmc_part1.txt", 'w+') as f:
+#     for path in list(DLMCPathIterator())[:1300]:
+#         f.write("dlmc" + path.split("dlmc")[-1] + "\n")
+#
+# with open(SCRIPT_DIR + "/../filelists/all_dlmc_part2.txt", 'w+') as f:
+#     for path in list(DLMCPathIterator())[1300:2600]:
+#         f.write("dlmc" + path.split("dlmc")[-1] + "\n")
+#
+# with open(SCRIPT_DIR + "/../filelists/all_dlmc_part3.txt", 'w+') as f:
+#     for path in list(DLMCPathIterator())[2600:]:
+#         f.write("dlmc" + path.split("dlmc")[-1] + "\n")
+
+
 
 def flatten(coll):
     for i in coll:
@@ -18,19 +32,6 @@ def flatten(coll):
                 yield subc
         else:
             yield i
-
-
-with open(SCRIPT_DIR + "/../filelists/all_dlmc_part1.txt", 'w+') as f:
-    for path in list(DLMCPathIterator())[:1300]:
-        f.write("dlmc" + path.split("dlmc")[-1] + "\n")
-
-with open(SCRIPT_DIR + "/../filelists/all_dlmc_part2.txt", 'w+') as f:
-    for path in list(DLMCPathIterator())[1300:2600]:
-        f.write("dlmc" + path.split("dlmc")[-1] + "\n")
-
-with open(SCRIPT_DIR + "/../filelists/all_dlmc_part3.txt", 'w+') as f:
-    for path in list(DLMCPathIterator())[2600:]:
-        f.write("dlmc" + path.split("dlmc")[-1] + "\n")
 
 
 def gen_dlmc_bench_exp(arch, test_methods, filelist, b_cols, num_threads, suffix = ""):
@@ -70,26 +71,35 @@ def gen_dlmc_bench_exp(arch, test_methods, filelist, b_cols, num_threads, suffix
         }
     ]
 
-    baseline_methods = [
-        {
-            "name": "MKL_Dense",
-            "method_id": "mkl_dense"
-        },
-        {
-            "name": "MKL_Sparse",
-            "method_id": "mkl",
-            "options": {
-                "inspector": False
+    if "AVX" in arch:
+        baseline_methods = [
+            {
+                "name": "MKL_Dense",
+                "method_id": "mkl_dense"
+            },
+            {
+                "name": "MKL_Sparse",
+                "method_id": "mkl",
+                "options": {
+                    "inspector": False
+                }
+            },
+            {
+                "name": "MKL_Sparse_IE",
+                "method_id": "mkl",
+                "options": {
+                    "inspector": True
+                }
             }
-        },
-        {
-            "name": "MKL_Sparse_IE",
-            "method_id": "mkl",
-            "options": {
-                "inspector": True
-            }
-        }
-    ]
+        ]
+    elif "NEON" in arch:
+        baseline_methods = [
+
+        ]
+    else:
+        assert False, "Unknown architecture"
+
+    print("arch", baseline_methods)
 
     experiment_file = f'{filelist_name}_{arch}{suffix}.yaml'
     dir = f'/experiments/generated/dlmc/{arch}/'
@@ -109,9 +119,16 @@ def gen_dlmc_bench_exp(arch, test_methods, filelist, b_cols, num_threads, suffix
 
 
 # All-DLMC Experiments
-for arch in ["AVX2", "AVX512"]:
-    for max_thread_count in [8, 32, 64]:
+for arch in ["AVX2", "AVX512", "NEON"]:
+    max_threads_by_arch ={
+        "AVX2": [32, 64],
+        "AVX512": [32],
+        "NEON": [4]
+    }
+
+    for max_thread_count in max_threads_by_arch[arch]:
         n_threads = {
+            4: [1, 4],
             8: [1, 8],
             32: [1, 16, 32],
             64: [1, 16, 32, 64],
@@ -127,18 +144,18 @@ for arch in ["AVX2", "AVX512"]:
             },
 
             nano(arch, 4, "identity"),
-            nano(arch, 4, "identity", load_balance=True),
-            nano(arch, 4, "identity", load_balance=True, tlb_comp=64),
-            nano(arch, 4, "identity", load_balance=True, sparse_a=True),
-            nano(arch, 4, "identity", load_balance=True, sparse_a=True, tlb_comp=48),
-            nano(arch, 4, "identity", load_balance=True, sparse_a=True, tlb_comp=64),
-            nano(arch, 4, "identity", load_balance=True, sparse_a=True, tlb_comp=128),
-            nano(arch, 4, "identity", load_balance=True, sparse_a=True, tlb_comp=64, beta=1.5),
-            nano(arch, 4, "identity", load_balance=True, sparse_a=True, tlb_comp=64, beta=2.0),
-            nano(arch, 4, "identity", load_balance=True, sparse_a=True, tlb_comp=128, beta=2.0),
-            nano(arch, 4, "identity", load_balance=True, sparse_a=True, tlb_comp=64, beta=3.0),
-            nano(arch, 4, "orig", load_balance=True),
-            nano(arch, 4, "orig", load_balance=True, sparse_a=True, tlb_comp=64),
+            nano(arch, 4, "identity", load_balance=True, tlb_comp=32),
+            # nano(arch, 4, "identity", load_balance=True, tlb_comp=64),
+            # nano(arch, 4, "identity", load_balance=True, sparse_a=True),
+            # nano(arch, 4, "identity", load_balance=True, sparse_a=True, tlb_comp=48),
+            # nano(arch, 4, "identity", load_balance=True, sparse_a=True, tlb_comp=64),
+            # nano(arch, 4, "identity", load_balance=True, sparse_a=True, tlb_comp=128),
+            # nano(arch, 4, "identity", load_balance=True, sparse_a=True, tlb_comp=64, beta=1.5),
+            # nano(arch, 4, "identity", load_balance=True, sparse_a=True, tlb_comp=64, beta=2.0),
+            # nano(arch, 4, "identity", load_balance=True, sparse_a=True, tlb_comp=128, beta=2.0),
+            # nano(arch, 4, "identity", load_balance=True, sparse_a=True, tlb_comp=64, beta=3.0),
+            # nano(arch, 4, "orig", load_balance=True),
+            # nano(arch, 4, "orig", load_balance=True, sparse_a=True, tlb_comp=64),
         ]
 
         test_methods_nano8 = [
