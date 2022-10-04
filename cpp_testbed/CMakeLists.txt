@@ -6,17 +6,22 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native -fopenmp -std=c++2a -ffast-math")
 
-##
-# Intel
-##
-set(TUNE intel)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mprefer-vector-width=512")
 
-##
-# ARM
-##
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__ARM_ARCH_8__ -mfpu=neon-fp-armv8")
-#set(TUNE cortex-a72)
+if (${RASPBERRY_PI})
+    ##
+    # ARM
+    ##
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__ARM_ARCH_8__ -mfpu=neon-fp-armv8")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DRASPBERRY_PI=4")
+    set(TUNE cortex-a72)
+else()
+    ##
+    # Intel
+    ##
+    set(TUNE intel)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mprefer-vector-width=512")
+endif()
+
 
 ## GCC
 if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")

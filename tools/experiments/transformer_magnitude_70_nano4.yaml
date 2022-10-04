@@ -36,27 +36,25 @@ tuning:
       n_tile: [ 32, 64, 128 ]
       use_cake_tiling: [ 0 ]
 
-
-
 methods:
-#  - name: MKL_Dense
-#    method_id: mkl_dense
-#
-#  - name: MKL_Sparse
-#    method_id: mkl
-#    options:
-#      inspector: False
-#
-#  - name: MKL_Sparse_IE
-#    method_id: mkl
-#    options:
-#      inspector: True
+  - name: MKL_Dense
+    method_id: mkl_dense
+
+  - name: MKL_Sparse
+    method_id: mkl
+    options:
+      inspector: False
+
+  - name: MKL_Sparse_IE
+    method_id: mkl
+    options:
+      inspector: True
 
   - name: NANO_4_CAKE_identity
     method_id: nano
     options:
       packed: False
-      vec_width: 512
+      vec_width_bits: 512
       mapping_id: 61fee
     config:
       tiling_strategy: 2
@@ -66,7 +64,7 @@ methods:
     options:
       packed: False
       load_balance: True
-      vec_width: 512
+      vec_width_bits: 512
       mapping_id: 61fee
     config:
       tiling_strategy: 2
@@ -75,7 +73,7 @@ methods:
     method_id: nano
     options:
       packed: False
-      vec_width: 512
+      vec_width_bits: 512
       mapping_id: da01e
     config:
       tiling_strategy: 2
@@ -94,7 +92,7 @@ methods:
     options:
       packed: False
       load_balance: True
-      vec_width: 512
+      vec_width_bits: 512
       mapping_id: 747f9
     config:
       tiling_strategy: 2
@@ -103,7 +101,7 @@ methods:
     method_id: nano
     options:
       packed: False
-      vec_width: 512
+      vec_width_bits: 512
       mapping_id: 400fa
     config:
       tiling_strategy: 2
@@ -122,7 +120,7 @@ methods:
     method_id: nano
     options:
       packed: False
-      vec_width: 512
+      vec_width_bits: 512
       mapping_id: b792a
     tune:
       grid: MKN_Grid_SOP4
@@ -132,7 +130,7 @@ methods:
     options:
       packed: False
       load_balance: True
-      vec_width: 512
+      vec_width_bits: 512
       mapping_id: b792a
     tune:
       grid: MKN_Grid_SOP4
@@ -141,7 +139,7 @@ methods:
     method_id: nano
     options:
       packed: False
-      vec_width: 512
+      vec_width_bits: 512
       mapping_id: da01e
     tune:
       grid: MKN_Grid_SOP4
@@ -150,7 +148,7 @@ methods:
     method_id: nano
     options:
       packed: False
-      vec_width: 512
+      vec_width_bits: 512
       mapping_id: 747f9
     tune:
       grid: MKN_Grid_SOP8
@@ -160,7 +158,7 @@ methods:
     options:
       packed: False
       load_balance: True
-      vec_width: 512
+      vec_width_bits: 512
       mapping_id: 747f9
     tune:
       grid: MKN_Grid_SOP8
@@ -169,7 +167,7 @@ methods:
     method_id: nano
     options:
       packed: False
-      vec_width: 512
+      vec_width_bits: 512
       mapping_id: 400fa
     tune:
       grid: MKN_Grid_SOP8

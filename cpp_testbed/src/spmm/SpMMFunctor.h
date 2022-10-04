@@ -52,8 +52,12 @@ public:
 
     constexpr static int TUNING_ITERATIONS = 3;
     int tuning_runs_per_iteration() {
-      int runs_per_iteration = std::max((int) std::ceil(15e7 / (task.A->nz * task.bCols)), 1);
-      runs_per_iteration *= std::max(1, task.nThreads);
+#ifdef RASPBERRY_PI
+        int runs_per_iteration = 1;
+#else
+        int runs_per_iteration = std::max((int) std::ceil(2e8 / (spmm_task.A->nz * spmm_task.bCols)), 1);
+        runs_per_iteration *= std::max(1, spmm_task.nThreads);
+#endif
       return runs_per_iteration;
     }
 

@@ -406,9 +406,12 @@ class SpMMExperiment {
             for (const int nThreads : nThreadsToTest) {
                 spmm_task.nThreads = nThreads;
 
+#ifdef RASPBERRY_PI
+                int runs_per_iteration = 1;
+#else
                 int runs_per_iteration = std::max((int) std::ceil(2e8 / (spmm_task.A->nz * spmm_task.bCols)), 1);
                 runs_per_iteration *= std::max(1, spmm_task.nThreads);
-                //int runs_per_iteration = 1;
+#endif
 
                 std::cout << "Begin Testing, nThreads: " << nThreads << " BCols: " << bCols;
                 std::cout << " Runs per iter: " << runs_per_iteration << " nnz_per_bcol " <<  runs_per_iteration << std::endl;

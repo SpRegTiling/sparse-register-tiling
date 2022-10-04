@@ -1,0 +1,180 @@
+options:
+  profile: False
+  scalar_type: float
+  n_threads: [ 1 ]
+  b_cols: [32, 128, 512] # -1 means use from filelist
+  output_file: transformer_magnitude_70_results.csv
+  save_tuning_results: False
+  expand_config_parameters: [ m_tile, k_tile, n_tile, density_threshold, agg, pct_nnz ]
+
+matrices:
+  filelist: ../../tools/filelists/transformer_magnitude_80.txt
+
+tuning:
+  parameter_grids:
+    - name: MKN_Grid_SOP4
+      m_tile: [ 4, 8, 32, 64 ]
+      k_tile: [ 512, 256, 128, 64 ]
+      n_tile: [ 64, 128, 256 ]
+      tiling_strategy: [ 0 ]
+
+    - name: MKN_Grid_SOP8
+      m_tile: [ 8, 32, 64 ]
+      k_tile: [ 512, 256, 128, 64 ]
+      n_tile: [ 32, 64, 128 ]
+      tiling_strategy: [ 0 ]
+
+    - name: MKN_Grid_SOP4_OLD
+      m_tile: [ 4, 8, 32, 64 ]
+      k_tile: [ 512, 256, 128, 64 ]
+      n_tile: [ 64, 128, 256 ]
+      use_cake_tiling: [ 0 ]
+
+    - name: MKN_Grid_SOP8_OLD
+      m_tile: [ 8, 32, 64 ]
+      k_tile: [ 512, 256, 128, 64 ]
+      n_tile: [ 32, 64, 128 ]
+      use_cake_tiling: [ 0 ]
+
+methods:
+  - name: XNN
+    method_id: xnn
+
+  - name: NANO_4_C1_identity
+    method_id: nano
+    options:
+      arch: NEON
+      vec_width_bits: 128
+      packed: False
+      mapping_id: 61fee
+    config:
+      n_tile: 32
+      k_tile: 256
+      m_tile: 8
+      tiling_strategy: 0
+
+  - name: NANO_4_C1_identity_nr_3
+    method_id: nano
+    options:
+      arch: NEON
+      vec_width_bits: 128
+      packed: False
+      mapping_id: 61fee
+      nr: 3
+    config:
+      n_tile: 36
+      k_tile: 256
+      m_tile: 4
+      tiling_strategy: 0
+
+  - name: NANO_4_C1_identity_512
+    method_id: nano
+    options:
+      arch: NEON
+      vec_width_bits: 128
+      packed: False
+      mapping_id: 61fee
+    config:
+      n_tile: 64
+      k_tile: 512
+      m_tile: 4
+      tiling_strategy: 0
+
+  - name: NANO_4_C1_orig
+    method_id: nano
+    options:
+      arch: NEON
+      vec_width_bits: 128
+      packed: False
+      mapping_id: da01e
+    config:
+      n_tile: 32
+      k_tile: 256
+      m_tile: 4
+      tiling_strategy: 0
+
+  - name: NANO_8_C1_orig
+    method_id: nano
+    options:
+      arch: NEON
+      vec_width_bits: 128
+      packed: False
+      mapping_id: 400fa
+      nr: 2
+    config:
+      n_tile: 32
+      k_tile: 512
+      m_tile: 8
+      tiling_strategy: 0
+
+  - name: NANO_8_C1_alt
+    method_id: nano
+    options:
+      arch: NEON
+      vec_width_bits: 128
+      packed: False
+      mapping_id: 747f9
+      nr: 2
+    config:
+      n_tile: 32
+      k_tile: 512
+      m_tile: 8
+      tiling_strategy: 0
+
+#
+#  - name: NANO_4_CAKE_identity
+#    method_id: nano
+#    options:
+#      arch: NEON
+#      vec_width_bits: 128
+#      packed: False
+#      mapping_id: 61fee
+#    config:
+#      n_tile: 32
+#      k_tile: 256
+#      m_tile: 4
+#      tiling_strategy: 0
+#
+#  - name: NANO_4_CAKE_identity
+#    method_id: nano
+#    options:
+#      arch: NEON
+#      vec_width_bits: 128
+#      packed: False
+#      mapping_id: 61fee
+#    config:
+#      n_tile: 32
+#      k_tile: 256
+#      m_tile: 8
+#      tiling_strategy: 0
+#
+#  - name: NANO_4_CAKE_identity
+#    method_id: nano
+#    options:
+#      arch: NEON
+#      vec_width_bits: 128
+#      packed: False
+#      mapping_id: 61fee
+#    config:
+#      tiling_strategy: 2
+#
+#  - name: NANO_4_CAKE_LB_identity
+#    method_id: nano
+#    options:
+#      arch: NEON
+#      vec_width_bits: 128
+#      packed: False
+#      load_balance: True
+#      mapping_id: 61fee
+#    config:
+#      tiling_strategy: 2
+#
+#  - name: NANO_4_CAKE_orig
+#    method_id: nano
+#    options:
+#      arch: NEON
+#      vec_width_bits: 128
+#      packed: False
+#      mapping_id: da01e
+#    config:
+#      tiling_strategy: 2
