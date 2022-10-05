@@ -2,6 +2,7 @@
 // Created by lwilkinson on 6/5/22.
 //
 #include "runtime_yaml_config.h"
+#include "c4/std/std.hpp"
 
 using namespace cpp_testbed;
 
