@@ -11,6 +11,8 @@
 #include <stddef.h>
 #include <arm_neon.h>
 
+#include "SpMM_XNN.h"
+
 //
 // From: https://github.com/google/XNNPACK/blob/295ea1aaf511ee594f3500da8465d20ea024fec1/src/xnnpack/common.h
 //      Removed minmax for fairness
@@ -45,6 +47,8 @@ void xnn_f32_spmm_minmax_ukernel_16x1__neon(
     assert(mc % sizeof(float) == 0);
     assert(nc != 0);
 
+    size_t m = mc / sizeof(float);
+
     size_t output_decrement = output_stride * nc - 16 * sizeof(float);
     while XNN_LIKELY(mc >= 16 * sizeof(float)) {
         const float*restrict w = weights;
@@ -57,14 +61,18 @@ void xnn_f32_spmm_minmax_ukernel_16x1__neon(
             float32x4_t vacc4567 = vacc0123;
             float32x4_t vacc89AB = vacc0123;
             float32x4_t vaccCDEF = vacc0123;
-            if XNN_LIKELY(nnz != 0) {
+            if (nnz != 0) {
                 do {
                     const intptr_t diff = *dmap++;
                     const float32x4_t vi0123 = vld1q_f32(input);
                     const float32x4_t vi4567 = vld1q_f32(input + 4);
                     const float32x4_t vi89AB = vld1q_f32(input + 8);
                     const float32x4_t viCDEF = vld1q_f32(input + 12);
+#ifdef PRESCALE_DIFF
                     input = (const float*restrict) ((uintptr_t) input + (uintptr_t) diff);
+#else
+                    input = (const float*restrict) ((uintptr_t) input + (uintptr_t) diff * (uintptr_t) m);
+#endif
                     //__builtin_prefetch(input + 16);
                     const float32x4_t vw = vld1q_dup_f32(w); w += 1;
                     //__builtin_prefetch(w + 32);
@@ -108,7 +116,11 @@ void xnn_f32_spmm_minmax_ukernel_16x1__neon(
                         const intptr_t diff = *dmap++;
                         const float32x4_t vi0123 = vld1q_f32(input);
                         const float32x4_t vi4567 = vld1q_f32(input + 4);
+#ifdef PRESCALE_DIFF
                         input = (const float*restrict) ((uintptr_t) input + (uintptr_t) diff);
+#else
+                        input = (const float*restrict) ((uintptr_t) input + (uintptr_t) diff * (uintptr_t) m);
+#endif
                         const float32x4_t vw = vld1q_dup_f32(w); w += 1;
                         vacc0123 = vmlaq_f32(vacc0123, vi0123, vw);
                         vacc4567 = vmlaq_f32(vacc4567, vi4567, vw);
@@ -138,7 +150,11 @@ void xnn_f32_spmm_minmax_ukernel_16x1__neon(
                     do {
                         const intptr_t diff = *dmap++;
                         const float32x4_t vi0123 = vld1q_f32(input);
+#ifdef PRESCALE_DIFF
                         input = (const float*restrict) ((uintptr_t) input + (uintptr_t) diff);
+#else
+                        input = (const float*restrict) ((uintptr_t) input + (uintptr_t) diff * (uintptr_t) m);
+#endif
                         const float32x4_t vw = vld1q_dup_f32(w); w += 1;
                         vacc0123 = vmlaq_f32(vacc0123, vi0123, vw);
                     } while (--nnz != 0);
@@ -164,7 +180,11 @@ void xnn_f32_spmm_minmax_ukernel_16x1__neon(
                     do {
                         const intptr_t diff = *dmap++;
                         const float32x2_t vi01 = vld1_f32(input);
+#ifdef PRESCALE_DIFF
                         input = (const float*restrict) ((uintptr_t) input + (uintptr_t) diff);
+#else
+                        input = (const float*restrict) ((uintptr_t) input + (uintptr_t) diff * (uintptr_t) m);
+#endif
                         const float32x2_t vw = vld1_dup_f32(w); w += 1;
                         vacc01 = vmla_f32(vacc01, vi01, vw);
                     } while (--nnz != 0);
@@ -190,7 +210,11 @@ void xnn_f32_spmm_minmax_ukernel_16x1__neon(
                     do {
                         const intptr_t diff = *dmap++;
                         const float32x2_t vi0 = vld1_dup_f32(input);
+#ifdef PRESCALE_DIFF
                         input = (const float*restrict) ((uintptr_t) input + (uintptr_t) diff);
+#else
+                        input = (const float*restrict) ((uintptr_t) input + (uintptr_t) diff * (uintptr_t) m);
+#endif
                         const float32x2_t vw = vld1_dup_f32(w); w += 1;
                         vacc0 = vmla_f32(vacc0, vi0, vw);
                     } while (--nnz != 0);

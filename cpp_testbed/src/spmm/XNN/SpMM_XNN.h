@@ -23,6 +23,7 @@ struct XNNConfig: ConfigBase {
 
 
 //#define MIN_MAX
+//#define PRESCALE_DIFF
 
 void xnn_f32_spmm_minmax_ukernel_16x1__neon(
         size_t mc,
@@ -101,7 +102,11 @@ public:
 
         col_diffs = this->col_diffs;
         for (int i = 0; i <= t.A->nz; i++) {
+#ifdef PRESCALE_DIFF
             *col_increment++ = (*col_diffs++) * t.n();
+#else
+            *col_increment++ = (*col_diffs++);
+#endif
         }
     }
 

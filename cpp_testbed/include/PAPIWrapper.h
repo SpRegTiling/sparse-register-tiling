@@ -6,6 +6,7 @@
 #define FUSION_PAPIWRAPPER_H
 
 #include <papi.h>
+#include <iomanip>
 #include <utility>
 #include <vector>
 
@@ -45,20 +46,25 @@ namespace cpp_testbed {
             ERROR_RETURN(retval);
         }
 
+        //std::cout << name << " " << event_code << std::endl;
         return event_code;
     }
 
-    void populate_papi_event(struct PapiEvent& event, std::string name, std::string alt_name = "") {
+    void populate_papi_event(std::vector<PapiEvent>& events, std::string name, std::string alt_name = "") {
+        PapiEvent event;
         event.event_name = name;
         event.alt_name = alt_name.empty() ? name : alt_name;
         event.event_code = event_name_to_code(name);
+        events.push_back(event);
     }
 
-    void populate_papi_event(struct PapiEvent& event, int event_code, std::string alt_name = "") {
+    void populate_papi_event(std::vector<PapiEvent>& events, int event_code, std::string alt_name = "") {
+        PapiEvent event;
         std::string name = convert_code_to_string(event_code);
         event.event_name = name;
         event.alt_name = alt_name.empty() ? name : alt_name;
         event.event_code = event_code;
+        events.push_back(event);
     }
 
     uint64_t get_value_based_on_alt_name(std::vector<struct PapiEvent>& events, std::string alt_name) {
@@ -75,6 +81,119 @@ namespace cpp_testbed {
     }
 
 
+#ifdef RASPBERRY_PI
+    // Based off of: https://github.com/avr-aics-riken/PMlib/blob/master/src/PerfCpuType.cpp
+    std::vector<
+        std::pair<
+                std::function<std::vector<struct PapiEvent>(void)>,
+                std::function<std::vector<struct PapiEvent>(std::vector<struct PapiEvent>)
+            >
+        >
+    > EVENT_CAPTURE_SETS = {
+        {   // Calculate Data cache
+            []() {
+                std::vector<struct PapiEvent> events;
+                populate_papi_event(events, "L1D_READ_ACCESS",    "LOADS");
+                populate_papi_event(events, "L1D_WRITE_ACCESS",   "STORES");
+                populate_papi_event(events, "L1D_CACHE_ACCESS",   "L1_ACCESS_TOTAL");
+                populate_papi_event(events, "L1D_CACHE_REFILL",   "L1_MISS_TOTAL");
+                return events;
+            },
+            [](std::vector<struct PapiEvent> events) {
+
+                int64_t ACCESSES = get_value_based_on_alt_name(events, "L1_ACCESS_TOTAL");
+                int64_t MISSES   = get_value_based_on_alt_name(events, "L1_MISS_TOTAL");
+                int64_t STORES   = get_value_based_on_alt_name(events, "STORES");
+                int64_t LOADS   = get_value_based_on_alt_name(events, "LOADS");
+
+                double L1_HIT_RATE = (double) (ACCESSES - MISSES) / (double) ACCESSES;
+                std::cout << "L1HIT: " << std::setprecision(2) << L1_HIT_RATE
+                          << " AC: " << ACCESSES
+                          << " ST: " << STORES
+                          << " LD: " << LOADS
+                          << " ";
+                events.push_back({-1, "L1_RATIO", "L1_RATIO", {.d = L1_HIT_RATE}, PapiEvent::DOUBLE});
+
+                return events;
+            }
+        },
+        {   // Calculate Instruction cache + some bonus data cache metrics
+            []() {
+                std::vector<struct PapiEvent> events;
+                populate_papi_event(events, "L1D_READ_REFILL",    "L1_READ_MISS");
+                populate_papi_event(events, "L1D_WRITE_REFILL",   "L1_STORE_MISS");
+                populate_papi_event(events, "L1I_CACHE_ACCESS",   "L1I_ACCESS_TOTAL");
+                populate_papi_event(events, "L1I_CACHE_REFILL",   "L1I_MISS_TOTAL");
+                return events;
+            },
+            [](std::vector<struct PapiEvent> events) {
+
+                int64_t ACCESSES = get_value_based_on_alt_name(events, "L1I_ACCESS_TOTAL");
+                int64_t MISSES   = get_value_based_on_alt_name(events, "L1I_MISS_TOTAL");
+
+                double L1_MISS_RATE = (double) (ACCESSES - MISSES) / (double) ACCESSES;
+                events.push_back({-1, "L1I_RATIO", "L1I_RATIO", {.d = L1_MISS_RATE}, PapiEvent::DOUBLE});
+
+                return events;
+            }
+        },
+        {   // Calculate TLB
+            []() {
+                std::vector<struct PapiEvent> events;
+                populate_papi_event(events, "L1D_TLB_REFILL", "L1_TLB");
+                populate_papi_event(events, "L1I_TLB_REFILL", "L1I_TLB");
+                return events;
+            },
+            [](std::vector<struct PapiEvent> events) { return events; }
+        },
+
+        {   // Calculate Flops Metrics
+            []() {
+                std::vector<struct PapiEvent> events;
+                populate_papi_event(events, "BRANCH_PRED",      "BRANCH_PRED");
+                populate_papi_event(events, "BRANCH_MISPRED",   "BRANCH_MISPRED");
+                populate_papi_event(events, "INST_RETIRED",     "INST_RETIRED");
+                return events;
+            },
+            [](std::vector<struct PapiEvent> events) { return events; }
+        },
+
+        {   // Calculate Flops Metrics
+            []() {
+                std::vector<struct PapiEvent> events;
+                populate_papi_event(events, "UNALIGNED_ACCESS",      "UNALIGNED_ACCESS");
+                populate_papi_event(events, "DATA_MEM_ACCESS",       "DATA_MEM_ACCESS");
+                populate_papi_event(events, "DATA_MEM_READ_ACCESS",  "DATA_MEM_READ_ACCESS");
+                populate_papi_event(events, "DATA_MEM_WRITE_ACCESS", "DATA_MEM_WRITE_ACCESS");
+                return events;
+            },
+            [](std::vector<struct PapiEvent> events) { return events; }
+        },
+
+        {   // Calculate Flops Metrics
+            []() {
+                std::vector<struct PapiEvent> events;
+                populate_papi_event(events, "BUS_NORMAL_ACCESS",     "BUS_NORMAL_ACCESS");
+                populate_papi_event(events, "BUS_READ_ACCESS",       "BUS_READ_ACCESS");
+                populate_papi_event(events, "BUS_WRITE_ACCESS",      "BUS_WRITE_ACCESS");
+                return events;
+            },
+            [](std::vector<struct PapiEvent> events) { return events; }
+        },
+
+        {   // Calculate Flops Metrics
+            []() {
+                std::vector<struct PapiEvent> events;
+                populate_papi_event(events, "INST_SPEC_EXEC_LOAD",   "INST_SPEC_EXEC_LOAD");
+                populate_papi_event(events, "INST_SPEC_EXEC_STORE",  "INST_SPEC_EXEC_STORE");
+                populate_papi_event(events, "INST_SPEC_EXEC_SIMD",   "INST_SPEC_EXEC_SIMD");
+                populate_papi_event(events, "INST_SPEC_EXEC_VFP",    "INST_SPEC_EXEC_VFP");
+                return events;
+            },
+            [](std::vector<struct PapiEvent> events) { return events; }
+        }
+    };
+#else
     // Based off of: https://github.com/avr-aics-riken/PMlib/blob/master/src/PerfCpuType.cpp
     std::vector<
         std::pair<
@@ -85,13 +204,13 @@ namespace cpp_testbed {
     > EVENT_CAPTURE_SETS = {
         {   // Calculate Flops Metrics
             []() {
-                std::vector<struct PapiEvent> events(4);
+                std::vector<struct PapiEvent> events;
                 int idx = 0;
 
-                populate_papi_event(events[idx++], "MEM_UOPS_RETIRED:ALL_LOADS",    "UOPS_LOADS");
-                populate_papi_event(events[idx++], "MEM_UOPS_RETIRED:ALL_STORES",   "UOPS_STORES");
-                populate_papi_event(events[idx++], "MEM_UOPS_RETIRED:SPLIT_LOADS",  "UOPS_SPLIT_LOADS");
-                populate_papi_event(events[idx++], "MEM_UOPS_RETIRED:SPLIT_STORES", "UOPS_SPLIT_STORES");
+                populate_papi_event(events, "MEM_UOPS_RETIRED:ALL_LOADS",    "UOPS_LOADS");
+                populate_papi_event(events, "MEM_UOPS_RETIRED:ALL_STORES",   "UOPS_STORES");
+                populate_papi_event(events, "MEM_UOPS_RETIRED:SPLIT_LOADS",  "UOPS_SPLIT_LOADS");
+                populate_papi_event(events, "MEM_UOPS_RETIRED:SPLIT_STORES", "UOPS_SPLIT_STORES");
 
                 return events;
             },
@@ -99,13 +218,13 @@ namespace cpp_testbed {
         },
         {   // Calculate Flops Metrics
             []() {
-                std::vector<struct PapiEvent> events(4);
+                std::vector<struct PapiEvent> events;
                 int idx = 0;
 
-                populate_papi_event(events[idx++], "UOPS_DISPATCHED:PORT_0", "PORT_0");
-                populate_papi_event(events[idx++], "UOPS_DISPATCHED:PORT_1", "PORT_1");
-                populate_papi_event(events[idx++], "UOPS_DISPATCHED:PORT_5", "PORT_5");
-                populate_papi_event(events[idx++], "UNHALTED_CORE_CYCLES", "CYCLES_1");
+                populate_papi_event(events, "UOPS_DISPATCHED:PORT_0", "PORT_0");
+                populate_papi_event(events, "UOPS_DISPATCHED:PORT_1", "PORT_1");
+                populate_papi_event(events, "UOPS_DISPATCHED:PORT_5", "PORT_5");
+                populate_papi_event(events, "UNHALTED_CORE_CYCLES", "CYCLES_1");
 
                 return events;
             },
@@ -113,13 +232,13 @@ namespace cpp_testbed {
         },
         {   // Calculate Flops Metrics
             []() {
-                std::vector<struct PapiEvent> events(4);
+                std::vector<struct PapiEvent> events;
                 int idx = 0;
 
-                populate_papi_event(events[idx++], "UOPS_DISPATCHED:PORT_2", "PORT_2");
-                populate_papi_event(events[idx++], "UOPS_DISPATCHED:PORT_3", "PORT_3");
-                populate_papi_event(events[idx++], "UOPS_DISPATCHED:PORT_4", "PORT_4");
-                populate_papi_event(events[idx++], "UNHALTED_CORE_CYCLES", "CYCLES_2");
+                populate_papi_event(events, "UOPS_DISPATCHED:PORT_2", "PORT_2");
+                populate_papi_event(events, "UOPS_DISPATCHED:PORT_3", "PORT_3");
+                populate_papi_event(events, "UOPS_DISPATCHED:PORT_4", "PORT_4");
+                populate_papi_event(events, "UNHALTED_CORE_CYCLES", "CYCLES_2");
 
                 return events;
             },
@@ -127,13 +246,13 @@ namespace cpp_testbed {
         },
         {   // Calculate Flops Metrics
             []() {
-                std::vector<struct PapiEvent> events(4);
+                std::vector<struct PapiEvent> events;
                 int idx = 0;
 
-                populate_papi_event(events[idx++], "UOPS_DISPATCHED:PORT_6",   "PORT_6");
-                populate_papi_event(events[idx++], "UOPS_DISPATCHED:PORT_7",   "PORT_7");
-                populate_papi_event(events[idx++], "UOPS_ISSUED:SLOW_LEA",     "SLOW_LEA");
-                populate_papi_event(events[idx++], "UNHALTED_CORE_CYCLES",     "CYCLES_3");
+                populate_papi_event(events, "UOPS_DISPATCHED:PORT_6",   "PORT_6");
+                populate_papi_event(events, "UOPS_DISPATCHED:PORT_7",   "PORT_7");
+                populate_papi_event(events, "UOPS_ISSUED:SLOW_LEA",     "SLOW_LEA");
+                populate_papi_event(events, "UNHALTED_CORE_CYCLES",     "CYCLES_3");
 
                 return events;
             },
@@ -141,13 +260,13 @@ namespace cpp_testbed {
         },
         {   // Calculate Flops Metrics
             []() {
-                std::vector<struct PapiEvent> events(4);
+                std::vector<struct PapiEvent> events;
                 int idx = 0;
 
-                populate_papi_event(events[idx++], PAPI_TOT_CYC, "TOT_CYC");
-                populate_papi_event(events[idx++], PAPI_TOT_INS, "TOT_INS");
-                populate_papi_event(events[idx++], PAPI_LD_INS, "LOAD_INS");
-                populate_papi_event(events[idx++], PAPI_SR_INS, "STORE_INS");
+                populate_papi_event(events, PAPI_TOT_CYC, "TOT_CYC");
+                populate_papi_event(events, PAPI_TOT_INS, "TOT_INS");
+                populate_papi_event(events, PAPI_LD_INS, "LOAD_INS");
+                populate_papi_event(events, PAPI_SR_INS, "STORE_INS");
 
                 return events;
             },
@@ -155,15 +274,15 @@ namespace cpp_testbed {
         },
         {   // Calculate Flops Metrics
             []() {
-                std::vector<struct PapiEvent> events(5);
+                std::vector<struct PapiEvent> events;
                 int idx = 0;
 
-                populate_papi_event(events[idx++], "FP_ARITH:SCALAR_SINGLE",      "SP_SINGLE");
-                populate_papi_event(events[idx++], "FP_ARITH:128B_PACKED_SINGLE", "SP_SSE");
-                populate_papi_event(events[idx++], "FP_ARITH:256B_PACKED_SINGLE", "SP_AVX");
-                populate_papi_event(events[idx++], "FP_ARITH:512B_PACKED_SINGLE", "SP_AVXW");
+                populate_papi_event(events, "FP_ARITH:SCALAR_SINGLE",      "SP_SINGLE");
+                populate_papi_event(events, "FP_ARITH:128B_PACKED_SINGLE", "SP_SSE");
+                populate_papi_event(events, "FP_ARITH:256B_PACKED_SINGLE", "SP_AVX");
+                populate_papi_event(events, "FP_ARITH:512B_PACKED_SINGLE", "SP_AVXW");
 
-                populate_papi_event(events[idx++], PAPI_SP_OPS, "SP_OPS");
+                populate_papi_event(events, PAPI_SP_OPS, "SP_OPS");
 
                 // TODO: Double support
 
@@ -187,13 +306,13 @@ namespace cpp_testbed {
         },
         {   // Calculate L1/L2 Cache Metrics
             []() {
-                std::vector<struct PapiEvent> events(3);
+                std::vector<struct PapiEvent> events;
                 int idx = 0;
 
-                populate_papi_event(events[idx++], "MEM_LOAD_UOPS_RETIRED:L1_HIT",  "L1_HIT");
-                populate_papi_event(events[idx++], "MEM_LOAD_UOPS_RETIRED:HIT_LFB", "LFB_HIT");
+                populate_papi_event(events, "MEM_LOAD_UOPS_RETIRED:L1_HIT",  "L1_HIT");
+                populate_papi_event(events, "MEM_LOAD_UOPS_RETIRED:HIT_LFB", "LFB_HIT");
 
-                populate_papi_event(events[idx++], PAPI_L1_TCM, "L1_TCM");
+                populate_papi_event(events, PAPI_L1_TCM, "L1_TCM");
 
 
                 return events;
@@ -217,11 +336,11 @@ namespace cpp_testbed {
         },
         {   // Calculate L3 Cache Metrics
             []() {
-                std::vector<struct PapiEvent> events(2);
+                std::vector<struct PapiEvent> events;
                 int idx = 0;
 
-                populate_papi_event(events[idx++], PAPI_L1_TCM, "L1_TCM_2");
-                populate_papi_event(events[idx++], PAPI_L2_TCM, "L2_TCM");
+                populate_papi_event(events, PAPI_L1_TCM, "L1_TCM_2");
+                populate_papi_event(events, PAPI_L2_TCM, "L2_TCM");
 
                 return events;
             },
@@ -240,14 +359,14 @@ namespace cpp_testbed {
         },
         {   // Calculate L3 Cache Metrics
             []() {
-                std::vector<struct PapiEvent> events(4);
+                std::vector<struct PapiEvent> events;
                 int idx = 0;
 
-                populate_papi_event(events[idx++], "OFFCORE_RESPONSE_0:ANY_DATA:L3_HIT",  "L3_HIT");
-                populate_papi_event(events[idx++], "OFFCORE_RESPONSE_0:ANY_DATA:L3_MISS", "L3_MISS");
+                populate_papi_event(events, "OFFCORE_RESPONSE_0:ANY_DATA:L3_HIT",  "L3_HIT");
+                populate_papi_event(events, "OFFCORE_RESPONSE_0:ANY_DATA:L3_MISS", "L3_MISS");
 
-                populate_papi_event(events[idx++], "L2_RQSTS:DEMAND_DATA_RD_HIT", "L2_RD_HIT");
-                populate_papi_event(events[idx++], "L2_RQSTS:PF_HIT",             "L2_PF_HIT");
+                populate_papi_event(events, "L2_RQSTS:DEMAND_DATA_RD_HIT", "L2_RD_HIT");
+                populate_papi_event(events, "L2_RQSTS:PF_HIT",             "L2_PF_HIT");
 
                 return events;
             },
@@ -255,12 +374,12 @@ namespace cpp_testbed {
         },
         {   // Branch Metrics
             []() {
-                std::vector<struct PapiEvent> events(4);
+                std::vector<struct PapiEvent> events;
                 int idx = 0;
-                populate_papi_event(events[idx++], PAPI_BR_UCN, "BR_UCN");
-                populate_papi_event(events[idx++], PAPI_BR_CN,  "BR_CN");
-                populate_papi_event(events[idx++], PAPI_BR_MSP, "BR_MSP");
-                populate_papi_event(events[idx++], PAPI_BR_PRC, "BR_PRC");
+                populate_papi_event(events, PAPI_BR_UCN, "BR_UCN");
+                populate_papi_event(events, PAPI_BR_CN,  "BR_CN");
+                populate_papi_event(events, PAPI_BR_MSP, "BR_MSP");
+                populate_papi_event(events, PAPI_BR_PRC, "BR_PRC");
 
                 return events;
             },
@@ -276,49 +395,50 @@ namespace cpp_testbed {
         },
         {   // Stall Metrics
             []() {
-                std::vector<struct PapiEvent> events(4);
+                std::vector<struct PapiEvent> events;
                 int idx = 0;
-                populate_papi_event(events[idx++], "CYCLE_ACTIVITY:STALLS_TOTAL",    "STALLS_TOTAL");
-                populate_papi_event(events[idx++], "CYCLE_ACTIVITY:CYCLES_L1D_MISS", "CYCLES_L1D_MISS");
-                populate_papi_event(events[idx++], "CYCLE_ACTIVITY:CYCLES_L2_MISS",  "CYCLES_L2_MISS");
-                populate_papi_event(events[idx++], "CYCLE_ACTIVITY:STALLS_L3_MISS",  "STALLS_L3_MISS");
+                populate_papi_event(events, "CYCLE_ACTIVITY:STALLS_TOTAL",    "STALLS_TOTAL");
+                populate_papi_event(events, "CYCLE_ACTIVITY:CYCLES_L1D_MISS", "CYCLES_L1D_MISS");
+                populate_papi_event(events, "CYCLE_ACTIVITY:CYCLES_L2_MISS",  "CYCLES_L2_MISS");
+                populate_papi_event(events, "CYCLE_ACTIVITY:STALLS_L3_MISS",  "STALLS_L3_MISS");
                 return events;
             },
             [](std::vector<struct PapiEvent> events) { return events; }
         },
         {   // Stall Metrics
             []() {
-                std::vector<struct PapiEvent> events(2);
+                std::vector<struct PapiEvent> events;
                 int idx = 0;
-                populate_papi_event(events[idx++], "CYCLE_ACTIVITY:STALLS_TOTAL",    "STALLS_TOTAL");
-                populate_papi_event(events[idx++], "CYCLE_ACTIVITY:CYCLES_MEM_ANY",  "CYCLES_MEM_ANY");
+                populate_papi_event(events, "CYCLE_ACTIVITY:STALLS_TOTAL",    "STALLS_TOTAL");
+                populate_papi_event(events, "CYCLE_ACTIVITY:CYCLES_MEM_ANY",  "CYCLES_MEM_ANY");
                 return events;
             },
             [](std::vector<struct PapiEvent> events) { return events; }
         },
         {   // TLB Metrics
             []() {
-                std::vector<struct PapiEvent> events(4);
+                std::vector<struct PapiEvent> events;
                 int idx = 0;
-                populate_papi_event(events[idx++], "DTLB_LOAD_MISSES:MISS_CAUSES_A_WALK",  "DTLB_LOAD_MISS");
-                populate_papi_event(events[idx++], "DTLB_LOAD_MISSES:WALK_DURATION",       "DTLB_LOAD_WALK_DURATION");
-                populate_papi_event(events[idx++], "DTLB_STORE_MISSES:MISS_CAUSES_A_WALK", "DTLB_STORE_MISS");
-                populate_papi_event(events[idx++], "DTLB_STORE_MISSES:WALK_DURATION",      "DTLB_STORE_WALK_DURATION");
+                populate_papi_event(events, "DTLB_LOAD_MISSES:MISS_CAUSES_A_WALK",  "DTLB_LOAD_MISS");
+                populate_papi_event(events, "DTLB_LOAD_MISSES:WALK_DURATION",       "DTLB_LOAD_WALK_DURATION");
+                populate_papi_event(events, "DTLB_STORE_MISSES:MISS_CAUSES_A_WALK", "DTLB_STORE_MISS");
+                populate_papi_event(events, "DTLB_STORE_MISSES:WALK_DURATION",      "DTLB_STORE_WALK_DURATION");
                 return events;
             },
             [](std::vector<struct PapiEvent> events) { return events; }
         },
         {   // TLB Metrics
             []() {
-                std::vector<struct PapiEvent> events(2);
+                std::vector<struct PapiEvent> events;
                 int idx = 0;
-                populate_papi_event(events[idx++], "ITLB_MISSES:MISS_CAUSES_A_WALK", "ITLB_MISS");
-                populate_papi_event(events[idx++], "ITLB_MISSES:WALK_DURATION",      "ITLB_WALK_DURATION");
+                populate_papi_event(events, "ITLB_MISSES:MISS_CAUSES_A_WALK", "ITLB_MISS");
+                populate_papi_event(events, "ITLB_MISSES:WALK_DURATION",      "ITLB_WALK_DURATION");
                 return events;
             },
             [](std::vector<struct PapiEvent> events) { return events; }
         }
     };
+#endif
 
     class PAPIWrapper {
         int event_set_ = PAPI_NULL; // PAPI

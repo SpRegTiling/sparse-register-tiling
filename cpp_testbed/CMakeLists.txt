@@ -11,7 +11,7 @@ if (${RASPBERRY_PI})
     ##
     # ARM
     ##
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__ARM_ARCH_8__ -mfpu=neon-fp-armv8")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__ARM_ARCH_8__ -mfpu=neon-fp-armv8 -mcpu=cortex-a72")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DRASPBERRY_PI=4")
     set(TUNE cortex-a72)
 else()

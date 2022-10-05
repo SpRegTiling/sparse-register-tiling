@@ -1,3 +1,61 @@
+#ifdef RASPBERRY_PI
+{"nano", [](c4::yml::ConstNodeRef options) -> method_factory_t<S> {
+    int vec_width_bits; options["vec_width_bits"] >> vec_width_bits;
+    std::string arch; options["arch"] >> arch;
+    std::string mapping_id; options["mapping_id"] >> mapping_id;
+
+    int nr = -1;
+    if (options.has_child("nr"))
+      options["nr"] >> nr;
+
+    std::string split = "M";
+    if (options.has_child("split"))
+      options["split"] >> split;
+
+
+    bool packed = false;
+    if (options.has_child("packed"))
+      options["packed"] >> packed;
+
+    bool load_balance = false;
+    if (options.has_child("load_balance"))
+      options["load_balance"] >> load_balance;
+
+    return [arch, vec_width_bits, nr, packed, load_balance, mapping_id, split](
+      additional_options_t options, SpMMTask<S>& task)
+        -> SpMMFunctor<S>* {
+
+      std::string mapping_id_mut = mapping_id;
+
+      if (mapping_id == "filelist") {
+        mapping_id_mut = options["mapping_id"];
+      }
+
+      ERROR_AND_EXIT_IF(packed && load_balance,
+        "Packing and load-balance are not currently "
+        "supported together");
+
+      if (load_balance) {
+        if (split == "M")
+            return new SpMM_SOP<sop::KD_PIFloatLoadBalancedSplitM>
+              (get_executor_id(mapping_id_mut, arch, vec_width_bits, nr), mapping_id_mut, task);
+        else
+            ERROR_AND_EXIT("Cannot split by " << split << " with load balancing");
+      } else {
+        if (split == "M")
+            return new SpMM_SOP<sop::KD_PIFloatSplitM>
+              (get_executor_id(mapping_id_mut, arch, vec_width_bits, nr), mapping_id_mut, task);
+        else if (split == "N")
+            return new SpMM_SOP<sop::KD_PIFloatSplitN>
+              (get_executor_id(mapping_id_mut, arch, vec_width_bits, nr), mapping_id_mut, task);
+        else
+            ERROR_AND_EXIT("Cannot split by " << split);
+      }
+
+      return nullptr;
+    };
+}}
+#else
 {"nano", [](c4::yml::ConstNodeRef options) -> method_factory_t<S> {
     int vec_width_bits; options["vec_width_bits"] >> vec_width_bits;
     std::string arch; options["arch"] >> arch;
@@ -30,16 +88,17 @@
         "supported together");
 
       if (load_balance) {
-        return new SpMM_SOP<sop::KDFloatNoPackingLoadBalanced>
+        return new SpMM_SOP<sop::KD_IntelFloatLoadBalanced>
           (get_executor_id(mapping_id_mut, arch, vec_width_bits, nr), mapping_id_mut, task);
       } else if (packed) {
-        return new SpMM_SOP<sop::KDFloatCPartialPacking>
+        return new SpMM_SOP<sop::KD_IntelFloatCPartialPacking>
           (get_executor_id(mapping_id_mut, arch, vec_width_bits, nr), mapping_id_mut, task);
       } else {
-        return new SpMM_SOP<sop::KDFloatNoPacking>
+        return new SpMM_SOP<sop::KD_IntelFloat>
           (get_executor_id(mapping_id_mut, arch, vec_width_bits, nr), mapping_id_mut, task);
       }
 
       return nullptr;
     };
 }}
+#endif
