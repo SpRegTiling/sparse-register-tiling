@@ -134,9 +134,6 @@ for n in df["n"].unique():
         plot_save(plt, f"dlmc/vsdense/boxplot_{n}_{numThreads}")
 
 
-sys.exit(-1)
-
-
 def gflops_scatter(method, b_cols, n_threads, df):
     df_filtered = df[(df["name"] == method) & (df["n"] == b_cols) & (df["numThreads"] == n_threads)]
     return alt.Chart(
@@ -182,7 +179,7 @@ def speedup_scatter_all_bcols(method, n_threads, max_speedup, color, df):
     ).mark_circle().encode(
         x=alt.X('sparsity:Q', title='Sparsity'),
         y=alt.Y('Speed-up vs MKL_Dense:Q', title='Speed-up Over Dense', scale=alt.Scale(domain=[0, max_speedup])),
-        color=alt.Color(f'gflops:Q', title='Problem size (gflops)', scale=alt.Scale(scheme=color_scheme))
+        color=alt.Color(f'n:Q', title='b_cols', scale=alt.Scale(scheme=color_scheme))
     )
 
 

@@ -30,6 +30,10 @@ using namespace cpp_testbed;
 #include "XNN/runtime_yaml_config.h"
 #endif
 
+#if defined(SPMM_TACO_ENABLED) && SPMM_TACO_ENABLED
+#include "TACO/runtime_yaml_config.h"
+#endif
+
 template<typename S>
 method_mapping_t<S>& get_method_id_mapping() {
     static std::map <std::string, method_factory_factory_t<S>> method_id_mapping = {
@@ -55,6 +59,10 @@ method_mapping_t<S>& get_method_id_mapping() {
 #endif
 #if defined(SPMM_XNN_ENABLED) && SPMM_XNN_ENABLED
 #include "XNN/runtime_yaml_config.register"
+,
+#endif
+#if defined(SPMM_TACO_ENABLED) && SPMM_TACO_ENABLED
+#include "TACO/runtime_yaml_config.register"
 ,
 #endif
     };

@@ -105,6 +105,10 @@ public:
         return config.rep();
     }
 
+    void log_extra_info(cpp_testbed::csv_row_t& row) override {
+        csv_row_insert(row, "required_storage", sop_matmul->require_storage);
+    }
+
     bool set_config_impl(const typename Super::Config& new_config) override {
         typename Super::Task& t = this->task;
         auto old_config = config;

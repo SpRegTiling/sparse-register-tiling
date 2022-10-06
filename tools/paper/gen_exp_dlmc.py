@@ -76,20 +76,6 @@ def gen_dlmc_bench_exp(arch, test_methods, filelist, b_cols, num_threads, suffix
             {
                 "name": "MKL_Dense",
                 "method_id": "mkl_dense"
-            },
-            {
-                "name": "MKL_Sparse",
-                "method_id": "mkl",
-                "options": {
-                    "inspector": False
-                }
-            },
-            {
-                "name": "MKL_Sparse_IE",
-                "method_id": "mkl",
-                "options": {
-                    "inspector": True
-                }
             }
         ]
     elif "NEON" in arch:
@@ -120,7 +106,7 @@ def gen_dlmc_bench_exp(arch, test_methods, filelist, b_cols, num_threads, suffix
 
 # All-DLMC Experiments
 for arch in ["AVX2", "AVX512", "NEON"]:
-    max_threads_by_arch ={
+    max_threads_by_arch = {
         "AVX2": [32, 64],
         "AVX512": [32],
         "NEON": [4]
@@ -134,82 +120,137 @@ for arch in ["AVX2", "AVX512", "NEON"]:
             64: [1, 16, 32, 64],
         }
 
-        test_methods_nano4_aspt = [
+        method_packs = {
+            "sota": [
+            {
+                "name": "MKL_Sparse",
+                "method_id": "mkl",
+                "options": {
+                    "inspector": False
+                }
+            },
+            {
+                "name": "MKL_Sparse_IE",
+                "method_id": "mkl",
+                "options": {
+                    "inspector": True
+                }
+            }],
+            "aspt": [
             {
                 "name": "ASpT",
                 "method_id": "aspt",
                 "options": {
                     "vec_width": "not-supported"
                 }
-            },
+            }],
+            "taco": [
+               {
+                   "name": "TACO_4",
+                   "method_id": "taco",
+                   "options": {
+                       "width": 4
+                   }
+               },
+               {
+                   "name": "TACO_16",
+                   "method_id": "taco",
+                   "options": {
+                       "width": 16
+                   }
+               },
+            ],
+            "mkl": [
+                {
+                    "name": "MKL_Sparse",
+                    "method_id": "mkl",
+                    "options": {
+                        "inspector": False
+                    }
+                },
+                {
+                    "name": "MKL_Sparse_IE",
+                    "method_id": "mkl",
+                    "options": {
+                        "inspector": True
+                    }
+                }
+            ],
+            "nano4_identity": [
+                nano(arch, 4, 4, "identity"),
+                nano(arch, 4, 4, "identity", load_balance=True, tlb_comp=32),
+                nano(arch, 4, 4, "identity", load_balance=True, tlb_comp=64),
+                nano(arch, 4, 4, "identity", load_balance=True, sparse_a=True),
+                nano(arch, 4, 4, "identity", load_balance=True, sparse_a=True, tlb_comp=48),
+                nano(arch, 4, 4, "identity", load_balance=True, sparse_a=True, tlb_comp=64),
+                nano(arch, 4, 4, "identity", load_balance=True, sparse_a=True, tlb_comp=128),
+                nano(arch, 4, 4, "identity", load_balance=True, sparse_a=True, tlb_comp=64,  beta=1.5),
+                nano(arch, 4, 4, "identity", load_balance=True, sparse_a=True, tlb_comp=64,  beta=2.0),
+                nano(arch, 4, 4, "identity", load_balance=True, sparse_a=True, tlb_comp=128, beta=2.0),
+                nano(arch, 4, 4, "identity", load_balance=True, sparse_a=True, tlb_comp=64,  beta=3.0),
 
-            nano(arch, 4, "identity"),
-            nano(arch, 4, "identity", load_balance=True, tlb_comp=32),
-            # nano(arch, 4, "identity", load_balance=True, tlb_comp=64),
-            # nano(arch, 4, "identity", load_balance=True, sparse_a=True),
-            # nano(arch, 4, "identity", load_balance=True, sparse_a=True, tlb_comp=48),
-            # nano(arch, 4, "identity", load_balance=True, sparse_a=True, tlb_comp=64),
-            # nano(arch, 4, "identity", load_balance=True, sparse_a=True, tlb_comp=128),
-            # nano(arch, 4, "identity", load_balance=True, sparse_a=True, tlb_comp=64, beta=1.5),
-            # nano(arch, 4, "identity", load_balance=True, sparse_a=True, tlb_comp=64, beta=2.0),
-            # nano(arch, 4, "identity", load_balance=True, sparse_a=True, tlb_comp=128, beta=2.0),
-            # nano(arch, 4, "identity", load_balance=True, sparse_a=True, tlb_comp=64, beta=3.0),
-            # nano(arch, 4, "orig", load_balance=True),
-            # nano(arch, 4, "orig", load_balance=True, sparse_a=True, tlb_comp=64),
-        ]
+                nano(arch, 4, 6, "identity"),
+                nano(arch, 4, 6, "identity", load_balance=True, sparse_a=True, tlb_comp=48),
+                nano(arch, 4, 6, "identity", load_balance=True, sparse_a=True, tlb_comp=64),
+                nano(arch, 4, 6, "identity", load_balance=True, sparse_a=True, tlb_comp=128),
+            ],
+            "nano4_orig": [
+                nano(arch, 4, 4, "orig",     load_balance=True),
+                nano(arch, 4, 4, "orig",     load_balance=True, sparse_a=True, tlb_comp=64),
 
-        test_methods_nano8 = [
-            nano(arch, 8, "orig"),
-            nano(arch, 8, "orig", load_balance=True),
-            nano(arch, 8, "orig", load_balance=True, tlb_comp=64),
-            nano(arch, 8, "orig", load_balance=True, sparse_a=True, tlb_comp=48),
-            nano(arch, 8, "orig", load_balance=True, sparse_a=True, tlb_comp=64),
-            nano(arch, 8, "orig", load_balance=True, sparse_a=True, tlb_comp=128),
-            nano(arch, 8, "alt",  load_balance=True, sparse_a=True, tlb_comp=64),
-        ]
+                nano(arch, 4, 6, "orig",     load_balance=True),
+                nano(arch, 4, 6, "orig",     load_balance=True, sparse_a=True, tlb_comp=64),
+            ],
+            "nano8_orig":  [
+                nano(arch, 8, 3, "orig"),
+                nano(arch, 8, 3, "orig", load_balance=True),
+                nano(arch, 8, 3, "orig", load_balance=True, tlb_comp=64),
+                nano(arch, 8, 3, "orig", load_balance=True, sparse_a=True, tlb_comp=48),
+                nano(arch, 8, 3, "orig", load_balance=True, sparse_a=True, tlb_comp=64),
+                nano(arch, 8, 3, "orig", load_balance=True, sparse_a=True, tlb_comp=128),
 
-        test_methods_csb = [
-            csb(arch, "CSR", 32),
-            csb(arch, "CSR", 32, sparse_a=True, tlb_comp=64),
-            csb(arch, "CSR", 64),
-            csb(arch, "CSR", 64, sparse_a=True, tlb_comp=64),
-        ]
+                nano(arch, 8, 2, "orig"),
+                nano(arch, 8, 2, "orig", load_balance=True, sparse_a=True, tlb_comp=48),
+                nano(arch, 8, 2, "orig", load_balance=True, sparse_a=True, tlb_comp=64),
+                nano(arch, 8, 2, "orig", load_balance=True, sparse_a=True, tlb_comp=128),
+            ],
+            "nano8_alt":  [
+                nano(arch, 8, 3, "alt",  load_balance=True, sparse_a=True, tlb_comp=64),
+                nano(arch, 8, 2, "alt",  load_balance=True, sparse_a=True, tlb_comp=64),
+            ],
+            "nano_tuned":  [
+                nano(arch, 4, 4, "identity", load_balance=True, tune="SOP4"),
+                nano(arch, 4, 4, "orig", load_balance=True, tune="SOP4"),
+                nano(arch, 8, 2, "orig", load_balance=True, tune="SOP4"),
+                nano(arch, 8, 2, "alt", load_balance=True, tune="SOP4")
+            ],
+            # "csb": [
+            #     csb(arch, "CSR", 32),
+            #     csb(arch, "CSR", 32, sparse_a=True, tlb_comp=64),
+            #     csb(arch, "CSR", 64),
+            #     csb(arch, "CSR", 64, sparse_a=True, tlb_comp=64),
+            # ]
+        }
 
-        test_methods_nano_tuned = [
-            nano(arch, 4, "identity", load_balance=True, tune="SOP4"),
-            nano(arch, 4, "orig", load_balance=True, tune="SOP4"),
-            nano(arch, 8, "orig", load_balance=True, tune="SOP4"),
-            nano(arch, 8, "alt", load_balance=True, tune="SOP4")
-        ]
+        files = []
+        for pack_name, methods in method_packs.items():
+            files += [
+                [
+                    gen_dlmc_bench_exp(arch, methods, filelist,
+                                       b_cols=[32, 128, 256],
+                                       num_threads=n_threads[max_thread_count],
+                                       suffix=f"dlmc_{arch}_{pack_name}_small_bcols_{max_thread_count}"),
+               ] for filelist in ["all_dlmc_part1", "all_dlmc_part2", "all_dlmc_part3"]
+            ]
 
-        files = [
-            [
-                gen_dlmc_bench_exp(arch, test_methods_nano4_aspt, filelist,
-                                   b_cols=[32, 128, 256],
-                                   num_threads=n_threads[max_thread_count],
-                                   suffix=f"nano4_all_threads_small_bcols_{max_thread_count}"),
-                gen_dlmc_bench_exp(arch, test_methods_nano4_aspt, filelist,
-                                   b_cols=[512, 1024],
-                                   num_threads=n_threads[max_thread_count],
-                                   suffix=f"nano4_all_threads_large_bcols_{max_thread_count}"),
-                gen_dlmc_bench_exp(arch, test_methods_nano8, filelist,
-                                   b_cols=[32, 128, 256],
-                                   num_threads=n_threads[max_thread_count],
-                                   suffix=f"nano8_all_threads_small_bcols_{max_thread_count}"),
-                gen_dlmc_bench_exp(arch, test_methods_csb, filelist,
-                                   b_cols=[32, 128, 128],
-                                   num_threads=n_threads[max_thread_count],
-                                   suffix=f"csb_all_threads_small_bcols_{max_thread_count}"),
-                gen_dlmc_bench_exp(arch, test_methods_csb, filelist,
-                                   b_cols=[512, 1024],
-                                   num_threads=n_threads[max_thread_count],
-                                   suffix=f"csb_all_threads_large_bcols_{max_thread_count}"),
-                gen_dlmc_bench_exp(arch, test_methods_nano_tuned, filelist,
-                                   b_cols=[32, 128, 256],
-                                   num_threads=n_threads[max_thread_count],
-                                   suffix=f"nano_tuned_all_threads_small_bcols_{max_thread_count}"),
-           ] for filelist in ["all_dlmc_part1", "all_dlmc_part2", "all_dlmc_part3"]
-        ]
+            files += [
+                [
+                    gen_dlmc_bench_exp(arch, methods, filelist,
+                                       b_cols=[512, 1024],
+                                       num_threads=n_threads[max_thread_count],
+                                       suffix=f"dlmc_{arch}_{pack_name}_large_bcols_{max_thread_count}"),
+                ] for filelist in ["all_dlmc_part1", "all_dlmc_part2", "all_dlmc_part3"]
+            ]
 
         files = flatten(files)
         run_all_script = SCRIPT_DIR + \

@@ -6,11 +6,16 @@
 #define DNN_SPMM_BENCH_SPMM_TACO_H
 
 #include "../SpMMFunctor.h"
-
-#define restrict __restrict__
-#include "taco_kernel.h"
+#include "utils/error.h"
 
 #include <iostream>
+
+#define restrict __restrict__
+#include "taco.h"
+
+extern int compute_4(taco_tensor_t *C, taco_tensor_t *A, taco_tensor_t *B);
+extern int compute_16(taco_tensor_t *C, taco_tensor_t *A, taco_tensor_t *B);
+
 
 template<typename Scalar>
 class SpMMTACO : public SpMMFunctor<Scalar> {
@@ -21,9 +26,10 @@ private:
     taco_tensor_t* A;
     taco_tensor_t* B;
     taco_tensor_t* C;
+    int width = 4;
 
 public:
-    SpMMTACO(typename Super::Task &task) : Super(task) {
+    SpMMTACO(typename Super::Task &task, int width = 4) : Super(task), width(width) {
         int A_dims[2] = {task.m(), task.k()};
         int B_dims[2] = {task.k(), task.n()};
         int C_dims[2] = {task.m(), task.n()};
@@ -54,7 +60,15 @@ public:
     // This operator overloading enables calling
     // operator function () on objects of increment
     void operator()() override {
-        compute(C, A, B);
+        switch(width) {
+            case 4: compute_4(C, A, B);
+            case 16: compute_16(C, A, B);
+        }
+    }
+
+    void copy_output() override {
+        typename Super::Task& t = this->task;
+        memcpy(t.C, C->vals, t.m() * t.n() * sizeof(Scalar));
     }
 };
 

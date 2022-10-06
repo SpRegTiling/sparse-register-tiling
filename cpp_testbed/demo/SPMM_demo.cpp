@@ -409,8 +409,8 @@ class SpMMExperiment {
 #ifdef RASPBERRY_PI
                 int runs_per_iteration = 1;
 #else
-                int runs_per_iteration = std::max((int) std::ceil(2e8 / (spmm_task.A->nz * spmm_task.bCols)), 1);
-                runs_per_iteration *= std::max(1, spmm_task.nThreads);
+                int runs_per_iteration = std::max((int) std::ceil(1e8 / (spmm_task.A->nz * spmm_task.bCols)), 1);
+                runs_per_iteration *= std::max(1, spmm_task.nThreads / 2);
 #endif
 
                 std::cout << "Begin Testing, nThreads: " << nThreads << " BCols: " << bCols;
@@ -439,7 +439,7 @@ class SpMMExperiment {
                     // Configure everytime to just make sure nothing gets messed up
                     mkl_set_num_threads(nThreads);
                     mkl_set_num_threads_local(nThreads);
-                    mkl_set_dynamic(1);
+                    mkl_set_dynamic(0);
 
                     if (nThreads != mkl_get_max_threads()) {
                         std::cerr << "Max threads does not match" << std::endl;
@@ -531,6 +531,7 @@ class SpMMExperiment {
                     __itt_pause();
 #endif
 
+                    executor->copy_output();
                     auto is_correct = verify<Scalar>(spmm_task);
                     auto is_correct_str = is_correct ? "correct" : "incorrect";
 

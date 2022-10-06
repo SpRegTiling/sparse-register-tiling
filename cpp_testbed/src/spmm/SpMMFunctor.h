@@ -48,6 +48,7 @@ protected:
 public:
     SpMMFunctor(Task &task): task(task) {}
 
+    virtual void copy_output() {};
     virtual void log_extra_info(cpp_testbed::csv_row_t& row) { }
 
     constexpr static int TUNING_ITERATIONS = 3;

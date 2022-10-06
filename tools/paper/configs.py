@@ -6,8 +6,8 @@ vec_width = {
 }
 
 
-def nano(arch, size, mapping, packed=False, load_balance=False, tune=None, tlb_comp=None, sparse_a=False, beta=1.0):
-    name = f"N{size}"
+def nano(arch, size, nr, mapping, packed=False, load_balance=False, tune=None, tlb_comp=None, sparse_a=False, beta=1.0):
+    name = f"M{size}N{nr}"
     beta_10x = int(round(beta * 10))
 
     default_arch_vec_width = {
@@ -41,6 +41,7 @@ def nano(arch, size, mapping, packed=False, load_balance=False, tune=None, tlb_c
             "mapping_id": mapping,
             "arch": arch,
             "vec_width_bits": default_arch_vec_width[arch],
+            "nr": nr,
         }
     }
 
