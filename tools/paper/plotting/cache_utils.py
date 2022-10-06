@@ -8,7 +8,7 @@ CACHE_DIR = SCRIPT_DIR + "/.cache/"
 os.makedirs(CACHE_DIR, exist_ok=True)
 
 
-def cached_merge_and_load(files, name, force_use_cache=False):
+def cached_merge_and_load(files, name, afterload_hook=None, force_use_cache=False):
     bcols_charts = defaultdict(lambda: [])
     numThreads_charts = defaultdict(lambda: [])
 
@@ -31,6 +31,9 @@ def cached_merge_and_load(files, name, force_use_cache=False):
         dfs = []
         for file in files:
             df = pd.read_csv(file)
+            if afterload_hook:
+                df = afterload_hook(file, df)
+
             dfs.append(df)
         df = pd.concat(dfs)
 
@@ -46,7 +49,7 @@ def cached_merge_and_load(files, name, force_use_cache=False):
 
 def cache_df_processes(name):
     def _cache_df_processes(fn):
-        cache_file = CACHE_DIR + f"compute_{name}.csv"
+        cache_file = CACHE_DIR + f"{name}.csv"
 
         def wrap(df, reload):
             if not reload and os.path.exists(cache_file):

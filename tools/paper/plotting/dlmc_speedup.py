@@ -27,45 +27,8 @@ PLOT_GFLOPS = True
 PLOT_SPEEDUP = True
 color_scheme = 'purpleblue'
 
-cluster_info = {
-    "graham": ("/home/lwilkinson/graham", "AVX2", 32),
-    "niagara": ("/home/lwilkinson/niagara", "AVX512", 32),
-}
-
-cluster = "niagara"
-cluster_dir, arch, threads = cluster_info[cluster]
-subdir = ""
-
-nano4_files = [
-    f"{cluster_dir}/results/{subdir}/all_dlmc_part1_{arch}_nano4_all_threads_small_bcols_{threads}.csv",
-    f"{cluster_dir}/results/{subdir}/all_dlmc_part2_{arch}_nano4_all_threads_small_bcols_{threads}.csv",
-    f"{cluster_dir}/results/{subdir}/all_dlmc_part3_{arch}_nano4_all_threads_small_bcols_{threads}.csv",
-    # f"{cluster_dir}/results/{subdir}/all_dlmc_part1_{arch}_nano4_all_threads_large_bcols_{threads}.csv",
-    # f"{cluster_dir}/results/{subdir}/all_dlmc_part2_{arch}_nano4_all_threads_large_bcols_{threads}.csv",
-    # f"{cluster_dir}/results/{subdir}/all_dlmc_part3_{arch}_nano4_all_threads_large_bcols_{threads}.csv",
-]
-
-df, df_reloaded = cached_merge_and_load(nano4_files, "nano4", force_use_cache=True)
-force_recompute = False
-
-
-@cache_df_processes("nano4_preprocess")
-def preprocess(df):
-    df["gflops"] = 2 * df["n"] * df["nnz"]
-    df["gflops/s"] = (df["gflops"] / df["time median"]) / 1e9
-
-    df = post_process.compute_speed_up_vs(df, 'MKL_Dense', group_by=["matrixPath", "n", "numThreads"])
-    df = post_process.compute_matrix_properties(df)
-    df = post_process.compute_best(df)
-    df = post_process.compute_global_best(df)
-    df = post_process.compute_pruning_method_and_model(df)
-    df = post_process.compute_scaling(df)
-
-    return df
-
-
-df = preprocess(df, df_reloaded or force_recompute)
-df_geo_mean_speedup = df.groupby(["n", "numThreads", "name"]).agg({'Speed-up vs MKL_Dense': gmean}).reset_index()
+cluster = 'niagara'
+df = pd.read_csv(SCRIPT_DIR + '/.cache/dlmc_merged_postprocessed.csv')
 
 b_colss = sorted(df["n"].unique())
 n_threadss = df["numThreads"].unique()
@@ -75,17 +38,13 @@ print(df["pruningMethod"].unique())
 print(methods)
 print(df.columns)
 
-methods = [
-    'MKL_Dense',
-    'MKL_Sparse',
-    #'MKL_Sparse_IE',
-    'ASpT',
-    'N4_LB_TLB128_SA_identity',
-    'N4_LB_TLB64_SA_identity',
-    'N4_LB_identity',
-    'N4_identity',
-    'N4_LB_orig',
-]
+methods =['MKL_Dense sota' 'MKL_Sparse sota' 'MKL_Sparse_IE' 'MKL_Dense tuned'
+          'NANO_M4N4_LB_tuned_identity' 'NANO_M4N4_LB_tuned_orig'
+          'NANO_M8N2_LB_tuned_orig' 'NANO_M8N2_LB_tuned_alt' 'MKL_Dense aspt'
+          'ASpT' 'MKL_Dense taco' 'TACO_4' 'TACO_16' 'MKL_Dense mkl'
+          'NANO_M8N3_LB_TLB64_SA_alt' 'NANO_M8N2_alt' 'NANO_M8N2_LB_TLB64_SA_alt'
+          'MKL_Dense orig' 'NANO_M4N4_LB_orig' 'NANO_M4N4_LB_TLB64_SA_orig'
+          'NANO_M4N6_LB_orig' 'NANO_M4N6_LB_TLB64_SA_orig']
 
 pruning_methods = [
     'random_pruning', 'variational_dropout'
@@ -101,6 +60,7 @@ plot_save(plt, f"dlmc/boxplot_sparsity_ranges")
 def filter(df, **kwargs):
     bool_index = None
     for key, value in kwargs.items():
+        print(key, value)
         if isinstance(value, list):
             _bool_index = df[key].isin(value)
         else:

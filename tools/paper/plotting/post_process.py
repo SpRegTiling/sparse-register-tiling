@@ -51,13 +51,39 @@ def compute_matrix_properties(df, sparsity_round=True):
     return df
 
 
-def compute_speed_up_vs(df, name, group_by=["matrixPath", "n"]):
-    def compute_time_vs(x):
-        baseline = x[x["name"] == name].iloc[0]["time median"]
-        x[f'Speed-up vs {name}'] = baseline / x["time median"]
+def compute_for_group(df, funcs, group_by=["matrixPath", "n", "numThreads"]):
+    def compute(x):
+        for func in funcs:
+            x = func(x)
         return x
 
-    df = df.groupby(group_by).apply(compute_time_vs).reset_index(drop=True)
+    df = df.groupby(group_by, group_keys=False).apply(compute).reset_index(drop=True)
+    return df
+
+
+def compute_speed_up_vs(df, name, group_by=["matrixPath", "n", "numThreads"]):
+    def compute_time_vs(x):
+        runs = x[x["name"] == name]
+        if not runs.empty:
+            baseline = runs.iloc[0]["time median"]
+            x[f'Speed-up vs {name}'] = baseline / x["time median"]
+        return x
+
+    df = df.groupby(group_by, group_keys=False).apply(compute_time_vs).reset_index(drop=True)
+    return df
+
+
+def compute_speed_up_vs_multidense(df, prefer, group_by=["matrixPath", "n"]):
+    def compute_time_vs(x):
+        dense_runs = x[x["name"] == f'MLK_Dense {prefer}']
+        if dense_runs.empty:
+            dense_runs = x[x["name"].str.contains("MKL_Dense")]
+
+        baseline = dense_runs.iloc[0]["time median"]
+        x[f'Speed-up vs MKL_Dense'] = baseline / x["time median"]
+        return x
+
+    df = df.groupby(group_by, group_keys=False).apply(compute_time_vs).reset_index(drop=True)
     return df
 
 
@@ -67,7 +93,7 @@ def compute_scaling(df, group_by=["matrixPath", "n", "name"]):
         x[f'scaling'] = baseline / x["time median"]
         return x
 
-    df = df.groupby(group_by).apply(compute_time_vs).reset_index(drop=True)
+    df = df.groupby(group_by, group_keys=False).apply(compute_time_vs).reset_index(drop=True)
     return df
 
 
@@ -77,8 +103,7 @@ def compute_best(df, group_by=["matrixPath", "n", "numThreads", "name"]):
         x.loc[x["time median"].idxmin(), "best"] = True
         return x
 
-
-    return df.groupby(group_by).apply(compute_best).reset_index(drop=True)
+    return df.groupby(group_by, group_keys=False).apply(compute_best).reset_index(drop=True)
 
 
 def compute_global_best(df, group_by=["matrixPath", "n", "numThreads"]):
@@ -87,15 +112,14 @@ def compute_global_best(df, group_by=["matrixPath", "n", "numThreads"]):
         x.loc[x["time median"].idxmin(), "global_best"] = True
         return x
 
-
-    return df.groupby(group_by).apply(compute_best).reset_index(drop=True)
+    return df.groupby(group_by, group_keys=False).apply(compute_best).reset_index(drop=True)
 
 
 def compute_avg_speedup_per_config(df,
                                    speed_up_vs='MKL_Executor_Only',
                                    group_by=["name", "n", "m_tile", "k_tile", "n_tile"]):
 
-    return df.groupby(group_by, dropna=False).mean().reset_index()
+    return df.groupby(group_by, group_keys=False, dropna=False).mean().reset_index()
 
 
 def compute_max_speedup_per_config(df,

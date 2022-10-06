@@ -104,6 +104,7 @@ def gen_dlmc_bench_exp(arch, test_methods, filelist, b_cols, num_threads, suffix
     return experiment_file
 
 
+pack_names = set()
 # All-DLMC Experiments
 for arch in ["AVX2", "AVX512", "NEON"]:
     max_threads_by_arch = {
@@ -121,7 +122,7 @@ for arch in ["AVX2", "AVX512", "NEON"]:
         }
 
         method_packs = {
-            "sota": [
+        "sota": [
             {
                 "name": "MKL_Sparse",
                 "method_id": "mkl",
@@ -136,7 +137,7 @@ for arch in ["AVX2", "AVX512", "NEON"]:
                     "inspector": True
                 }
             }],
-            "aspt": [
+        "aspt": [
             {
                 "name": "ASpT",
                 "method_id": "aspt",
@@ -144,96 +145,104 @@ for arch in ["AVX2", "AVX512", "NEON"]:
                     "vec_width": "not-supported"
                 }
             }],
-            "taco": [
-               {
-                   "name": "TACO_4",
-                   "method_id": "taco",
-                   "options": {
-                       "width": 4
-                   }
-               },
-               {
-                   "name": "TACO_16",
-                   "method_id": "taco",
-                   "options": {
-                       "width": 16
-                   }
-               },
-            ],
-            "mkl": [
-                {
-                    "name": "MKL_Sparse",
-                    "method_id": "mkl",
-                    "options": {
-                        "inspector": False
-                    }
-                },
-                {
-                    "name": "MKL_Sparse_IE",
-                    "method_id": "mkl",
-                    "options": {
-                        "inspector": True
-                    }
+        "taco": [
+            {
+                "name": "TACO_4",
+                "method_id": "taco",
+                "options": {
+                    "width": 4
                 }
-            ],
-            "nano4_identity": [
-                nano(arch, 4, 4, "identity"),
-                nano(arch, 4, 4, "identity", load_balance=True, tlb_comp=32),
-                nano(arch, 4, 4, "identity", load_balance=True, tlb_comp=64),
-                nano(arch, 4, 4, "identity", load_balance=True, sparse_a=True),
-                nano(arch, 4, 4, "identity", load_balance=True, sparse_a=True, tlb_comp=48),
-                nano(arch, 4, 4, "identity", load_balance=True, sparse_a=True, tlb_comp=64),
-                nano(arch, 4, 4, "identity", load_balance=True, sparse_a=True, tlb_comp=128),
-                nano(arch, 4, 4, "identity", load_balance=True, sparse_a=True, tlb_comp=64,  beta=1.5),
-                nano(arch, 4, 4, "identity", load_balance=True, sparse_a=True, tlb_comp=64,  beta=2.0),
-                nano(arch, 4, 4, "identity", load_balance=True, sparse_a=True, tlb_comp=128, beta=2.0),
-                nano(arch, 4, 4, "identity", load_balance=True, sparse_a=True, tlb_comp=64,  beta=3.0),
+            },
+            {
+                "name": "TACO_16",
+                "method_id": "taco",
+                "options": {
+                    "width": 16
+                }
+            },
+        ],
+        "mkl": [
+            {
+                "name": "MKL_Sparse",
+                "method_id": "mkl",
+                "options": {
+                    "inspector": False
+                }
+            },
+            {
+                "name": "MKL_Sparse_IE",
+                "method_id": "mkl",
+                "options": {
+                    "inspector": True
+                }
+            }
+        ],
+        "nano4_identity": [
+            nano(arch, 4, 4, "identity"),
+            nano(arch, 4, 4, "identity", load_balance=True, tlb_comp=32),
+            nano(arch, 4, 4, "identity", load_balance=True, tlb_comp=64),
+            nano(arch, 4, 4, "identity", load_balance=True, sparse_a=True),
+            nano(arch, 4, 4, "identity", load_balance=True, sparse_a=True, tlb_comp=48),
+            nano(arch, 4, 4, "identity", load_balance=True, sparse_a=True, tlb_comp=64),
+            nano(arch, 4, 4, "identity", load_balance=True, sparse_a=True, tlb_comp=128),
+            nano(arch, 4, 4, "identity", load_balance=True, sparse_a=True, tlb_comp=64,  beta=1.5),
+            nano(arch, 4, 4, "identity", load_balance=True, sparse_a=True, tlb_comp=64,  beta=2.0),
+            nano(arch, 4, 4, "identity", load_balance=True, sparse_a=True, tlb_comp=128, beta=2.0),
+            nano(arch, 4, 4, "identity", load_balance=True, sparse_a=True, tlb_comp=64,  beta=3.0),
 
-                nano(arch, 4, 6, "identity"),
-                nano(arch, 4, 6, "identity", load_balance=True, sparse_a=True, tlb_comp=48),
-                nano(arch, 4, 6, "identity", load_balance=True, sparse_a=True, tlb_comp=64),
-                nano(arch, 4, 6, "identity", load_balance=True, sparse_a=True, tlb_comp=128),
-            ],
-            "nano4_orig": [
-                nano(arch, 4, 4, "orig",     load_balance=True),
-                nano(arch, 4, 4, "orig",     load_balance=True, sparse_a=True, tlb_comp=64),
+            nano(arch, 4, 6, "identity"),
+            nano(arch, 4, 6, "identity", load_balance=True, sparse_a=True, tlb_comp=48),
+            nano(arch, 4, 6, "identity", load_balance=True, sparse_a=True, tlb_comp=64),
+            nano(arch, 4, 6, "identity", load_balance=True, sparse_a=True, tlb_comp=128),
+        ],
+        "nano4_orig": [
+            nano(arch, 4, 4, "orig",     load_balance=True),
+            nano(arch, 4, 4, "orig",     load_balance=True, sparse_a=True, tlb_comp=64),
 
-                nano(arch, 4, 6, "orig",     load_balance=True),
-                nano(arch, 4, 6, "orig",     load_balance=True, sparse_a=True, tlb_comp=64),
-            ],
-            "nano8_orig":  [
-                nano(arch, 8, 3, "orig"),
-                nano(arch, 8, 3, "orig", load_balance=True),
-                nano(arch, 8, 3, "orig", load_balance=True, tlb_comp=64),
-                nano(arch, 8, 3, "orig", load_balance=True, sparse_a=True, tlb_comp=48),
-                nano(arch, 8, 3, "orig", load_balance=True, sparse_a=True, tlb_comp=64),
-                nano(arch, 8, 3, "orig", load_balance=True, sparse_a=True, tlb_comp=128),
+            nano(arch, 4, 6, "orig",     load_balance=True),
+            nano(arch, 4, 6, "orig",     load_balance=True, sparse_a=True, tlb_comp=64),
+        ],
+        "nano8_orig":  [
+            nano(arch, 8, 2, "orig"),
+            nano(arch, 8, 2, "orig", load_balance=True),
+            nano(arch, 8, 2, "orig", load_balance=True, tlb_comp=64),
+            nano(arch, 8, 2, "orig", load_balance=True, sparse_a=True, tlb_comp=48),
+            nano(arch, 8, 2, "orig", load_balance=True, sparse_a=True, tlb_comp=64),
+            nano(arch, 8, 2, "orig", load_balance=True, sparse_a=True, tlb_comp=128),
 
-                nano(arch, 8, 2, "orig"),
-                nano(arch, 8, 2, "orig", load_balance=True, sparse_a=True, tlb_comp=48),
-                nano(arch, 8, 2, "orig", load_balance=True, sparse_a=True, tlb_comp=64),
-                nano(arch, 8, 2, "orig", load_balance=True, sparse_a=True, tlb_comp=128),
-            ],
-            "nano8_alt":  [
-                nano(arch, 8, 3, "alt",  load_balance=True, sparse_a=True, tlb_comp=64),
-                nano(arch, 8, 2, "alt",  load_balance=True, sparse_a=True, tlb_comp=64),
-            ],
-            "nano_tuned":  [
-                nano(arch, 4, 4, "identity", load_balance=True, tune="SOP4"),
-                nano(arch, 4, 4, "orig", load_balance=True, tune="SOP4"),
-                nano(arch, 8, 2, "orig", load_balance=True, tune="SOP4"),
-                nano(arch, 8, 2, "alt", load_balance=True, tune="SOP4")
-            ],
-            # "csb": [
-            #     csb(arch, "CSR", 32),
-            #     csb(arch, "CSR", 32, sparse_a=True, tlb_comp=64),
-            #     csb(arch, "CSR", 64),
-            #     csb(arch, "CSR", 64, sparse_a=True, tlb_comp=64),
-            # ]
+            nano(arch, 8, 3, "orig"),
+            nano(arch, 8, 3, "orig", load_balance=True),
+            nano(arch, 8, 3, "orig", load_balance=True, sparse_a=True, tlb_comp=48),
+            nano(arch, 8, 3, "orig", load_balance=True, sparse_a=True, tlb_comp=64),
+            nano(arch, 8, 3, "orig", load_balance=True, sparse_a=True, tlb_comp=128),
+        ],
+        "nano8_alt":  [
+            nano(arch, 8, 3, "alt"),
+            nano(arch, 8, 3, "alt",  load_balance=True, sparse_a=True, tlb_comp=64),
+
+            nano(arch, 8, 2, "alt"),
+            nano(arch, 8, 2, "alt",  load_balance=True, sparse_a=True, tlb_comp=64),
+        ],
+        "nano_tuned":  [
+            nano(arch, 4, 4, "identity", load_balance=True, tune="SOP4"),
+            nano(arch, 4, 4, "orig", load_balance=True, tune="SOP4"),
+            nano(arch, 8, 2, "orig", load_balance=True, tune="SOP4"),
+            nano(arch, 8, 2, "alt", load_balance=True, tune="SOP4")
+        ],
+        # "csb": [
+        #     csb(arch, "CSR", 32),
+        #     csb(arch, "CSR", 32, sparse_a=True, tlb_comp=64),
+        #     csb(arch, "CSR", 64),
+        #     csb(arch, "CSR", 64, sparse_a=True, tlb_comp=64),
+        # ]
         }
 
-        files = []
+
+        all_files = []
         for pack_name, methods in method_packs.items():
+            pack_names.add(pack_name)
+            files = []
+
             files += [
                 [
                     gen_dlmc_bench_exp(arch, methods, filelist,
@@ -252,15 +261,31 @@ for arch in ["AVX2", "AVX512", "NEON"]:
                 ] for filelist in ["all_dlmc_part1", "all_dlmc_part2", "all_dlmc_part3"]
             ]
 
-        files = flatten(files)
+            all_files += files
+
+            files = flatten(files)
+            run_all_script = SCRIPT_DIR + \
+                 f"/experiments/generated/{sub_dir}/{run_all_script_name}_{pack_name}_{arch}_{max_thread_count}_runall.sh"
+
+            print("Generating runall script: ", run_all_script)
+            with open(run_all_script, 'w+') as f:
+                f.write('SCRIPT_PATH=$(realpath $0)\n')
+                f.write('SCRIPT_DIR=$(dirname "${SCRIPT_PATH}")\n')
+                for file in files:
+                    f.write(f"/bin/bash $1 $SCRIPT_DIR/{arch}/{file} $2\n")
+
+        all_files = flatten(all_files)
         run_all_script = SCRIPT_DIR + \
-             f"/experiments/generated/{sub_dir}/{run_all_script_name}_{arch}_{max_thread_count}_runall.sh"
+                         f"/experiments/generated/{sub_dir}/{run_all_script_name}_{arch}_{max_thread_count}_runall.sh"
 
         print("Generating runall script: ", run_all_script)
         with open(run_all_script, 'w+') as f:
             f.write('SCRIPT_PATH=$(realpath $0)\n')
             f.write('SCRIPT_DIR=$(dirname "${SCRIPT_PATH}")\n')
-            for file in files:
+            for file in all_files:
                 f.write(f"/bin/bash $1 $SCRIPT_DIR/{arch}/{file} $2\n")
+
+for pack_name in pack_names:
+    gen_cluster_scripts(sub_dir, run_all_script_name + "_" + pack_name)
 
 gen_cluster_scripts(sub_dir, run_all_script_name)
