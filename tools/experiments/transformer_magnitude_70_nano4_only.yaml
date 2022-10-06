@@ -61,7 +61,7 @@ methods:
       sparse_a: 0
 
   - name: NANO_4_CAKE_LB_identity
-    method_id: nano
+    method_id: mkl_block
     options:
       packed: False
       load_balance: True

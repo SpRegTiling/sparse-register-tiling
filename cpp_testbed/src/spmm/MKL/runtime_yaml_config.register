@@ -9,4 +9,10 @@
     return [](additional_options_t options, SpMMTask<S>& task) -> SpMMFunctor<S>* {
         return new SpMMMKLDense<S>(task);
     };
+}},
+{"mkl_bsr", [](c4::yml::ConstNodeRef options) -> method_factory_t<S> {
+    int block_size; options["block_size"] >> block_size;
+    return [block_size](additional_options_t options, SpMMTask<S>& task) -> SpMMFunctor<S>* {
+        return new SpMMMKLBSR<S>(task, block_size);
+    };
 }}
