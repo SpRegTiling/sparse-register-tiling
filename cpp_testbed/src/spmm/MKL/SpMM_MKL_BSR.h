@@ -18,6 +18,7 @@ private:
     matrix_descr d;
     sparse_matrix_t m;
     MKL_INT *mkl_row_ptrs;
+    int bsr_num_blocks, bsr_required_storage, csr_required_storage;
 
 public:
     SpMMMKLBSR(typename Super::Task &task, int block_size) : Super(task) {
@@ -41,21 +42,45 @@ public:
                                   task.A->Lx);
         MKL_CHECK(status);
 
+        int csr_nnz = 0;
+        for(int i = 0; i < task.A->r; i++) {
+            csr_nnz += task.A->Lp[i+1] - task.A->Lp[i];
+        }
+        csr_required_storage = 2 * csr_nnz + task.A->r + 1;
+
         mkl_sparse_convert_bsr(m_csr, block_size, SPARSE_LAYOUT_ROW_MAJOR, SPARSE_OPERATION_NON_TRANSPOSE, &m);
         MKL_CHECK(status);
 
-        // if (run_inspector) {
-        //     status = mkl_sparse_set_mm_hint(m, SPARSE_OPERATION_NON_TRANSPOSE,
-        //                                     d, SPARSE_LAYOUT_ROW_MAJOR,
-        //                                     task.bCols, 1e9);
-        //     MKL_CHECK(status);
+        sparse_index_base_t m_indexing;
+        sparse_layout_t m_block_layout;
+        int m_rows, m_cols, m_block_size;
+        int *m_rows_start, *m_rows_end, *m_col_indx;
+        Scalar* m_values;
+        
+        MKL_SPARSE_TYPED_DISPATCH(export_bsr,
+                                  m,
+                                  &m_indexing,
+                                  &m_block_layout, &m_rows, &m_cols,
+                                  &m_block_size, &m_rows_start, &m_rows_end,
+                                  &m_col_indx,
+                                  &m_values);
 
-        //     status = mkl_sparse_set_memory_hint(m, SPARSE_MEMORY_AGGRESSIVE);
-        //     MKL_CHECK(status);
+        // mkl_sparse_s_export_bsr(m, indexing, block_layout, rows, cols, block_size, rows_start, rows_end, col_indx, values);
+        MKL_CHECK(status);
 
-        //     status = mkl_sparse_optimize(m);
-        //     MKL_CHECK(status);
-        // }
+        bsr_num_blocks = 0;
+        bsr_required_storage = 0;
+        for (int i = 0; i < m_rows; i++) {
+            bsr_num_blocks += m_rows_end[i] - m_rows_start[i];
+        }
+        bsr_required_storage = bsr_num_blocks * m_block_size * m_block_size * sizeof(Scalar) + 2 * m_rows * sizeof(int) + bsr_num_blocks * sizeof(int);
+
+    }
+
+    void log_extra_info(cpp_testbed::csv_row_t& row) override {
+        csv_row_insert(row, "mkl_csr_required_storage", csr_required_storage);
+        csv_row_insert(row, "mkl_bsr_num_blocks", bsr_num_blocks);
+        csv_row_insert(row, "required_storage", bsr_required_storage);
     }
 
     ~SpMMMKLBSR() {
