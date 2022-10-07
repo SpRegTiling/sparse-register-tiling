@@ -41,6 +41,10 @@ public:
         MKL_CHECK(status);
 
         if constexpr(run_inspector) {
+            mkl_set_num_threads(task.nThreads);
+            mkl_set_num_threads_local(task.nThreads);
+            mkl_set_dynamic(0);
+
             status = mkl_sparse_set_mm_hint(m, SPARSE_OPERATION_NON_TRANSPOSE,
                                             d, SPARSE_LAYOUT_ROW_MAJOR,
                                             task.bCols, 1e9);

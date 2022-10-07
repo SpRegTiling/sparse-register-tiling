@@ -161,6 +161,7 @@ template<typename Scalar>
 class SpMMExperiment {
     struct Method {
         std::string name;
+        std::string method_id;
         method_factory_t<Scalar> methodFactory;
         std::string rowReordering;
         std::string tuningParameterGrid;
@@ -363,7 +364,7 @@ class SpMMExperiment {
 
 
         auto factory = get_method_id_mapping<Scalar>()[method_id](options);
-        return { name, factory, row_reordering, tuning_grid, config };
+        return { name, method_id, factory, row_reordering, tuning_grid, config };
     }
 
     void expand_config(csv_row_t& csv_row, const Config& config) {
@@ -426,6 +427,17 @@ class SpMMExperiment {
             for (const int nThreads : nThreadsToTest) {
                 spmm_task.nThreads = nThreads;
 
+#ifdef MKL
+                mkl_set_num_threads(nThreads);
+                mkl_set_num_threads_local(nThreads);
+                mkl_set_dynamic(0);
+
+                if (nThreads != mkl_get_max_threads()) {
+                    std::cerr << "Max threads does not match" << std::endl;
+                    exit(-1);
+                }
+#endif
+
                 std::cout << "Begin Testing, nThreads: " << nThreads << " BCols: " << bCols << std::endl;
 
                 { // compute correct C
@@ -447,12 +459,9 @@ class SpMMExperiment {
                 std::map<std::string, std::string> names;
 
                 // Allow for parallel construction
-                omp_set_num_threads(16);
+                omp_set_num_threads(omp_get_num_procs());
 
-                // Setup the executors
-                #pragma omp parallel for
-                for (int i = 0; i < methods.size(); i++) {
-                    const auto& method = methods[i];
+                auto setup_method = [&, this](const struct Method& method) {
                     auto name = method.name;
 
                     auto executor = method.methodFactory(additional_options, spmm_task);
@@ -513,11 +522,19 @@ class SpMMExperiment {
                     if (save_tuning_results) {
                         ERROR_AND_EXIT("Saving tuning results support is deprecated");
                     }
+                };
+
+
+                // Setup the executors
+                #pragma omp parallel for
+                for (int i = 0; i < methods.size(); i++) {
+                    const auto& method = methods[i];
+                    if (method.method_id != "mkl") {
+                        setup_method(method);
+                    }
                 }
 
-
-
-
+                omp_set_num_threads(nThreads);
 #ifdef MKL
                 mkl_set_num_threads(nThreads);
                 mkl_set_num_threads_local(nThreads);
@@ -528,7 +545,15 @@ class SpMMExperiment {
                     exit(-1);
                 }
 #endif
-                omp_set_num_threads(nThreads);
+
+                // Cant setup inside OMP environment
+                for (int i = 0; i < methods.size(); i++) {
+                    const auto& method = methods[i];
+                    if (method.method_id == "mkl") {
+                        setup_method(method);
+                    }
+                }
+
 
                 // Test correctness
                 for (const auto& [method_uid, executor] : executors) {
@@ -552,7 +577,6 @@ class SpMMExperiment {
                 //
                 // Profiling if requested
                 //
-
 
                 if (profile) {
 #ifdef PAPI_AVAILABLE
