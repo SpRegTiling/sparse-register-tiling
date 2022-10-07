@@ -50,6 +50,11 @@ methods:
     options:
       inspector: True
 
+  - name: MKL_BSR
+    method_id: mkl_bsr
+    options:
+      block_size: 4
+
   - name: NANO_4_CAKE_identity
     method_id: nano
     options:
