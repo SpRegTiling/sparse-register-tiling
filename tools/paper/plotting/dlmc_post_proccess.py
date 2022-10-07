@@ -39,8 +39,8 @@ def after_loadhook(filename, df):
   return df
 
 files = glob.glob(f"{cluster_dir}/results/{subdir}/all_dlmc_*_{arch}_*.csv")
+files = [f for f in files if "sota" not in f]
 df, df_reloaded = cached_merge_and_load(files, "dlmc_merged", afterload_hook=after_loadhook, force_use_cache=False)
-
 
 
 @cache_df_processes("dlmc_merged_postprocessed")
@@ -62,7 +62,7 @@ def postprocess(df):
     return x
 
   def compute_time_vs_densemulti(x):
-    dense_runs = x[x["name"] == f'MLK_Dense sota']
+    dense_runs = x[x["name"] == f'MLK_Dense mkl']
     if dense_runs.empty:
       dense_runs = x[x["name"].str.contains("MKL_Dense")]
 

@@ -23,7 +23,7 @@ os.makedirs(PLOT_DIR, exist_ok=True)
 alt.data_transformers.enable('default', max_rows=1000000)
 unique_config_columns = ["name", "n", "m_tile", "k_tile", "n_tile"]
 
-PLOT_GFLOPS = True
+PLOT_GFLOPS = False
 PLOT_SPEEDUP = True
 color_scheme = 'purpleblue'
 
@@ -38,13 +38,11 @@ print(df["pruningMethod"].unique())
 print(methods)
 print(df.columns)
 
-methods =['MKL_Dense sota' 'MKL_Sparse sota' 'MKL_Sparse_IE' 'MKL_Dense tuned'
-          'NANO_M4N4_LB_tuned_identity' 'NANO_M4N4_LB_tuned_orig'
-          'NANO_M8N2_LB_tuned_orig' 'NANO_M8N2_LB_tuned_alt' 'MKL_Dense aspt'
-          'ASpT' 'MKL_Dense taco' 'TACO_4' 'TACO_16' 'MKL_Dense mkl'
-          'NANO_M8N3_LB_TLB64_SA_alt' 'NANO_M8N2_alt' 'NANO_M8N2_LB_TLB64_SA_alt'
-          'MKL_Dense orig' 'NANO_M4N4_LB_orig' 'NANO_M4N4_LB_TLB64_SA_orig'
-          'NANO_M4N6_LB_orig' 'NANO_M4N6_LB_TLB64_SA_orig']
+methods =['MKL_Dense sota', 'MKL_Sparse', 'MKL_Sparse_IE',
+          'NANO_M4N4_LB_tuned_identity', 'NANO_M4N4_LB_tuned_orig',
+          'NANO_M8N2_LB_TLB64_SA_orig', 'NANO_M8N3_LB_TLB64_SA_orig',
+          'NANO_M4N6_LB_TLB64_SA_orig',
+          'TACO_4', 'TACO_16', 'ASpT']
 
 pruning_methods = [
     'random_pruning', 'variational_dropout'
@@ -60,7 +58,6 @@ plot_save(plt, f"dlmc/boxplot_sparsity_ranges")
 def filter(df, **kwargs):
     bool_index = None
     for key, value in kwargs.items():
-        print(key, value)
         if isinstance(value, list):
             _bool_index = df[key].isin(value)
         else:
@@ -70,29 +67,6 @@ def filter(df, **kwargs):
         else:
             bool_index = bool_index & _bool_index
     return df[bool_index]
-
-
-# Scaling
-for n in df["n"].unique():
-    df_filtered = filter(df, n=n, pruningMethod=pruning_methods, name=methods, sparsityFolder=0.8)
-
-    fig, ax = plt.subplots(figsize=(12, 8))
-    p = sns.boxplot(data=df_filtered, x='numThreads', y='scaling', hue='name', ax=ax)
-    p.set_title(f"Scaling n={n}")
-    p.set(xlabel='Num Threads', ylabel='Speedup vs Single Thread')
-    plot_save(plt, f"dlmc/scaling/boxplot_{n}")
-
-
-# Dense Speedups
-for n in df["n"].unique():
-    for numThreads in df["numThreads"].unique():
-        df_filtered = filter(df, n=n, numThreads=numThreads, pruningMethod=pruning_methods, name=methods)
-        fig, ax = plt.subplots(figsize=(12, 8))
-        p = sns.boxplot(data=df_filtered, x='sparsityFolder', y='Speed-up vs MKL_Dense', hue='name', ax=ax)
-        p.set_title(f"Speedup vs MKL_Dense for n={n}, numThreads={numThreads}")
-        p.set(xlabel='Sparsity', ylabel='Speedup vs MKL_Dense')
-        plot_save(plt, f"dlmc/vsdense/boxplot_{n}_{numThreads}")
-
 
 def gflops_scatter(method, b_cols, n_threads, df):
     df_filtered = df[(df["name"] == method) & (df["n"] == b_cols) & (df["numThreads"] == n_threads)]
@@ -138,7 +112,7 @@ def speedup_scatter_all_bcols(method, n_threads, max_speedup, color, df):
         title=[f'{method}']
     ).mark_circle().encode(
         x=alt.X('sparsity:Q', title='Sparsity'),
-        y=alt.Y('Speed-up vs MKL_Dense:Q', title='Speed-up Over Dense', scale=alt.Scale(domain=[0, max_speedup])),
+        y=alt.Y('Speed-up vs MKL_Sparse:Q', title='Speed-up Over Sparse'),
         color=alt.Color(f'n:Q', title='b_cols', scale=alt.Scale(scheme=color_scheme))
     )
 
@@ -184,3 +158,28 @@ if PLOT_SPEEDUP:
                 title=f'b_cols: {b_colss}, numThreads: {n_threads}, matrices: {df["matrixPath"].nunique()}'
             )
             chart_save(chart, f'speedup/{cluster}_speedup_all_bcols_color_{color}_n_threads_{n_threads}')
+
+
+
+# Scaling
+for n in df["n"].unique():
+    df_filtered = filter(df, n=n, pruningMethod=pruning_methods, name=methods, sparsityFolder=0.8)
+
+    fig, ax = plt.subplots(figsize=(12, 8))
+    p = sns.boxplot(data=df_filtered, x='numThreads', y='scaling', hue='name', ax=ax)
+    p.set_title(f"Scaling n={n}")
+    p.set(xlabel='Num Threads', ylabel='Speedup vs Single Thread')
+    plot_save(plt, f"dlmc/scaling/boxplot_{n}")
+
+
+# Dense Speedups
+for n in df["n"].unique():
+    for numThreads in df["numThreads"].unique():
+        df_filtered = filter(df, n=n, numThreads=numThreads, pruningMethod=pruning_methods, name=methods)
+        fig, ax = plt.subplots(figsize=(12, 8))
+        p = sns.boxplot(data=df_filtered, x='sparsityFolder', y='Speed-up vs MKL_Dense', hue='name', ax=ax)
+        p.set_title(f"Speedup vs MKL_Dense for n={n}, numThreads={numThreads}")
+        p.set(xlabel='Sparsity', ylabel='Speedup vs MKL_Dense')
+        plot_save(plt, f"dlmc/vsdense/boxplot_{n}_{numThreads}")
+
+

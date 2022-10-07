@@ -45,7 +45,7 @@ def gen_dlmc_bench_exp(arch, test_methods, filelist, b_cols, num_threads, suffix
         "scalar_type": "float",
         "b_cols": b_cols,
         "n_threads": num_threads,
-        "output_file": f"results/{filelist_name}_{arch}{suffix}.csv",
+        "output_file": f"results2/{filelist_name}_{arch}{suffix}.csv",
         "save_tuning_results": False,
         "expand_config_parameters": [ "m_tile", "k_tile", "n_tile", "tiling_strategy", "sparse_a", "beta_10x" ]
     }
@@ -117,118 +117,140 @@ for arch in ["AVX2", "AVX512", "NEON"]:
         n_threads = {
             4: [1, 4],
             8: [1, 8],
-            32: [1, 16, 32],
+            32: [1, 32],
             64: [1, 16, 32, 64],
         }
 
         method_packs = {
-        "sota": [
-            {
-                "name": "MKL_Sparse",
-                "method_id": "mkl",
-                "options": {
-                    "inspector": False
-                }
-            },
-            {
-                "name": "MKL_Sparse_IE",
-                "method_id": "mkl",
-                "options": {
-                    "inspector": True
-                }
-            }],
-        "aspt": [
-            {
-                "name": "ASpT",
-                "method_id": "aspt",
-                "options": {
-                    "vec_width": "not-supported"
-                }
-            }],
-        "taco": [
-            {
-                "name": "TACO_4",
-                "method_id": "taco",
-                "options": {
-                    "width": 4
-                }
-            },
-            {
-                "name": "TACO_16",
-                "method_id": "taco",
-                "options": {
-                    "width": 16
-                }
-            },
+        # "aspt": [
+        #     {
+        #         "name": "ASpT",
+        #         "method_id": "aspt",
+        #         "options": {
+        #             "vec_width": "not-supported"
+        #         }
+        #     }],
+        # "taco": [
+        #     {
+        #         "name": "TACO_4",
+        #         "method_id": "taco",
+        #         "options": {
+        #             "width": 4
+        #         }
+        #     },
+        #     {
+        #         "name": "TACO_16",
+        #         "method_id": "taco",
+        #         "options": {
+        #             "width": 16
+        #         }
+        #     },
+        # ],
+        # "mkl": [
+        #     {
+        #         "name": "MKL_Sparse",
+        #         "method_id": "mkl",
+        #         "options": {
+        #             "inspector": False
+        #         }
+        #     },
+        #     {
+        #         "name": "MKL_Sparse_IE",
+        #         "method_id": "mkl",
+        #         "options": {
+        #             "inspector": True
+        #         }
+        #     }
+        # ],
+        "nano4_identity_NKM": [
+            nano(arch, 4, 4, "identity", "NKM"),
+            nano(arch, 4, 4, "identity", "NKM", load_balance=True, tlb_comp=32),
+            nano(arch, 4, 4, "identity", "NKM", load_balance=True, tlb_comp=64),
+            nano(arch, 4, 4, "identity", "NKM", load_balance=True, sparse_a=True),
+            nano(arch, 4, 4, "identity", "NKM", load_balance=True, sparse_a=True, tlb_comp=48),
+            nano(arch, 4, 4, "identity", "NKM", load_balance=True, sparse_a=True, tlb_comp=64),
+            nano(arch, 4, 4, "identity", "NKM", load_balance=True, sparse_a=True, tlb_comp=128),
+            nano(arch, 4, 6, "identity", "NKM"),
+            nano(arch, 4, 6, "identity", "NKM", load_balance=True, sparse_a=True, tlb_comp=48),
+            nano(arch, 4, 6, "identity", "NKM", load_balance=True, sparse_a=True, tlb_comp=64),
+            nano(arch, 4, 6, "identity", "NKM", load_balance=True, sparse_a=True, tlb_comp=128),
         ],
-        "mkl": [
-            {
-                "name": "MKL_Sparse",
-                "method_id": "mkl",
-                "options": {
-                    "inspector": False
-                }
-            },
-            {
-                "name": "MKL_Sparse_IE",
-                "method_id": "mkl",
-                "options": {
-                    "inspector": True
-                }
-            }
+        "nano4_orig_NKM": [
+            nano(arch, 4, 4, "orig", "NKM",     load_balance=True),
+            nano(arch, 4, 4, "orig", "NKM",     load_balance=True, sparse_a=True, tlb_comp=64),
+            nano(arch, 4, 6, "orig", "NKM",     load_balance=True),
+            nano(arch, 4, 6, "orig", "NKM",     load_balance=True, sparse_a=True, tlb_comp=64),
         ],
-        "nano4_identity": [
-            nano(arch, 4, 4, "identity"),
-            nano(arch, 4, 4, "identity", load_balance=True, tlb_comp=32),
-            nano(arch, 4, 4, "identity", load_balance=True, tlb_comp=64),
-            nano(arch, 4, 4, "identity", load_balance=True, sparse_a=True),
-            nano(arch, 4, 4, "identity", load_balance=True, sparse_a=True, tlb_comp=48),
-            nano(arch, 4, 4, "identity", load_balance=True, sparse_a=True, tlb_comp=64),
-            nano(arch, 4, 4, "identity", load_balance=True, sparse_a=True, tlb_comp=128),
-            nano(arch, 4, 4, "identity", load_balance=True, sparse_a=True, tlb_comp=64,  beta=1.5),
-            nano(arch, 4, 4, "identity", load_balance=True, sparse_a=True, tlb_comp=64,  beta=2.0),
-            nano(arch, 4, 4, "identity", load_balance=True, sparse_a=True, tlb_comp=128, beta=2.0),
-            nano(arch, 4, 4, "identity", load_balance=True, sparse_a=True, tlb_comp=64,  beta=3.0),
+        "nano8_orig_NKM":  [
+            nano(arch, 8, 2, "orig", "NKM"),
+            nano(arch, 8, 2, "orig", "NKM", load_balance=True),
+            nano(arch, 8, 2, "orig", "NKM", load_balance=True, tlb_comp=64),
+            nano(arch, 8, 2, "orig", "NKM", load_balance=True, sparse_a=True, tlb_comp=48),
+            nano(arch, 8, 2, "orig", "NKM", load_balance=True, sparse_a=True, tlb_comp=64),
+            nano(arch, 8, 2, "orig", "NKM", load_balance=True, sparse_a=True, tlb_comp=128),
+            nano(arch, 8, 3, "orig", "NKM"),
+            nano(arch, 8, 3, "orig", "NKM", load_balance=True),
+            nano(arch, 8, 3, "orig", "NKM", load_balance=True, sparse_a=True, tlb_comp=48),
+            nano(arch, 8, 3, "orig", "NKM", load_balance=True, sparse_a=True, tlb_comp=64),
+            nano(arch, 8, 3, "orig", "NKM", load_balance=True, sparse_a=True, tlb_comp=128),
+        ],
+        "nano8_alt_NKM":  [
+            nano(arch, 8, 3, "alt", "NKM"),
+            nano(arch, 8, 3, "alt", "NKM",  load_balance=True, sparse_a=True, tlb_comp=64),
+            nano(arch, 8, 2, "alt", "NKM"),
+            nano(arch, 8, 2, "alt", "NKM",  load_balance=True, sparse_a=True, tlb_comp=64),
+        ],
+        # "nano_tuned_NKM":  [
+        #     nano(arch, 4, 4, "identity", "NKM", load_balance=True, tune="SOP4"),
+        #     nano(arch, 4, 4, "orig",     "NKM", load_balance=True, tune="SOP4"),
+        #     nano(arch, 8, 2, "orig",     "NKM", load_balance=True, tune="SOP4"),
+        #     nano(arch, 8, 2, "alt",      "NKM", load_balance=True, tune="SOP4")
+        # ],
+        # "nano4_identity_KNM": [
+        #     nano(arch, 4, 4, "identity", "KNM"),
+        #     nano(arch, 4, 4, "identity", "KNM", load_balance=True, tlb_comp=32),
+        #     nano(arch, 4, 4, "identity", "KNM", load_balance=True, tlb_comp=64),
+        #     nano(arch, 4, 4, "identity", "KNM", load_balance=True, sparse_a=True),
+        #     nano(arch, 4, 4, "identity", "KNM", load_balance=True, sparse_a=True, tlb_comp=48),
+        #     nano(arch, 4, 4, "identity", "KNM", load_balance=True, sparse_a=True, tlb_comp=64),
+        #     nano(arch, 4, 4, "identity", "KNM", load_balance=True, sparse_a=True, tlb_comp=128),
+        #     nano(arch, 4, 6, "identity", "KNM"),
+        #     nano(arch, 4, 6, "identity", "KNM", load_balance=True, sparse_a=True, tlb_comp=48),
+        #     nano(arch, 4, 6, "identity", "KNM", load_balance=True, sparse_a=True, tlb_comp=64),
+        #     nano(arch, 4, 6, "identity", "KNM", load_balance=True, sparse_a=True, tlb_comp=128),
+        # ],
+        # "nano4_orig_KNM": [
+        #     nano(arch, 4, 4, "orig", "KNM",     load_balance=True),
+        #     nano(arch, 4, 4, "orig", "KNM",     load_balance=True, sparse_a=True, tlb_comp=64),
+        #     nano(arch, 4, 6, "orig", "KNM",     load_balance=True),
+        #     nano(arch, 4, 6, "orig", "KNM",     load_balance=True, sparse_a=True, tlb_comp=64),
+        # ],
+        # "nano8_orig_KNM":  [
+        #     nano(arch, 8, 2, "orig", "KNM"),
+        #     nano(arch, 8, 2, "orig", "KNM", load_balance=True),
+        #     nano(arch, 8, 2, "orig", "KNM", load_balance=True, tlb_comp=64),
+        #     nano(arch, 8, 2, "orig", "KNM", load_balance=True, sparse_a=True, tlb_comp=48),
+        #     nano(arch, 8, 2, "orig", "KNM", load_balance=True, sparse_a=True, tlb_comp=64),
+        #     nano(arch, 8, 2, "orig", "KNM", load_balance=True, sparse_a=True, tlb_comp=128),
+        #     nano(arch, 8, 3, "orig", "KNM"),
+        #     nano(arch, 8, 3, "orig", "KNM", load_balance=True),
+        #     nano(arch, 8, 3, "orig", "KNM", load_balance=True, sparse_a=True, tlb_comp=48),
+        #     nano(arch, 8, 3, "orig", "KNM", load_balance=True, sparse_a=True, tlb_comp=64),
+        #     nano(arch, 8, 3, "orig", "KNM", load_balance=True, sparse_a=True, tlb_comp=128),
+        # ],
+        # "nano8_alt_KNM":  [
+        #     nano(arch, 8, 3, "alt", "KNM"),
+        #     nano(arch, 8, 3, "alt", "KNM",  load_balance=True, sparse_a=True, tlb_comp=64),
+        #     nano(arch, 8, 2, "alt", "KNM"),
+        #     nano(arch, 8, 2, "alt", "KNM",  load_balance=True, sparse_a=True, tlb_comp=64),
+        # ],
+        # "nano_tuned_KNM":  [
+        #     nano(arch, 4, 4, "identity", "KNM", load_balance=True, tune="SOP4"),
+        #     nano(arch, 4, 4, "orig",     "KNM", load_balance=True, tune="SOP4"),
+        #     nano(arch, 8, 2, "orig",     "KNM", load_balance=True, tune="SOP4"),
+        #     nano(arch, 8, 2, "alt",      "KNM", load_balance=True, tune="SOP4")
+        # ],
 
-            nano(arch, 4, 6, "identity"),
-            nano(arch, 4, 6, "identity", load_balance=True, sparse_a=True, tlb_comp=48),
-            nano(arch, 4, 6, "identity", load_balance=True, sparse_a=True, tlb_comp=64),
-            nano(arch, 4, 6, "identity", load_balance=True, sparse_a=True, tlb_comp=128),
-        ],
-        "nano4_orig": [
-            nano(arch, 4, 4, "orig",     load_balance=True),
-            nano(arch, 4, 4, "orig",     load_balance=True, sparse_a=True, tlb_comp=64),
-
-            nano(arch, 4, 6, "orig",     load_balance=True),
-            nano(arch, 4, 6, "orig",     load_balance=True, sparse_a=True, tlb_comp=64),
-        ],
-        "nano8_orig":  [
-            nano(arch, 8, 2, "orig"),
-            nano(arch, 8, 2, "orig", load_balance=True),
-            nano(arch, 8, 2, "orig", load_balance=True, tlb_comp=64),
-            nano(arch, 8, 2, "orig", load_balance=True, sparse_a=True, tlb_comp=48),
-            nano(arch, 8, 2, "orig", load_balance=True, sparse_a=True, tlb_comp=64),
-            nano(arch, 8, 2, "orig", load_balance=True, sparse_a=True, tlb_comp=128),
-
-            nano(arch, 8, 3, "orig"),
-            nano(arch, 8, 3, "orig", load_balance=True),
-            nano(arch, 8, 3, "orig", load_balance=True, sparse_a=True, tlb_comp=48),
-            nano(arch, 8, 3, "orig", load_balance=True, sparse_a=True, tlb_comp=64),
-            nano(arch, 8, 3, "orig", load_balance=True, sparse_a=True, tlb_comp=128),
-        ],
-        "nano8_alt":  [
-            nano(arch, 8, 3, "alt"),
-            nano(arch, 8, 3, "alt",  load_balance=True, sparse_a=True, tlb_comp=64),
-
-            nano(arch, 8, 2, "alt"),
-            nano(arch, 8, 2, "alt",  load_balance=True, sparse_a=True, tlb_comp=64),
-        ],
-        "nano_tuned":  [
-            nano(arch, 4, 4, "identity", load_balance=True, tune="SOP4"),
-            nano(arch, 4, 4, "orig", load_balance=True, tune="SOP4"),
-            nano(arch, 8, 2, "orig", load_balance=True, tune="SOP4"),
-            nano(arch, 8, 2, "alt", load_balance=True, tune="SOP4")
-        ],
         # "csb": [
         #     csb(arch, "CSR", 32),
         #     csb(arch, "CSR", 32, sparse_a=True, tlb_comp=64),
@@ -237,29 +259,34 @@ for arch in ["AVX2", "AVX512", "NEON"]:
         # ]
         }
 
-
         all_files = []
         for pack_name, methods in method_packs.items():
             pack_names.add(pack_name)
             files = []
 
+            if "8" in pack_name:
+                b_cols = [128, 256]
+            else:
+                b_cols = [32, 128, 256]
+
             files += [
                 [
                     gen_dlmc_bench_exp(arch, methods, filelist,
-                                       b_cols=[32, 128, 256],
+                                       b_cols=b_cols,
                                        num_threads=n_threads[max_thread_count],
                                        suffix=f"dlmc_{arch}_{pack_name}_small_bcols_{max_thread_count}"),
                ] for filelist in ["all_dlmc_part1", "all_dlmc_part2", "all_dlmc_part3"]
             ]
 
-            files += [
-                [
-                    gen_dlmc_bench_exp(arch, methods, filelist,
-                                       b_cols=[512, 1024],
-                                       num_threads=n_threads[max_thread_count],
-                                       suffix=f"dlmc_{arch}_{pack_name}_large_bcols_{max_thread_count}"),
-                ] for filelist in ["all_dlmc_part1", "all_dlmc_part2", "all_dlmc_part3"]
-            ]
+            if "8" not in pack_name:
+                files += [
+                    [
+                        gen_dlmc_bench_exp(arch, methods, filelist,
+                                           b_cols=[512, 1024],
+                                           num_threads=n_threads[max_thread_count],
+                                           suffix=f"dlmc_{arch}_{pack_name}_large_bcols_{max_thread_count}"),
+                    ] for filelist in ["all_dlmc_part1", "all_dlmc_part2", "all_dlmc_part3"]
+                ]
 
             all_files += files
 

@@ -15,9 +15,9 @@ namespace cpp_testbed {
 
 typedef std::map<std::string, std::string> csv_row_t;
 
-void add_missing_columns(std::vector<csv_row_t>& rows);
+void add_missing_columns(std::map<std::string, csv_row_t>& rows);
 
-void write_csv_rows(std::string filepath, const std::vector<csv_row_t> &row);
+void write_csv_rows(std::string filepath, const std::map<std::string, csv_row_t> &row);
 void write_csv_row(std::string filepath, const csv_row_t &row);
 
 template<typename Value>

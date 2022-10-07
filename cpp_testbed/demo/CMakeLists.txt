@@ -1,6 +1,30 @@
 include(../cmake/LinkVtune.cmake)
 include(../cmake/LinkCake.cmake)
 
+##
+#   Google Benchmark
+##
+SET(CONFU_DEPENDENCIES_SOURCE_DIR ${CMAKE_SOURCE_DIR}/deps
+        CACHE PATH "Confu-style dependencies source directory")
+SET(CONFU_DEPENDENCIES_BINARY_DIR ${CMAKE_BINARY_DIR}/deps
+        CACHE PATH "Confu-style dependencies binary directory")
+
+IF(NOT DEFINED GOOGLEBENCHMARK_SOURCE_DIR)
+    MESSAGE(STATUS "Downloading Google Benchmark to ${CMAKE_BINARY_DIR}/googlebenchmark-source (define GOOGLEBENCHMARK_SOURCE_DIR to avoid it)")
+    CONFIGURE_FILE(../cmake/DownloadGoogleBenchmark.cmake "${CMAKE_BINARY_DIR}/googlebenchmark-download/CMakeLists.txt")
+    EXECUTE_PROCESS(COMMAND "${CMAKE_COMMAND}" -G "${CMAKE_GENERATOR}" .
+            WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/googlebenchmark-download")
+    EXECUTE_PROCESS(COMMAND "${CMAKE_COMMAND}" --build .
+            WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/googlebenchmark-download")
+    SET(GOOGLEBENCHMARK_SOURCE_DIR "${CMAKE_BINARY_DIR}/googlebenchmark-source" CACHE STRING "Google Benchmark source directory")
+ENDIF()
+
+SET(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "")
+ADD_SUBDIRECTORY(
+        "${GOOGLEBENCHMARK_SOURCE_DIR}"
+        "${CONFU_DEPENDENCIES_BINARY_DIR}/googlebenchmark")
+
+
 if (PAPI_FOUND)
     set(SPMM_DEMO_LIBS ${SPMM_DEMO_LIBS} ${PAPI_LIBRARIES})
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DPAPI_AVAILABLE")
@@ -26,6 +50,7 @@ add_executable(SPMM_demo SPMM_demo.cpp
         ${SOP_SOURCES}
         ${SOP_GENERATED_SRCS}
 )
+
 target_compile_options(SPMM_demo PRIVATE -save-temps=obj -funroll-loops ${SPMM_METHODS_CXX_FLAGS})
 target_include_directories(SPMM_demo PUBLIC
         ${SPMM_DEMO_INCLUDES}
@@ -39,9 +64,14 @@ target_link_libraries(SPMM_demo
         ${SPMM_METHODS_LIBRARIES}
         ${SPMM_DEMO_LIBS}
         -lstdc++fs
+        benchmark
         ryml::ryml
 ) # stdc++fs for c++ filesystem
 link_vtune_if_available(SPMM_demo)
+
+#TARGET_INCLUDE_DIRECTORIES(x24-transpose-bench PRIVATE . include src)
+#TARGET_LINK_LIBRARIES(x24-transpose-bench PRIVATE benchmark bench-utils cpuinfo fp16 pthreadpool)
+
 
 #add_executable(SPMM_analyze SPMM_analyze.cpp ${SRC} ${SPMM_SOURCES})
 #target_compile_options(SPMM_analyze PRIVATE -save-temps=obj -funroll-loops)

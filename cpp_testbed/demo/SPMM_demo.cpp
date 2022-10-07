@@ -7,6 +7,7 @@
 #include <cxxabi.h>
 #include <filesystem>
 #include <iostream>
+#include <sstream>
 #include <iomanip>      // std::setw
 //#include <aligned_new>
 
@@ -16,6 +17,9 @@
 
 #include "utils/misc.h"
 #include "utils/error.h"
+
+// Google Benchmark
+#include "benchmark/benchmark.h"
 
 #include "Input.h"
 #include "SparseMatrixIO.h"
@@ -132,6 +136,22 @@ void report_mismatches(SpMMTask<T> &task) {
         }
     }
 }
+
+/***********************************************************
+ *  Benchmark utils
+ **********************************************************/
+
+class SavedRunsReporter: public benchmark::BenchmarkReporter {
+public:
+    std::vector<std::vector<Run>> latest_runs;
+    virtual bool ReportContext(const Context& context) BENCHMARK_OVERRIDE {
+        return true;
+    };
+    virtual void ReportRuns(const std::vector<Run>& report) BENCHMARK_OVERRIDE {
+        latest_runs.push_back(report);
+    };
+
+};
 
 /***********************************************************
  *  Experiment
@@ -369,7 +389,7 @@ class SpMMExperiment {
         std::map<std::string, RowDistance*> rowDistanceMeasures;
 
         constexpr int WARMUP_ITERATIONS = 3;
-        constexpr int MEASURED_ITERATIONS = 17; // NOTE: Each measured iteration will consist of multiple runs
+        constexpr int MEASURED_ITERATIONS = 7; // NOTE: Each measured iteration will consist of multiple runs
 
         typedef CSR<Scalar> CSR;
         auto As = cpp_testbed::readSparseMatrix<CSR>(matrixPath);
@@ -406,15 +426,7 @@ class SpMMExperiment {
             for (const int nThreads : nThreadsToTest) {
                 spmm_task.nThreads = nThreads;
 
-#ifdef RASPBERRY_PI
-                int runs_per_iteration = 1;
-#else
-                int runs_per_iteration = std::max((int) std::ceil(1e8 / (spmm_task.A->nz * spmm_task.bCols)), 1);
-                runs_per_iteration *= std::max(1, spmm_task.nThreads / 2);
-#endif
-
-                std::cout << "Begin Testing, nThreads: " << nThreads << " BCols: " << bCols;
-                std::cout << " Runs per iter: " << runs_per_iteration << " nnz_per_bcol " <<  runs_per_iteration << std::endl;
+                std::cout << "Begin Testing, nThreads: " << nThreads << " BCols: " << bCols << std::endl;
 
                 { // compute correct C
                     if (get_method_id_mapping<Scalar>().count(BASELINE_METHOD) == 0) {
@@ -430,27 +442,48 @@ class SpMMExperiment {
                     std::memcpy(spmm_task.correct_C, spmm_task.C, spmm_task.cNumel() * sizeof(Scalar));
                 }
 
-                std::vector<csv_row_t> csv_rows;
-                csv_rows.reserve(methods.size());
+                std::map<std::string, csv_row_t> csv_rows;
+                std::map<std::string, SpMMFunctor<Scalar>*> executors;
+                std::map<std::string, std::string> names;
 
-                double baseline_time = 0;
-                for (const auto &method: methods) {
-#ifdef MKL
-                    // Configure everytime to just make sure nothing gets messed up
-                    mkl_set_num_threads(nThreads);
-                    mkl_set_num_threads_local(nThreads);
-                    mkl_set_dynamic(0);
+                // Allow for parallel construction
+                omp_set_num_threads(16);
 
-                    if (nThreads != mkl_get_max_threads()) {
-                        std::cerr << "Max threads does not match" << std::endl;
-                        exit(-1);
-                    }
-#endif
-                    omp_set_num_threads(nThreads);
-
-
-                    csv_row_t csv_row;
+                // Setup the executors
+                #pragma omp parallel for
+                for (int i = 0; i < methods.size(); i++) {
+                    const auto& method = methods[i];
                     auto name = method.name;
+
+                    auto executor = method.methodFactory(additional_options, spmm_task);
+                    ERROR_AND_EXIT_IF(!executor, "Failed to create executor: " << name);
+
+                    #pragma omp critical
+                    {
+                        if (!method.rowReordering.empty()) {
+                            ERROR_AND_EXIT("Row reordering support depricated");
+                        }
+
+                        if (!method.tuningParameterGrid.empty()) {
+                            if (tuningParameterGrids.count(method.tuningParameterGrid) == 0) {
+                                std::cerr << "No tuning grid " << method.tuningParameterGrid << " defined" << std::endl;
+                                exit(-1);
+                            }
+
+                            for (int iter = 0; iter < WARMUP_ITERATIONS; iter++) { (*executor)(); }
+                            executor->tune(tuningParameterGrids[method.tuningParameterGrid], save_tuning_results);
+                        } else if (method.config) {
+                            executor->set_config(method.config.value());
+                        }
+                    }
+
+                    std::stringstream ss; ss << (uintptr_t)executor;
+                    std::string method_uid = ss.str();
+
+                    csv_row_t* csv_row_ptr = nullptr;
+                    #pragma omp critical
+                    csv_row_ptr = &csv_rows[method_uid];
+                    auto& csv_row = *csv_row_ptr;
 
                     csv_row_insert(csv_row, "name", name);
                     csv_row_insert(csv_row, "matrixPath", matrixPath);
@@ -465,129 +498,130 @@ class SpMMExperiment {
                     csv_row_insert(csv_row, "n", spmm_task.n());
                     csv_row_insert(csv_row, "nnz", spmm_task.A->nz);
 
-                    std::cout << "Running: " << std::setw(40) << std::left << name;
-                    std::vector<double> timings(MEASURED_ITERATIONS);
 
-                    auto executor = method.methodFactory(additional_options, spmm_task);
-                    ERROR_AND_EXIT_IF(!executor,
-                                      "Failed to create executor: " << name);
+                    //  Register Benchmark
+                    #pragma omp critical
+                    {
+                        executors[method_uid] = executor;
+                        names[method_uid] = name;
 
-                    if (!method.rowReordering.empty()) {
-                        if (rowReorderingDefinitions.count(method.rowReordering) == 0) {
-                            std::cerr << "Row ordering " << method.rowReordering << " not defined, used by ";
-                            std::cerr << method.name << std::endl;
-                            exit(-1);
-                        }
-
-                        if (rowOrderings.count(method.rowReordering) == 0) {
-                            auto def = rowReorderingDefinitions[method.rowReordering];
-                            if (rowDistanceMeasures.count(def.distance) == 0)
-                                rowDistanceMeasures[def.distance] = construct_distance(def.distance, pattern);
-
-                            rowOrderings[def.name] = compute_ordering(def.algo, 16, rowDistanceMeasures[def.distance]);
-                        }
-
-                        executor->set_row_reordering(rowOrderings[method.rowReordering]);
+                        benchmark::RegisterBenchmark(method_uid.c_str(), [executor](benchmark::State& st) {
+                            for (auto _: st) { (*executor)(); }
+                        })->Unit(benchmark::kMicrosecond);
                     }
+
+                    if (save_tuning_results) {
+                        ERROR_AND_EXIT("Saving tuning results support is deprecated");
+                    }
+                }
+
+
+
+
+#ifdef MKL
+                mkl_set_num_threads(nThreads);
+                mkl_set_num_threads_local(nThreads);
+                mkl_set_dynamic(0);
+
+                if (nThreads != mkl_get_max_threads()) {
+                    std::cerr << "Max threads does not match" << std::endl;
+                    exit(-1);
+                }
+#endif
+                omp_set_num_threads(nThreads);
+
+                // Test correctness
+                for (const auto& [method_uid, executor] : executors) {
+                    auto &csv_row = csv_rows[method_uid];
 
                     zero(spmm_task.C, spmm_task.cNumel());
-
-                    if (!method.tuningParameterGrid.empty()) {
-                        if (tuningParameterGrids.count(method.tuningParameterGrid) == 0) {
-                            std::cerr << "No tuning grid " << method.tuningParameterGrid << " defined" << std::endl;
-                            exit(-1);
-                        }
-
-                        for (int iter = 0; iter < WARMUP_ITERATIONS; iter++) { (*executor)(); }
-                        executor->tune(tuningParameterGrids[method.tuningParameterGrid], save_tuning_results);
-                    } else if (method.config) {
-                        executor->set_config(method.config.value());
-                    }
-
-                    for (int iter = 0; iter < WARMUP_ITERATIONS; iter++) { (*executor)(); }
-
-#ifdef VTUNE_AVAILABLE
-                    std::string event_name =
-                        method.name + " n " + std::to_string(bCols) \
-                        + " nt " + std::to_string(spmm_task.nThreads);
-                    __itt_event mark_event = __itt_event_create( event_name.c_str(), event_name.size() );
-                    __itt_resume();
-                    __itt_event_start( mark_event );
-#endif
-                    report_packing_time = true;
-                    for (int iter = 0; iter < MEASURED_ITERATIONS; iter++) {
-                        sym_lib::timing_measurement t1;
-
-                        t1.start_timer();
-                        for (int run = 0; run < runs_per_iteration; run++) (*executor)();
-                        t1.measure_elapsed_time();
-
-                        timings[iter] = t1.elapsed_time / runs_per_iteration;
-                    }
-                    report_packing_time = false;
-
-#ifdef VTUNE_AVAILABLE
-                    __itt_event_end( mark_event );
-                    __itt_pause();
-#endif
+                    (*executor)();
 
                     executor->copy_output();
                     auto is_correct = verify<Scalar>(spmm_task);
                     auto is_correct_str = is_correct ? "correct" : "incorrect";
 
-                    std::cout << std::setw(12) << std::left << is_correct_str;
-                    std::cout << std::setw(20) << std::to_string(median(timings) * 1e6) + " us";
-
-                    if (baseline_time == 0) {
-                        baseline_time = median(timings);
-                    }
-
-                    std::cout << std::setw(12) << std::left << std::to_string(baseline_time / median(timings)) + "x";
-
-                    if (profile) {
-#ifdef PAPI_AVAILABLE
-                        auto profiler = Profiler<SpMMFunctor<Scalar>>(executor);
-                        profiler.profile();
-                        profiler.log_counters(csv_row);
-#else
-                        std::cerr << "WARNING: the profile flag was set but the app was not compiled with PAPI support";
-                        std::cerr << " skipping profiling" << std::endl;
-#endif
-                    }
-
-                    std::string config_string;
-                    if (!method.tuningParameterGrid.empty() || method.config) {
-                        config_string += executor->get_config_rep();
-                    }
-
-
-                    std::cout << config_string;
-                    std::cout << std::endl;
-
-                    csv_row_insert(csv_row, "tuning", config_string);
-                    csv_row_insert(csv_row, "time mean", mean(timings));
-                    csv_row_insert(csv_row, "time median", median(timings));
-                    csv_row_insert(csv_row, "correct", is_correct_str);
-
                     if (!is_correct) {
+                        std::cout << "Incorrect result for " << csv_row["name"] << std::endl;
                         report_mismatches(spmm_task);
                     }
 
+                    csv_row_insert(csv_row, "correct", is_correct_str);
+                }
+
+                //
+                // Profiling if requested
+                //
+
+
+                if (profile) {
+#ifdef PAPI_AVAILABLE
+                    for (const auto& [method_uid, executor] : executors) {
+                        auto &csv_row = csv_rows[method_uid];
+
+                        for (int i = 0; i < 3; i++) { (*executor)(); } // Warmup
+                        auto profiler = Profiler<SpMMFunctor<Scalar>>(executor);
+                        profiler.profile();
+                        profiler.log_counters(csv_row);
+                    }
+#else
+                    std::cerr << "WARNING: the profile flag was set but the app was not compiled with PAPI support";
+                        std::cerr << " skipping profiling" << std::endl;
+#endif
+                }
+
+
+
+                SavedRunsReporter saved_runs_reporter;
+                benchmark::RunSpecifiedBenchmarks(&saved_runs_reporter);
+                benchmark::ClearRegisteredBenchmarks();
+
+                for (auto& runs : saved_runs_reporter.latest_runs) {
+                    for (auto& run : runs) {
+                        const auto &method_uid = run.run_name.str();
+                        const auto &name = names[method_uid];
+
+                        auto &executor = *executors[method_uid];
+                        auto &csv_row = csv_rows[method_uid];
+
+                        csv_row_insert(csv_row, "time " + run.aggregate_name, run.GetAdjustedRealTime());
+                        csv_row_insert(csv_row, "time cpu " + run.aggregate_name, run.GetAdjustedCPUTime());
+                        csv_row_insert(csv_row, "iterations", run.iterations);
+                    }
+                }
+
+                for (const auto& [method_uid, executor] : executors) {
+                    auto &csv_row = csv_rows[method_uid];
+                    if (executor == nullptr) continue;
+
+                    // Store Config
+                    std::string config_string;
+                    config_string += executor->get_config_rep();
+                    csv_row_insert(csv_row, "config", config_string);
+
+                    // Store extra info
                     executor->log_extra_info(csv_row);
 
-                    if (save_tuning_results) {
-                        csv_row_insert(csv_row, "tuning", "saved result");
-                        for (const auto &[config, time_median, time_mean]: executor->saved_results) {
-                            expand_config(csv_row, config);
-                            csv_row_insert(csv_row, "time mean", time_mean);
-                            csv_row_insert(csv_row, "time median", time_median);
-                            csv_rows.push_back(csv_row);
-                        }
-                    }
-
-                    csv_rows.push_back(std::move(csv_row));
+                    // Cleanup
                     delete executor;
                 }
+
+                for (const auto& [method_uid, csv_row] : csv_rows) {
+                    std::cout << std::setw(20) << csv_row.at("name") << " ";
+                    if (csv_row.find("time cpu mean") != csv_row.end()) {
+                        std::cout << std::setw(20) << csv_row.at("time cpu mean") << " ";
+                    }
+
+                    if (csv_row.find("time cpu median") != csv_row.end()) {
+                        std::cout << std::setw(20) << csv_row.at("time cpu median") << " ";
+                    }
+
+                    if (csv_row.find("time cpu stddev") != csv_row.end()) {
+                        std::cout << std::setw(20) << csv_row.at("time cpu stddev") << " ";
+                    }
+                    std::cout << std::endl;
+                }
+                std::cout << std::endl;
 
                 add_missing_columns(csv_rows);
                 write_csv_rows(csv_file, csv_rows);
@@ -712,6 +746,18 @@ public:
     }
 
     int operator()() {
+        int argc = 5;
+        char strs[argc][256];
+        std::strcpy(strs[0], "SpMM_Demo");
+        std::strcpy(strs[1], "--benchmark_display_aggregates_only=true");
+        std::strcpy(strs[2], "--benchmark_report_aggregates_only=true");
+        std::strcpy(strs[3], "--benchmark_repetitions=7");
+        std::strcpy(strs[4], "--benchmark_min_time=0.015");
+        char* argv[] = {strs[0], strs[1], strs[2], strs[3], strs[4]};
+
+        benchmark::Initialize(&argc, argv);
+        benchmark::ReportUnrecognizedArguments(argc, argv);
+
         if (matricesToTest.size() == 0) {
             std::cerr << "No matrices listed, please either supply matrices:{  filelist: path } ";
             std::cerr << "or matrices: paths: [path, path, ...]" << std::endl;
@@ -748,6 +794,7 @@ public:
             if (retVal) return retVal;
         }
 
+        benchmark::Shutdown();
         return 0;
     }
 };

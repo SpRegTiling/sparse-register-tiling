@@ -26,16 +26,16 @@ std::string to_string_with_precision(const T a_value, const int n)
 typedef std::map<std::string, std::pair<std::ofstream, std::set<std::string>>> csv_files_cache_t;
 static csv_files_cache_t  csv_files_cache;
 
-void add_missing_columns(std::vector<csv_row_t>& rows) {
+void add_missing_columns(std::map<std::string, csv_row_t>& rows) {
     std::vector<std::string> keys;
-    for (const auto& row : rows) {
+    for (const auto& [method, row] : rows) {
         for (const auto &[key, _]: row) {
             keys.push_back(key);
         }
     }
 
     auto column_names = std::set(keys.begin(), keys.end());
-    for (auto& row : rows) {
+    for (auto& [method, row] : rows) {
         for (const auto &name: column_names) {
             if (row.find(name) == row.end()) {
                 csv_row_insert(row, name, "");
@@ -46,9 +46,9 @@ void add_missing_columns(std::vector<csv_row_t>& rows) {
 
 void write_csv_rows(
     std::string filepath,
-    const std::vector<csv_row_t> &rows
+    const std::map<std::string, csv_row_t>& rows
 ) {
-    for (const auto& row : rows) { write_csv_row(filepath, row); }
+    for (auto& [method, row] : rows) { write_csv_row(filepath, row); }
 }
 
 void write_csv_row(
