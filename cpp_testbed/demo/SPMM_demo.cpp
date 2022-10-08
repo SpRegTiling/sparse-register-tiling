@@ -9,6 +9,7 @@
 #include <iostream>
 #include <sstream>
 #include <iomanip>      // std::setw
+#include <optional>
 //#include <aligned_new>
 
 #include <omp.h>

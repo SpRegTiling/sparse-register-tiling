@@ -155,6 +155,29 @@ for arch in ["AVX2", "AVX512", "NEON"]:
                 }
             }
         ],
+        "mkl_bsr": [
+            {
+                "name": "MKL_BSR_B2",
+                "method_id": "mkl_bsr",
+                "options": {
+                    "block_size": 2
+                }
+            },
+            {
+                "name": "MKL_BSR_B4",
+                "method_id": "mkl_bsr",
+                "options": {
+                    "block_size": 4
+                }
+            },
+            {
+                "name": "MKL_BSR_B8",
+                "method_id": "mkl_bsr",
+                "options": {
+                    "block_size": 8
+                }
+            }
+        ],
         "nano4_identity_NKM": [
             nano(arch, 4, 4, "identity", "NKM"),
             nano(arch, 4, 4, "identity", "NKM", load_balance=True, tlb_comp=32),
