@@ -630,6 +630,29 @@ class SpMMExperiment {
                     delete executor;
                 }
 
+
+#if 1
+                double dense_time = 0;
+                std::vector<std::pair<std::string, double>> times;
+                for (const auto& [method_uid, csv_row] : csv_rows) {
+                    auto& name = names[method_uid];
+                    if (csv_row.find("time mean") == csv_row.end()) continue;
+                    if (name == "MKL_Dense") {
+                        dense_time = std::stod(csv_row.at("time median"));
+                    }
+                    times.push_back({name, std::stod(csv_row.at("time median"))});
+                }
+
+                std::sort(times.begin(), times.end(), [](auto &left, auto &right) {
+                    return left.second < right.second;
+                });
+
+                for (int i = 0; i < 3; i++) {
+                    std::cout << i + 1 << ". " << times[i].first << " " << times[i].second << std::endl;
+                }
+
+                std::cout << "Dense: " << dense_time << std::endl;
+#else
                 for (const auto& [method_uid, csv_row] : csv_rows) {
                     std::cout << std::setw(20) << csv_row.at("name") << " ";
                     if (csv_row.find("time cpu mean") != csv_row.end()) {
@@ -646,7 +669,7 @@ class SpMMExperiment {
                     std::cout << std::endl;
                 }
                 std::cout << std::endl;
-
+#endif
                 add_missing_columns(csv_rows);
                 write_csv_rows(csv_file, csv_rows);
             }

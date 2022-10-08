@@ -51,7 +51,7 @@
 
 #define A_ROW_TIMES_B_COL_PANEL_TEMPLATE(TILE_SIZE_IN_VECTORS)                                              \
 template<typename VecType, typename StorageTypes, bool row_swizzle, bool load_c>                            \
-__attribute__((always_inline)) int _a_row_times_b_col_panel_##TILE_SIZE_IN_VECTORS (                                       \
+inline __attribute__((always_inline)) int _a_row_times_b_col_panel_##TILE_SIZE_IN_VECTORS (                 \
     int m, int k, int n,                                                                                    \
     int i, int j,                                                                                           \
     const int* __restrict__ row_indices,                                                                    \
