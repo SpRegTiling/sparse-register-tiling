@@ -22,12 +22,12 @@ alt.data_transformers.enable('default', max_rows=1000000)
 
 cluster_info = {
     "graham": ("/home/lwilkinson/graham", "AVX2", 32),
-    "niagara": ("/home/lwilkinson/niagara/2/", "AVX512", 32),
+    "niagara": ("/home/lwilkinson/niagara/2", "AVX512", 32),
 }
 
 cluster = "niagara"
 cluster_dir, arch, threads = cluster_info[cluster]
-subdir = ""
+subdir = "oct_10"
 
 
 def after_loadhook(filename, df):

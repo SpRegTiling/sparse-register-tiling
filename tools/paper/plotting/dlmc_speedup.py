@@ -28,7 +28,7 @@ PLOT_SPEEDUP = True
 color_scheme = 'purpleblue'
 
 cluster = 'niagara'
-df = pd.read_csv(SCRIPT_DIR + '/.cache/dlmc_merged_postprocessed.csv')
+df = pd.read_csv(SCRIPT_DIR + '/.cache/dlmc_merged_postprocessed_v2.csv')
 
 b_colss = sorted(df["n"].unique())
 n_threadss = df["numThreads"].unique()
@@ -38,11 +38,9 @@ print(df["pruningMethod"].unique())
 print(methods)
 print(df.columns)
 
-methods =['MKL_Dense sota', 'MKL_Sparse', 'MKL_Sparse_IE',
-          'NANO_M4N4_LB_tuned_identity', 'NANO_M4N4_LB_tuned_orig',
-          'NANO_M8N2_LB_TLB64_SA_orig', 'NANO_M8N3_LB_TLB64_SA_orig',
-          'NANO_M4N6_LB_TLB64_SA_orig',
-          'TACO_4', 'TACO_16', 'ASpT']
+methods =['MKL_Dense mkl', 'MKL_Sparse', 'MKL_Sparse_IE',
+          'NANO_Best',
+          'ASpT']
 
 pruning_methods = [
     'random_pruning', 'variational_dropout'
@@ -68,7 +66,7 @@ def filter(df, **kwargs):
             bool_index = bool_index & _bool_index
     return df[bool_index]
 
-def gflops_scatter(method, b_cols, n_threads, df):
+def gflops_scatter(method, b_cols, n_threads, df_filtered):
     df_filtered = df[(df["name"] == method) & (df["n"] == b_cols) & (df["numThreads"] == n_threads)]
     return alt.Chart(
         df_filtered,
@@ -81,8 +79,7 @@ def gflops_scatter(method, b_cols, n_threads, df):
     )
 
 
-def gflops_scatter_all_bcols(method, n_threads, max_gflopss, color, df):
-    df_filtered = df[(df["name"] == method) & (df["numThreads"] == n_threads)]
+def gflops_scatter_all_bcols(max_gflopss, color, df_filtered):
     return alt.Chart(
         df_filtered,
         title=[f'{method}']
@@ -105,48 +102,64 @@ def speedup_scatter_all_bcols(method, n_threads, max_speedup, color, df):
     )
 
 
-def speedup_scatter_all_bcols(method, n_threads, max_speedup, color, df):
-    df_filtered = df[(df["name"] == method) & (df["numThreads"] == n_threads)]
+def speedup_scatter_all_bcols(over, max_speedup, color, df_filtered):
     return alt.Chart(
         df_filtered,
-        title=[f'{method}']
+        title=[f'{method}'],
+        height=160
     ).mark_circle().encode(
-        x=alt.X('sparsity:Q', title='Sparsity'),
-        y=alt.Y('Speed-up vs MKL_Sparse:Q', title='Speed-up Over Sparse'),
+        x=alt.X('sparsity:Q', title='Sparsity', scale=alt.Scale(domain=[0.5, 1.0])),
+        y=alt.Y(f'{over}:Q', title=f'{over}', scale=alt.Scale(domain=[0, max_speedup])),
         color=alt.Color(f'n:Q', title='b_cols', scale=alt.Scale(scheme=color_scheme))
     )
 
 
-if PLOT_GFLOPS:
-    for color in ["n", "sparsity"]:
-        for n_threads in n_threadss:
-            charts = []
-            max_gflopss = df[df["numThreads"] == n_threads]["gflops/s"].max()
+# if PLOT_GFLOPS:
+#     for color in ["n", "sparsity"]:
+#         for n_threads in n_threadss:
+#             charts = []
+#             max_gflopss = df[df["numThreads"] == n_threads]["gflops/s"].max()
+#
+#             for method in methods:
+#                 print("Plotting GFLOPS for method:", method)
+#                 if ('NANO_Best' in method):
+#                     df_filtered = df[(df["best_nano"]) & (df["numThreads"] == n_threads)]
+#                 else:
+#                     df_filtered = df[(df["name"] == method) & (df["numThreads"] == n_threads)]
+#
+#                 chart = gflops_scatter_all_bcols('Speed-up vs MKL_Sparse', max_gflopss, color, df_filtered)
+#                 charts.append(chart)
+#
+#             chart = create_chart_grid(charts, 4)
+#             chart = chart.resolve_scale(
+#                 y='shared',
+#                 color='shared'
+#             )
+#             chart = chart.properties(
+#                 title=f'b_cols: {b_colss}, numThreads: {n_threads}, matrices: {df["matrixPath"].nunique()}'
+#             )
+#             chart_save(chart, f'gflops_{color}_all_bcols_{n_threads}_threads')
 
-            for method in methods:
-                print("Plotting GFLOPS for method:", method)
-                chart = gflops_scatter_all_bcols(method, n_threads, max_gflopss, color, df)
-                charts.append(chart)
-
-            chart = create_chart_grid(charts, 4)
-            chart = chart.resolve_scale(
-                y='shared',
-                color='shared'
-            )
-            chart = chart.properties(
-                title=f'b_cols: {b_colss}, numThreads: {n_threads}, matrices: {df["matrixPath"].nunique()}'
-            )
-            chart_save(chart, f'gflops_{color}_all_bcols_{n_threads}_threads')
+df = df[df["sparsity"] >= 0.5]
 
 if PLOT_SPEEDUP:
     for color in ["n", "sparsity"]:
         for n_threads in n_threadss:
+            df["Speed-up vs Best MKL"] = df[['Speed-up vs MKL_Dense', 'Speed-up vs MKL_Sparse']].min(axis=1)
+
             charts = []
-            max_speedup = df[df["numThreads"] == n_threads]["Speed-up vs MKL_Dense"].max()
+            merged_chart = None
+            max_speedup = 8#df[df["numThreads"] == n_threads]["Speed-up vs MKL_Dense"].max()
 
             for method in methods:
                 print("Plotting speedup for method:", method)
-                chart = speedup_scatter_all_bcols(method, n_threads, max_speedup, color, df)
+
+                if ('NANO_Best' in method):
+                    df_filtered = df[(df["best_nano"]) & (df["numThreads"] == n_threads)]
+                else:
+                    df_filtered = df[(df["name"] == method) & (df["numThreads"] == n_threads)]
+
+                chart = speedup_scatter_all_bcols('Speed-up vs MKL_Sparse', max_speedup, color, df_filtered)
                 charts.append(chart)
 
             chart = create_chart_grid(charts, 4)
@@ -155,9 +168,64 @@ if PLOT_SPEEDUP:
                 color='shared'
             )
             chart = chart.properties(
-                title=f'b_cols: {b_colss}, numThreads: {n_threads}, matrices: {df["matrixPath"].nunique()}'
+                title=f'Over Sparse, b_cols: {b_colss}, numThreads: {n_threads}, matrices: {df["matrixPath"].nunique()}'
             )
-            chart_save(chart, f'speedup/{cluster}_speedup_all_bcols_color_{color}_n_threads_{n_threads}')
+
+            merged_chart = chart
+            charts = []
+            max_speedup = 8
+
+
+            for method in methods:
+                print("Plotting speedup for method:", method)
+
+                if ('NANO_Best' in method):
+                    df_filtered = df[(df["best_nano"]) & (df["numThreads"] == n_threads)]
+                else:
+                    df_filtered = df[(df["name"] == method) & (df["numThreads"] == n_threads)]
+
+                df_filtered = df_filtered[df_filtered['Speed-up vs MKL_Dense'] <= max_speedup]
+                chart = speedup_scatter_all_bcols('Speed-up vs MKL_Dense', max_speedup, color, df_filtered)
+                charts.append(chart)
+
+            chart = create_chart_grid(charts, 4)
+            chart = chart.resolve_scale(
+                y='shared',
+                color='shared'
+            )
+            chart = chart.properties(
+                title=f'Over Dense, b_cols: {b_colss}, numThreads: {n_threads}, matrices: {df["matrixPath"].nunique()}'
+            )
+
+            merged_chart = merged_chart & chart
+            charts = []
+            max_speedup = 4
+
+            for method in methods:
+                print("Plotting speedup for method:", method)
+
+                if ('NANO_Best' in method):
+                    df_filtered = df[(df["best_nano"]) & (df["numThreads"] == n_threads)]
+                else:
+                    df_filtered = df[(df["name"] == method) & (df["numThreads"] == n_threads)]
+
+                df_filtered = df_filtered[df_filtered['Speed-up vs Best MKL'] <= max_speedup]
+                chart = speedup_scatter_all_bcols('Speed-up vs Best MKL', max_speedup, color, df_filtered)
+                charts.append(chart)
+
+            chart = create_chart_grid(charts, 4)
+            chart = chart.resolve_scale(
+                y='shared',
+                color='shared'
+            )
+            chart = chart.properties(
+                title=f'Over Best Dense or Sparse, b_cols: {b_colss}, numThreads: {n_threads}, matrices: {df["matrixPath"].nunique()}'
+            )
+
+            merged_chart = merged_chart & chart
+
+
+    chart_save(merged_chart, f'speedup/{cluster}_speedup_all_bcols_color_{color}_n_threads_{n_threads}')
 
 
 

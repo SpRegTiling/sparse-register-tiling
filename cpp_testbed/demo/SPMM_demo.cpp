@@ -648,7 +648,7 @@ class SpMMExperiment {
                     return left.second < right.second;
                 });
 
-                for (int i = 0; i < 3; i++) {
+                for (int i = 0; i < std::min((size_t) 10, times.size()); i++) {
                     std::cout << i + 1 << ". " << times[i].first << " " << times[i].second << std::endl;
                 }
 

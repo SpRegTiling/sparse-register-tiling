@@ -58,14 +58,17 @@ sbatch <<EOT
 #SBATCH --job-name="$EXPERIMENT_NAME"
 #SBATCH --nodes=1
 #SBATCH --output="log_$EXPERIMENT_NAME.%j.%N.out"
-#SBATCH -t $2:00:00
-#SBATCH --constraint=cascade
+#SBATCH -t $2:15:00
+#SBATCH --constraint=broadwell
+#SBATCH --account=def-kazem
 
 module load cmake/3.22.1
 module load gcc
 module load imkl/2022.1.0
 module load metis/5.1.0
 module load papi
+
+lscpu
 
 export OMP_PROC_BIND=true
 $SPMM_BIN_PATH -e $1 -d $DATASET_DIR_PATH

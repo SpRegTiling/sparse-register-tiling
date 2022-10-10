@@ -58,7 +58,7 @@ class SpMM_SOP : public SpMMFunctor<typename KernelDesc::Scalar> {
     using Super  = SpMMFunctor<typename KernelDesc::Scalar>;
     using Scalar = typename KernelDesc::Scalar;
 
-    sop::MatMul<KernelDesc>* sop_matmul = nullptr;
+    sop::MatMulSpecialized<KernelDesc>* sop_matmul = nullptr;
     Config config;
 
     std::string executor_id;
@@ -135,7 +135,7 @@ public:
             tile_config.max_tlb_entries = config.max_tlb_entries;
 
             delete sop_matmul;
-            sop_matmul = new sop::MatMul<KernelDesc>(
+            sop_matmul = new sop::MatMulSpecialized<KernelDesc>(
                 t.m(), t.k(), t.n(),
                 t.A->Lx, t.A->Lp, t.A->Li,
                 tile_config, t.nThreads,
@@ -176,15 +176,17 @@ public:
             tile_config.tlb_page_size = config.tlb_page_size;
             tile_config.max_tlb_entries = config.max_tlb_entries;
 
-            sop_matmul = new sop::MatMul<KernelDesc>(
+            sop_matmul = new sop::MatMulSpecialized<KernelDesc>(
               t.m(), t.k(), t.n(),
               t.A->Lx, t.A->Lp, t.A->Li,
               tile_config, t.nThreads,
               executor_id,
               mapping_id
             );
+
+            sop_matmul->allocate_executor(t.n());
         }
 
-        (*sop_matmul)(t.C, t.B, t.n());
+        (*sop_matmul)(t.C, t.B);
     }
 };

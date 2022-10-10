@@ -90,7 +90,7 @@
       if (outer_schedule == "NKM") {
         if (load_balance) {
           if (packed) {
-            return new SpMM_SOP<sop::KD_IntelFloatLoadBalancedCPackedNKM>
+            return new SpMM_SOP<sop::KD_IntelFloatLoadBalancedPackedNKM>
               (get_executor_id(mapping_id_mut, arch, vec_width_bits, nr), mapping_id_mut, task);
           } else {
             return new SpMM_SOP<sop::KD_IntelFloatLoadBalancedNKM>
@@ -98,7 +98,7 @@
           }
         } else {
           if (packed) {
-            return new SpMM_SOP<sop::KD_IntelFloatCPackedNKM>
+            return new SpMM_SOP<sop::KD_IntelFloatPackedNKM>
               (get_executor_id(mapping_id_mut, arch, vec_width_bits, nr), mapping_id_mut, task);
           } else {
             return new SpMM_SOP<sop::KD_IntelFloatNKM>
@@ -108,7 +108,7 @@
       } else if (outer_schedule == "KNM") {
         if (load_balance) {
           if (packed) {
-            return new SpMM_SOP<sop::KD_IntelFloatLoadBalancedCPackedKNM>
+            return new SpMM_SOP<sop::KD_IntelFloatLoadBalancedPackedKNM>
               (get_executor_id(mapping_id_mut, arch, vec_width_bits, nr), mapping_id_mut, task);
           } else {
             return new SpMM_SOP<sop::KD_IntelFloatLoadBalancedKNM>
@@ -116,7 +116,7 @@
           }
         } else {
           if (packed) {
-            return new SpMM_SOP<sop::KD_IntelFloatCPackedKNM>
+            return new SpMM_SOP<sop::KD_IntelFloatPackedKNM>
               (get_executor_id(mapping_id_mut, arch, vec_width_bits, nr), mapping_id_mut, task);
           } else {
             return new SpMM_SOP<sop::KD_IntelFloatKNM>
