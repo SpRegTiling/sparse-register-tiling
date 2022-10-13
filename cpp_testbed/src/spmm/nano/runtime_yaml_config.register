@@ -12,7 +12,6 @@
     if (options.has_child("split"))
       options["split"] >> split;
 
-
     bool packed = false;
     if (options.has_child("packed"))
       options["packed"] >> packed;

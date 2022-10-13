@@ -10,6 +10,7 @@
 #include <sstream>
 #include <iomanip>      // std::setw
 #include <optional>
+#include <utility>
 //#include <aligned_new>
 
 #include <omp.h>
@@ -455,18 +456,24 @@ class SpMMExperiment {
                     std::memcpy(spmm_task.correct_C, spmm_task.C, spmm_task.cNumel() * sizeof(Scalar));
                 }
 
+                std::vector<std::string> method_uids;
                 std::map<std::string, csv_row_t> csv_rows;
                 std::map<std::string, SpMMFunctor<Scalar>*> executors;
+                std::map<std::string, bool> should_tune;
+                std::map<std::string, std::string> tuning_grid;
                 std::map<std::string, std::string> names;
 
                 // Allow for parallel construction
                 omp_set_num_threads(omp_get_num_procs());
 
-                auto setup_method = [&, this](const struct Method& method) {
+                auto construct_method = [&, this](const struct Method& method) {
                     auto name = method.name;
 
                     auto executor = method.methodFactory(additional_options, spmm_task);
                     ERROR_AND_EXIT_IF(!executor, "Failed to create executor: " << name);
+
+                    std::stringstream ss; ss << (uintptr_t)executor;
+                    std::string method_uid = ss.str();
 
                     #pragma omp critical
                     {
@@ -475,20 +482,15 @@ class SpMMExperiment {
                         }
 
                         if (!method.tuningParameterGrid.empty()) {
-                            if (tuningParameterGrids.count(method.tuningParameterGrid) == 0) {
-                                std::cerr << "No tuning grid " << method.tuningParameterGrid << " defined" << std::endl;
-                                exit(-1);
+                            should_tune[method_uid] = true;
+                            tuning_grid[method_uid] = method.tuningParameterGrid;
+                        } else {
+                            should_tune[method_uid] = false;
+                            if (method.config) {
+                                executor->set_config(method.config.value());
                             }
-
-                            for (int iter = 0; iter < WARMUP_ITERATIONS; iter++) { (*executor)(); }
-                            executor->tune(tuningParameterGrids[method.tuningParameterGrid], save_tuning_results);
-                        } else if (method.config) {
-                            executor->set_config(method.config.value());
                         }
                     }
-
-                    std::stringstream ss; ss << (uintptr_t)executor;
-                    std::string method_uid = ss.str();
 
                     csv_row_t* csv_row_ptr = nullptr;
                     #pragma omp critical
@@ -514,6 +516,7 @@ class SpMMExperiment {
                     {
                         executors[method_uid] = executor;
                         names[method_uid] = name;
+                        method_uids.push_back(method_uid);
 
                         benchmark::RegisterBenchmark(method_uid.c_str(), [executor](benchmark::State& st) {
                             for (auto _: st) { (*executor)(); }
@@ -531,7 +534,7 @@ class SpMMExperiment {
                 for (int i = 0; i < methods.size(); i++) {
                     const auto& method = methods[i];
                     if (method.method_id != "mkl") {
-                        setup_method(method);
+                        construct_method(method);
                     }
                 }
 
@@ -551,10 +554,32 @@ class SpMMExperiment {
                 for (int i = 0; i < methods.size(); i++) {
                     const auto& method = methods[i];
                     if (method.method_id == "mkl") {
-                        setup_method(method);
+                        construct_method(method);
                     }
                 }
 
+                for (auto& [method_uid, executor]: executors) {
+                    if (should_tune[method_uid]) {
+                        std::string grid_name = tuning_grid[method_uid];
+
+                        if (tuningParameterGrids.count(grid_name) == 0) {
+                          std::cerr << "No tuning grid " << grid_name << " defined" << std::endl;
+                          exit(-1);
+                        }
+
+                        executor->tune(tuningParameterGrids[grid_name], save_tuning_results);
+                        std::cout << "Tuned: " << names[method_uid]
+                                  << " config: " << executor->get_config_rep() << std::endl;
+                    }
+                }
+
+                // Setup the executors after tuning in parallel
+                #pragma omp parallel for
+                for (int i = 0; i < method_uids.size(); i++) {
+                    const auto& method_uid = method_uids[i];
+                    auto& executor = executors[method_uid];
+                    executor->setup(); // Setup after the config has been set
+                }
 
                 // Test correctness
                 for (const auto& [method_uid, executor] : executors) {
@@ -568,7 +593,8 @@ class SpMMExperiment {
                     auto is_correct_str = is_correct ? "correct" : "incorrect";
 
                     if (!is_correct) {
-                        std::cout << "Incorrect result for " << csv_row["name"] << std::endl;
+                        std::cout << "Incorrect result for " << csv_row["name"]
+                                  << " " << executor->get_config_rep() << std::endl;
                         report_mismatches(spmm_task);
                     }
 
@@ -594,8 +620,6 @@ class SpMMExperiment {
                         std::cerr << " skipping profiling" << std::endl;
 #endif
                 }
-
-
 
                 SavedRunsReporter saved_runs_reporter;
                 benchmark::RunSpecifiedBenchmarks(&saved_runs_reporter);

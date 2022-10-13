@@ -12,6 +12,7 @@
 #include <sstream>
 
 #include "utils/Vec.h"
+#include "utils/error.h"
 #include "utils/algorithmic.h"
 
 #include "SpMMFunctor.h"
@@ -157,6 +158,31 @@ public:
         return true;
     }
 
+    void setup() override {
+      typename Super::Task& t = this->task;
+      if (!sop_matmul) {
+        sop::TileConfig tile_config;
+        tile_config.N_c = config.n_tile;
+        tile_config.M_c = config.m_tile;
+        tile_config.K_c = config.k_tile;
+        tile_config.beta = float(config.beta_10x) / 10.f;
+        tile_config.sparse_a = config.sparse_a;
+        tile_config.tiling_strategy = (sop::TilingStrategy) config.tiling_strategy;
+        tile_config.tlb_page_size = config.tlb_page_size;
+        tile_config.max_tlb_entries = config.max_tlb_entries;
+
+        sop_matmul = new sop::MatMulSpecialized<KernelDesc>(
+                t.m(), t.k(), t.n(),
+                t.A->Lx, t.A->Lp, t.A->Li,
+                tile_config, t.nThreads,
+                executor_id,
+                mapping_id
+        );
+
+        sop_matmul->allocate_executor(t.n());
+      }
+    }
+
     ~SpMM_SOP() {
         delete sop_matmul;
     }
@@ -165,28 +191,7 @@ public:
     // operator function () on objects of increment
     void operator()() override {
         typename Super::Task& t = this->task;
-        if (!sop_matmul) {
-            sop::TileConfig tile_config;
-            tile_config.N_c = config.n_tile;
-            tile_config.M_c = config.m_tile;
-            tile_config.K_c = config.k_tile;
-            tile_config.beta = float(config.beta_10x) / 10.f;
-            tile_config.sparse_a = config.sparse_a;
-            tile_config.tiling_strategy = (sop::TilingStrategy) config.tiling_strategy;
-            tile_config.tlb_page_size = config.tlb_page_size;
-            tile_config.max_tlb_entries = config.max_tlb_entries;
-
-            sop_matmul = new sop::MatMulSpecialized<KernelDesc>(
-              t.m(), t.k(), t.n(),
-              t.A->Lx, t.A->Lp, t.A->Li,
-              tile_config, t.nThreads,
-              executor_id,
-              mapping_id
-            );
-
-            sop_matmul->allocate_executor(t.n());
-        }
-
+        ERROR_AND_EXIT_IF(!sop_matmul, "sop_matmul is null, not setup");
         (*sop_matmul)(t.C, t.B);
     }
 };
