@@ -442,14 +442,14 @@ class SpMMExperiment {
                 std::cout << "Begin Testing, nThreads: " << nThreads << " BCols: " << bCols << std::endl;
 
                 { // compute correct C
-                    if (get_method_id_mapping<Scalar>().count(BASELINE_METHOD) == 0) {
-                        std::cerr << "Baseline method_id " << BASELINE_METHOD << " not registered" << std::endl;
+                    if (get_method_id_mapping<Scalar>().count(REFERENCE_METHOD) == 0) {
+                        std::cerr << "Reference method_id " << REFERENCE_METHOD << " not registered" << std::endl;
                         exit(-1);
                     }
                     c4::yml::ConstNodeRef no_options;
                     additional_options_t no_additional_options;
 
-                    auto baseline_factory = get_method_id_mapping<Scalar>()[BASELINE_METHOD](no_options);
+                    auto baseline_factory = get_method_id_mapping<Scalar>()[REFERENCE_METHOD](no_options);
                     auto verification_baseline = baseline_factory(no_additional_options, spmm_task);
                     (*verification_baseline)();
                     std::memcpy(spmm_task.correct_C, spmm_task.C, spmm_task.cNumel() * sizeof(Scalar));

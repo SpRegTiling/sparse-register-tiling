@@ -1,15 +1,17 @@
-cmake_minimum_required(VERSION 3.14.7)
-project(nano-spmm-bench)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.15 FATAL_ERROR)
+project(nano-spmm-bench C CXX ASM)
+
+# MSVC runtime library flags are selected by an abstraction.
+CMAKE_POLICY(SET CMP0091 NEW)
+
+INCLUDE(GNUInstallDirs)
+IF(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    # Disable "note: parameter passing for argument of type ... changed/will change in ..."
+    ADD_COMPILE_OPTIONS("-Wno-psabi")
+ENDIF()
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-macro(remove_cxx_flag flag)
-    string(REPLACE "${flag}" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-endmacro()
-
-#remove_cxx_flag("-O3")
-#set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2 -Wregister")
 
 add_subdirectory(spmm-nano-kernels)
 set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} ${SOP_CXX_FLAGS})
