@@ -72,35 +72,7 @@ public:
              typename Super::Task &task) :
             Super(task),
             executor_id(executor_id),
-            mapping_id(mapping_id) {
-
-        typename Super::Task& t = this->task;
-
-        sop::TileConfig tile_config;
-        tile_config.N_c = config.n_tile;
-        tile_config.M_c = config.m_tile;
-        tile_config.K_c = config.k_tile;
-        tile_config.tiling_strategy =
-            config.tiling_strategy ? sop::CAKE_TILING : sop::MANUAL_TILING;
-
-        delete sop_matmul;
-        sop_matmul = nullptr;
-    }
-
-//    void log_extra_info(cpp_testbed::csv_row_t& row) override {
-//        csv_row_insert(row, "total_tile_count", stats.total_tile_count);
-//
-//        csv_row_insert(row, "sop_tiles_count", stats.sop_tiles_count);
-//        csv_row_insert(row, "sop_tiles_nnz_count", stats.sop_tiles_nnz_count);
-//        csv_row_insert(row, "sop_tiles_padding", stats.sop_tiles_padding);
-//
-//        csv_row_insert(row, "csr_tiles_count", stats.csr_tiles_count);
-//        csv_row_insert(row, "csr_tiles_nnz_count", stats.csr_tiles_nnz_count);
-//
-//        csv_row_insert(row, "dense_tiles_count", stats.dense_tiles_count);
-//        csv_row_insert(row, "dense_tiles_padding", stats.dense_tiles_padding);
-//        csv_row_insert(row, "dense_tiles_nnz_count", stats.dense_tiles_nnz_count);
-//    }
+            mapping_id(mapping_id) { }
 
     std::string get_config_rep_impl() override {
         return config.rep();

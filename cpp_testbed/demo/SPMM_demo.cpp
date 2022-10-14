@@ -486,10 +486,11 @@ class SpMMExperiment {
                             tuning_grid[method_uid] = method.tuningParameterGrid;
                         } else {
                             should_tune[method_uid] = false;
-                            if (method.config) {
-                                executor->set_config(method.config.value());
-                            }
                         }
+                    }
+
+                    if (method.config) {
+                      executor->set_config(method.config.value());
                     }
 
                     csv_row_t* csv_row_ptr = nullptr;
@@ -568,8 +569,8 @@ class SpMMExperiment {
                         }
 
                         executor->tune(tuningParameterGrids[grid_name], save_tuning_results);
-                        std::cout << "Tuned: " << names[method_uid]
-                                  << " config: " << executor->get_config_rep() << std::endl;
+//                        std::cout << "Tuned: " << names[method_uid]
+//                                  << " config: " << executor->get_config_rep() << std::endl;
                     }
                 }
 
@@ -639,33 +640,17 @@ class SpMMExperiment {
                     }
                 }
 
-                for (const auto& [method_uid, executor] : executors) {
-                    auto &csv_row = csv_rows[method_uid];
-                    if (executor == nullptr) continue;
-
-                    // Store Config
-                    std::string config_string;
-                    config_string += executor->get_config_rep();
-                    csv_row_insert(csv_row, "config", config_string);
-
-                    // Store extra info
-                    executor->log_extra_info(csv_row);
-
-                    // Cleanup
-                    delete executor;
-                }
-
-
 #if 1
                 double dense_time = 0;
                 std::vector<std::pair<std::string, double>> times;
                 for (const auto& [method_uid, csv_row] : csv_rows) {
                     auto& name = names[method_uid];
+
                     if (csv_row.find("time mean") == csv_row.end()) continue;
                     if (name == "MKL_Dense") {
                         dense_time = std::stod(csv_row.at("time median"));
                     }
-                    times.push_back({name, std::stod(csv_row.at("time median"))});
+                    times.push_back({method_uid, std::stod(csv_row.at("time median"))});
                 }
 
                 std::sort(times.begin(), times.end(), [](auto &left, auto &right) {
@@ -673,7 +658,13 @@ class SpMMExperiment {
                 });
 
                 for (int i = 0; i < std::min((size_t) 10, times.size()); i++) {
-                    std::cout << i + 1 << ". " << times[i].first << " " << times[i].second << std::endl;
+                    auto& method_uid = times[i].first;
+                    auto& name = names[method_uid];
+                    auto& executor = executors[method_uid];
+
+                    std::cout << i + 1 << ". " << times[i].second << " "
+                              << name << " "
+                              << executor->get_config_rep() << " " << std::endl;
                 }
 
                 std::cout << "Dense: " << dense_time << std::endl;
@@ -695,6 +686,22 @@ class SpMMExperiment {
                 }
                 std::cout << std::endl;
 #endif
+                for (const auto& [method_uid, executor] : executors) {
+                    auto &csv_row = csv_rows[method_uid];
+                    if (executor == nullptr) continue;
+
+                    // Store Config
+                    std::string config_string;
+                    config_string += executor->get_config_rep();
+                    csv_row_insert(csv_row, "config", config_string);
+
+                    // Store extra info
+                    executor->log_extra_info(csv_row);
+
+                    // Cleanup
+                    delete executor;
+                }
+
                 add_missing_columns(csv_rows);
                 write_csv_rows(csv_file, csv_rows);
             }
