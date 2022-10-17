@@ -5,7 +5,7 @@ set(SPMM_METHODS_LIBRARIES "")
 
 if (${RASPBERRY_PI})
     set(SPMM_MKL        OFF)
-    set(SPMM_ARMCL      ON)
+    set(SPMM_ARMCL      OFF)
     set(SPMM_baselines  OFF)
     set(SPMM_ASpT       ON)
     set(SPMM_nano       ON)

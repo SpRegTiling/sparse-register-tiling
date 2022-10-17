@@ -21,6 +21,8 @@
 #include "sop.h"
 #include "cake_block_dims.h"
 
+#include "MatMulMacro.h"
+
 
 //#define PACK_B
 
@@ -59,6 +61,7 @@ class SpMM_SOP : public SpMMFunctor<typename KernelDesc::Scalar> {
     using Scalar = typename KernelDesc::Scalar;
 
     sop::MatMulSpecialized<KernelDesc>* sop_matmul = nullptr;
+    sop::MatMulMacro<KernelDesc>* sop_matmul_macro = nullptr;
     Config config;
 
     std::string executor_id;
@@ -165,28 +168,41 @@ public:
     // operator function () on objects of increment
     void operator()() override {
         typename Super::Task& t = this->task;
-        if (!sop_matmul) {
-            sop::TileConfig tile_config;
-            tile_config.N_c = config.n_tile;
-            tile_config.M_c = config.m_tile;
-            tile_config.K_c = config.k_tile;
-            tile_config.beta = float(config.beta_10x) / 10.f;
-            tile_config.sparse_a = config.sparse_a;
-            tile_config.tiling_strategy = (sop::TilingStrategy) config.tiling_strategy;
-            tile_config.tlb_page_size = config.tlb_page_size;
-            tile_config.max_tlb_entries = config.max_tlb_entries;
+//        if (!sop_matmul) {
+//            sop::TileConfig tile_config;
+//            tile_config.N_c = config.n_tile;
+//            tile_config.M_c = config.m_tile;
+//            tile_config.K_c = config.k_tile;
+//            tile_config.beta = float(config.beta_10x) / 10.f;
+//            tile_config.sparse_a = config.sparse_a;
+//            tile_config.tiling_strategy = (sop::TilingStrategy) config.tiling_strategy;
+//            tile_config.tlb_page_size = config.tlb_page_size;
+//            tile_config.max_tlb_entries = config.max_tlb_entries;
+//
+//            sop_matmul = new sop::MatMulSpecialized<KernelDesc>(
+//              t.m(), t.k(), t.n(),
+//              t.A->Lx, t.A->Lp, t.A->Li,
+//              tile_config, t.nThreads,
+//              executor_id,
+//              mapping_id
+//            );
+//
+//            sop_matmul->allocate_executor(t.n());
+//        }
 
-            sop_matmul = new sop::MatMulSpecialized<KernelDesc>(
+//        (*sop_matmul)(t.C, t.B);
+
+        DenseMatrix<float> B_new();
+
+        sop_matmul_macro = new sop::MatMulMacro<KernelDesc>(
               t.m(), t.k(), t.n(),
               t.A->Lx, t.A->Lp, t.A->Li,
-              tile_config, t.nThreads,
+               t.nThreads,
               executor_id,
               mapping_id
             );
 
-            sop_matmul->allocate_executor(t.n());
-        }
+        sop_matmul_macro->calculateSimpleMatMul(t.bRows, t.bCols, t.C, t.B);
 
-        (*sop_matmul)(t.C, t.B);
     }
 };

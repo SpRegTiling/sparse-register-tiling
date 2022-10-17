@@ -1,10 +1,1 @@
-mobilenet/80/conv1x1_4_196.smtx,192
-mobilenet/80/conv1x1_4_196.smtx,196
-mobilenet/80/conv1x1_4_196.smtx,208
-mobilenet/80/conv1x1_5_196.smtx,192
-mobilenet/80/conv1x1_5_196.smtx,196
-mobilenet/80/conv1x1_5_196.smtx,208
-mobilenet/80/conv1x1_10_49.smtx,49
-mobilenet/80/conv1x1_10_49.smtx,64
-mobilenet/80/conv1x1_11_49.smtx,49
-mobilenet/80/conv1x1_11_49.smtx,64
+mobilenet/cage3.mtx,5

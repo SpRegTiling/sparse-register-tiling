@@ -116,7 +116,7 @@
           }
         } else {
           if (packed) {
-            return new SpMM_SOP<sop::KD_IntelFloatPackedKNM>
+            return new SpMM_SOP<sop::KD_IntelFloatCPackedKNM>
               (get_executor_id(mapping_id_mut, arch, vec_width_bits, nr), mapping_id_mut, task);
           } else {
             return new SpMM_SOP<sop::KD_IntelFloatKNM>

@@ -390,13 +390,13 @@ class SpMMExperiment {
         std::map<std::string, std::vector<int>> rowOrderings;
         std::map<std::string, RowDistance*> rowDistanceMeasures;
 
-        constexpr int WARMUP_ITERATIONS = 3;
-        constexpr int MEASURED_ITERATIONS = 7; // NOTE: Each measured iteration will consist of multiple runs
+        constexpr int WARMUP_ITERATIONS = 0;
+        constexpr int MEASURED_ITERATIONS = 1; // NOTE: Each measured iteration will consist of multiple runs
 
         typedef CSR<Scalar> CSR;
         auto As = cpp_testbed::readSparseMatrix<CSR>(matrixPath);
 
-        if (As.r % 32 != 0 || As.c % 32 != 0) return 0;
+//        if (As.r % 32 != 0 || As.c % 32 != 0) return 0;
 
         std::cout << matrixPath << " (" << As.r << "x" << As.c << ") ";
         std::cout << int((1 - As.nz / double(As.r * As.c)) * 100) << "%, nnz " << As.nz << std::endl;
