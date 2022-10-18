@@ -48,6 +48,7 @@ protected:
 public:
     SpMMFunctor(Task &task): task(task) {}
 
+    virtual void setup() {}; // Can be used for setup after the configs have been set, will be run in parallel
     virtual void copy_output() {};
     virtual void log_extra_info(cpp_testbed::csv_row_t& row) { }
 
@@ -59,7 +60,7 @@ public:
         int runs_per_iteration = std::max((int) std::ceil(2e8 / (task.A->nz * task.bCols)), 1);
         runs_per_iteration *= std::max(1, task.nThreads);
 #endif
-      return runs_per_iteration;
+        return runs_per_iteration;
     }
 
     virtual void tune(const ParameterGrid& grid, bool save_results = false) {
@@ -67,6 +68,7 @@ public:
         int runs_per_iter = tuning_runs_per_iteration();
         double best_time = std::numeric_limits<double>::max();
         std::set<std::string> keys;
+        bool warmed_up = false;
 
         saved_results = {};
 
@@ -88,11 +90,17 @@ public:
         std::function<void(std::set<std::string>, bool)> _tune_over = \
         [&](std::set<std::string> tune_over, bool parallelize) {
             auto param = *tune_over.begin();
+            int dim_test_cases = grid.find(param)->second.size();
+
             //#pragma omp parallel for if(parallelize)
             for (const int value : grid.find(param)->second) {
-                if (param == "m_tile" && value > task.m()) continue;
-                if (param == "n_tile" && value > task.n()) continue;
-                if (param == "k_tile" && value > task.k()) continue;
+                // If a dimension (parameter) has one test case we can skip it or nothing
+                //   will get tuned
+                if (dim_test_cases > 1) {
+                    if (param == "m_tile" && value > task.m()) continue;
+                    if (param == "n_tile" && value > task.n()) continue;
+                    if (param == "k_tile" && value > task.k()) continue;
+                }
 
                 current_config[param] = value;
                 auto remaining_params = tune_over;
@@ -107,10 +115,16 @@ public:
                 if (!this->set_config(current_config))
                     continue;
 
-                // Warm up run
-                for (int run = 0; run < runs_per_iter; run++) (*this)();
-                std::vector<double> timings(TUNING_ITERATIONS);
+                this->setup(); // Setup after the config has been set
 
+                if (!warmed_up) {
+                    for (int iter = 0; iter < 2; iter++) (*this)();
+                    warmed_up = true;
+                } else {
+                    (*this)(); // One warmup run per tuning
+                }
+
+                std::vector<double> timings(TUNING_ITERATIONS);
                 for (int iter = 0; iter < TUNING_ITERATIONS; iter++) {
                     sym_lib::timing_measurement t1;
 
@@ -125,10 +139,10 @@ public:
                 {
                     if (save_results) {
                         saved_results.push_back({
-                            current_config,
-                            median(timings),
-                            mean(timings)
-                        });
+                                                        current_config,
+                                                        median(timings),
+                                                        mean(timings)
+                                                });
                     }
 
                     double median_time = median(timings);
@@ -142,6 +156,11 @@ public:
 
         // For now do not parallelize for best accuracy
         _tune_over(keys, false);
+
+        if (tuned_config.empty()) {
+            std::cerr << "ERROR tuning returned an empty config" << std::endl;
+            exit(1);
+        }
 
         this->set_config(tuned_config);
         tuned = true;
