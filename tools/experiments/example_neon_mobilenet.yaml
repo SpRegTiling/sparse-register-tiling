@@ -10,104 +10,70 @@ options:
 matrices:
   filelist: ../../tools/filelists/mobilenet_70.txt
 
+
 tuning:
   parameter_grids:
-    - name: MKN_Grid_SOP4
-      m_tile: [ 4, 8, 32, 64, 512]
+    # Split M Grids, when we split across the M dimension we traverse the full
+    #   N dimension so the n_tile size doesn't matter
+    - name: Grid_MR4_SPLIT_M
+      m_tile: [ 4, 8, 16, 32, 64 ]
       k_tile: [ 1024, 512, 256, 128, 64, 32 ]
-      n_tile: [ 16 ]
+      n_tile: [ 512 ]
+      tiling_strategy: [ 0 ] # 0 for manual tiling
+
+    - name: Grid_MR8_SPLIT_M
+      m_tile: [ 8, 16, 32, 64 ]
+      k_tile: [ 1024, 512, 256, 128, 64, 32 ]
+      n_tile: [ 512 ]
+      tiling_strategy: [ 0 ] # 0 for manual tiling
+
+    # Split N Grids, when we split across the M dimension we traverse the full
+    #   M dimension so the m_tile size doesn't matter
+    - name: Grid_NR2_SPLIT_N
+      m_tile: [ 512 ]
+      k_tile: [ 1024, 512, 256, 128, 64, 32 ]
+      n_tile: [ 8, 16, 32, 64, 128 ] # Nr is 2 vectors or 2 * 4 = 8 elements therefore the n_tile must be a multiple of 8
       tiling_strategy: [ 0 ]
 
-    - name: MKN_Grid_SOP4_NR3
-      m_tile: [ 4, 8, 32, 64, 512 ]
+    - name: Grid_NR3_SPLIT_N
+      m_tile: [ 512 ]
       k_tile: [ 1024, 512, 256, 128, 64, 32 ]
-      n_tile: [ 12, 24, 48, 72 ]
+      n_tile: [ 12, 24, 36, 48, 72, 96, 144 ] # Nr is 3 vectors or 3 * 4 = 12 elements therefore the n_tile must be a multiple of 12
       tiling_strategy: [ 0 ]
 
-    - name: MKN_Grid_SOP4_NR3_SPLIT_M
-      m_tile: [ 4, 8, 32, 64, 512 ]
+    - name: Grid_NR4_SPLIT_N
+      m_tile: [ 512 ]
       k_tile: [ 1024, 512, 256, 128, 64, 32 ]
-      n_tile: [ 0 ]
+      n_tile: [ 16, 32, 64, 128 ] # Nr is 4 vectors or 4* 4 = 16 elements therefore the n_tile must be a multiple of 16
       tiling_strategy: [ 0 ]
 
-    - name: MKN_Grid_SOP4_NR3_SPLIT_N
-      m_tile: [ 0 ]
+    - name: Grid_NR6_SPLIT_N
+      m_tile: [ 512 ]
       k_tile: [ 1024, 512, 256, 128, 64, 32 ]
-      n_tile: [ 12, 24, 48, 72, 96, 120 ]
-      tiling_strategy: [ 0 ]
-
-    - name: MKN_Grid_SOP4_NR6
-      m_tile: [ 4, 8, 32, 64, 512 ]
-      k_tile: [ 1024, 512, 256, 128, 64, 32 ]
-      n_tile: [ 24 ]
+      n_tile: [ 24, 48, 72, 96, 144 ] # Nr is 6 vectors or 6 * 4 = 24 elements therefore the n_tile must be a multiple of 24
       tiling_strategy: [ 0 ]
 
 methods:
   - name: XNN
     method_id: xnn
 
-  - name: NANO_4_C1_identity
+  #
+  # NANO 4 methods
+  #
+
+  - name: NANO_4x6_identity_split_M
     method_id: nano
     options:
       arch: NEON
       vec_width_bits: 128
       packed: False
       mapping_id: 61fee
-      nr: 4
-    tune:
-      grid: MKN_Grid_SOP4
-
-  - name: NANO_4_C1_identity_nr_2
-    method_id: nano
-    options:
-      arch: NEON
-      vec_width_bits: 128
-      packed: False
-      mapping_id: 61fee
-      nr: 2
-    config:
-      k_tile: 16
-      m_tile: 8
-      tiling_strategy: 0
-#    tune:
-#      grid: MKN_Grid_SOP4
-
-  - name: NANO_4_C1_orig_nr_2
-    method_id: nano
-    options:
-      arch: NEON
-      vec_width_bits: 128
-      packed: False
-      mapping_id: da01e
-      nr: 2
-    tune:
-      grid: MKN_Grid_SOP4
-
-  - name: NANO_4_C1_identity_nr_3_split_N
-    method_id: nano
-    options:
-      arch: NEON
-      vec_width_bits: 128
-      packed: False
-      mapping_id: 61fee
-      split: N
-      nr: 3
-    tune:
-      grid: MKN_Grid_SOP4_NR3_SPLIT_N
-
-  - name: NANO_4_C1_identity_nr_3
-    method_id: nano
-    options:
-      arch: NEON
-      vec_width_bits: 128
-      packed: False
-      mapping_id: 61fee
+      nr: 6
       split: M
-      nr: 3
     tune:
-      grid: MKN_Grid_SOP4_NR3_SPLIT_M
+      grid: Grid_MR4_SPLIT_M
 
-  - name: NANO_4_C1_identity_nr_4_split_N
+  - name: NANO_4x4_identity_split_M
     method_id: nano
     options:
       arch: NEON
@@ -115,102 +81,171 @@ methods:
       packed: False
       mapping_id: 61fee
       nr: 4
+      split: M
     tune:
-      grid: MKN_Grid_SOP4
+      grid: Grid_MR4_SPLIT_M
 
-  - name: NANO_4_C1_orig
+  - name: NANO_4x2_identity_split_M
     method_id: nano
     options:
       arch: NEON
       vec_width_bits: 128
       packed: False
-      mapping_id: da01e
-      nr: 4
+      mapping_id: 61fee
+      nr: 2
+      split: M
     tune:
-      grid: MKN_Grid_SOP4
+      grid: Grid_MR4_SPLIT_M
 
-  - name: NANO_8_C1_orig
+  - name: NANO_4x6_identity_split_M_load_balanced
+    method_id: nano
+    options:
+      arch: NEON
+      vec_width_bits: 128
+      packed: False
+      mapping_id: 61fee
+      load_balance: True
+      nr: 6
+      split: M
+    tune:
+      grid: Grid_MR4_SPLIT_M
+
+  - name: NANO_4x4_identity_split_M_load_balanced
+    method_id: nano
+    options:
+      arch: NEON
+      vec_width_bits: 128
+      packed: False
+      mapping_id: 61fee
+      load_balance: True
+      nr: 4
+      split: M
+    tune:
+      grid: Grid_MR4_SPLIT_M
+
+  - name: NANO_4x2_identity_split_M_load_balanced
+    method_id: nano
+    options:
+      arch: NEON
+      vec_width_bits: 128
+      packed: False
+      mapping_id: 61fee
+      load_balance: True
+      nr: 2
+      split: M
+    tune:
+      grid: Grid_MR4_SPLIT_M
+
+  - name: NANO_4x6_identity_split_N
+    method_id: nano
+    options:
+      arch: NEON
+      vec_width_bits: 128
+      packed: False
+      mapping_id: 61fee
+      nr: 6
+      split: N
+    tune:
+      grid: Grid_NR6_SPLIT_N
+
+  - name: NANO_4x4_identity_split_N
+    method_id: nano
+    options:
+      arch: NEON
+      vec_width_bits: 128
+      packed: False
+      mapping_id: 61fee
+      nr: 4
+      split: N
+    tune:
+      grid: Grid_NR4_SPLIT_N
+
+  - name: NANO_4x2_identity_split_N
+    method_id: nano
+    options:
+      arch: NEON
+      vec_width_bits: 128
+      packed: False
+      mapping_id: 61fee
+      nr: 2
+      split: N
+    tune:
+      grid: Grid_NR2_SPLIT_N
+
+  #
+  # NANO 8 methods
+  #
+
+  - name: NANO_8x3_orig_split_M
     method_id: nano
     options:
       arch: NEON
       vec_width_bits: 128
       packed: False
       mapping_id: 400fa
-      nr: 1
-    config:
-      n_tile: 32
-      k_tile: 512
-      m_tile: 8
-      tiling_strategy: 0
+      nr: 3
+      split: M
+    tune:
+      grid: Grid_MR8_SPLIT_M
 
-  - name: NANO_8_C1_alt
+  - name: NANO_8x2_orig_split_M
     method_id: nano
     options:
       arch: NEON
       vec_width_bits: 128
       packed: False
-      mapping_id: 747f9
-      nr: 1
-    config:
-      n_tile: 32
-      k_tile: 512
-      m_tile: 8
-      tiling_strategy: 0
+      mapping_id: 400fa
+      nr: 2
+      split: M
+    tune:
+      grid: Grid_MR8_SPLIT_M
 
-#
-#  - name: NANO_4_CAKE_identity
-#    method_id: nano
-#    options:
-#      arch: NEON
-#      vec_width_bits: 128
-#      packed: False
-#      mapping_id: 61fee
-#    config:
-#      n_tile: 32
-#      k_tile: 256
-#      m_tile: 4
-#      tiling_strategy: 0
-#
-#  - name: NANO_4_CAKE_identity
-#    method_id: nano
-#    options:
-#      arch: NEON
-#      vec_width_bits: 128
-#      packed: False
-#      mapping_id: 61fee
-#    config:
-#      n_tile: 32
-#      k_tile: 256
-#      m_tile: 8
-#      tiling_strategy: 0
-#
-#  - name: NANO_4_CAKE_identity
-#    method_id: nano
-#    options:
-#      arch: NEON
-#      vec_width_bits: 128
-#      packed: False
-#      mapping_id: 61fee
-#    config:
-#      tiling_strategy: 2
-#
-#  - name: NANO_4_CAKE_LB_identity
-#    method_id: nano
-#    options:
-#      arch: NEON
-#      vec_width_bits: 128
-#      packed: False
-#      load_balance: True
-#      mapping_id: 61fee
-#    config:
-#      tiling_strategy: 2
-#
-#  - name: NANO_4_CAKE_orig
-#    method_id: nano
-#    options:
-#      arch: NEON
-#      vec_width_bits: 128
-#      packed: False
-#      mapping_id: da01e
-#    config:
-#      tiling_strategy: 2
+  - name: NANO_8x3_orig_split_M_load_balanced
+    method_id: nano
+    options:
+      arch: NEON
+      vec_width_bits: 128
+      packed: False
+      mapping_id: 400fa
+      load_balance: True
+      nr: 3
+      split: M
+    tune:
+      grid: Grid_MR8_SPLIT_M
+
+  - name: NANO_8x2_orig_split_M_load_balanced
+    method_id: nano
+    options:
+      arch: NEON
+      vec_width_bits: 128
+      packed: False
+      mapping_id: 400fa
+      load_balance: True
+      nr: 2
+      split: M
+    tune:
+      grid: Grid_MR8_SPLIT_M
+
+  - name: NANO_8x3_orig_split_N
+    method_id: nano
+    options:
+      arch: NEON
+      vec_width_bits: 128
+      packed: False
+      mapping_id: 400fa
+      nr: 3
+      split: N
+    tune:
+      grid: Grid_NR3_SPLIT_N
+
+  - name: NANO_8x2_orig_split_N
+    method_id: nano
+    options:
+      arch: NEON
+      vec_width_bits: 128
+      packed: False
+      mapping_id: 400fa
+      nr: 2
+      split: N
+    tune:
+      grid: Grid_NR2_SPLIT_N

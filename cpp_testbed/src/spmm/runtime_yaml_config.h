@@ -16,7 +16,13 @@
 
 using additional_options_t = std::map<std::string, std::string>;
 
-#define BASELINE_METHOD "mkl_dense"
+#if defined(SPMM_MKL_ENABLED) && SPMM_MKL_ENABLED
+#   define REFERENCE_METHOD "mkl_dense"
+#elif defined(SPMM_XNN_ENABLED) && SPMM_XNN_ENABLED
+#   define REFERENCE_METHOD "xnn"
+#else
+    static_assert(false, "Cannot find a reasonable reference method to use");
+#endif
 
 // Method mapping
 template<typename S> using method_factory_t = std::function<SpMMFunctor<S>* (additional_options_t options, SpMMTask<S>&)>;

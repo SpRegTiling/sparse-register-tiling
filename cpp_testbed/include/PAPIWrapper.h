@@ -107,11 +107,6 @@ namespace cpp_testbed {
                 int64_t LOADS   = get_value_based_on_alt_name(events, "LOADS");
 
                 double L1_HIT_RATE = (double) (ACCESSES - MISSES) / (double) ACCESSES;
-                std::cout << "L1HIT: " << std::setprecision(2) << L1_HIT_RATE
-                          << " AC: " << ACCESSES
-                          << " ST: " << STORES
-                          << " LD: " << LOADS
-                          << " ";
                 events.push_back({-1, "L1_RATIO", "L1_RATIO", {.d = L1_HIT_RATE}, PapiEvent::DOUBLE});
 
                 return events;

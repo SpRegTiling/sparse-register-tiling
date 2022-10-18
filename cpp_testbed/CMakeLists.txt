@@ -1,17 +1,14 @@
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
-
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native -fopenmp -std=c++2a -ffast-math")
-
 
 if (${RASPBERRY_PI})
     ##
     # ARM
     ##
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__ARM_ARCH_8__ -mfpu=neon-fp-armv8 -mcpu=cortex-a72")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=armv8-a ")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DRASPBERRY_PI=4")
     set(TUNE cortex-a72)
 else()
