@@ -169,7 +169,6 @@ public:
     void operator()() override {
         typename Super::Task& t = this->task;
         if (!sop_matmul) {
-            sop::TileConfig tile_config;
             tile_config.N_c = config.n_tile;
             tile_config.M_c = config.m_tile;
             tile_config.K_c = config.k_tile;
