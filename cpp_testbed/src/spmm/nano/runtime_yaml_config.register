@@ -8,9 +8,9 @@
     if (options.has_child("nr"))
       options["nr"] >> nr;
 
-    std::string split = "M";
-    if (options.has_child("split"))
-      options["split"] >> split;
+    int outer_schedule = 0;
+    if (options.has_child("outer_schedule"))
+      options["outer_schedule"] >> outer_schedule;
 
 
     bool packed = false;
@@ -21,7 +21,7 @@
     if (options.has_child("load_balance"))
       options["load_balance"] >> load_balance;
 
-    return [arch, vec_width_bits, nr, packed, load_balance, mapping_id, split](
+    return [arch, vec_width_bits, nr, packed, load_balance, mapping_id, outer_schedule](
       additional_options_t options, SpMMTask<S>& task)
         -> SpMMFunctor<S>* {
 
@@ -35,22 +35,8 @@
         "Packing and load-balance are not currently "
         "supported together");
 
-      if (load_balance) {
-        if (split == "M")
-            return new SpMM_SOP<sop::KD_PIFloatLoadBalancedSplitM>
-              (get_executor_id(mapping_id_mut, arch, vec_width_bits, nr), mapping_id_mut, task);
-        else
-            ERROR_AND_EXIT("Cannot split by " << split << " with load balancing");
-      } else {
-        if (split == "M")
-            return new SpMM_SOP<sop::KD_PIFloatSplitM>
-              (get_executor_id(mapping_id_mut, arch, vec_width_bits, nr), mapping_id_mut, task);
-        else if (split == "N")
-            return new SpMM_SOP<sop::KD_PIFloatSplitN>
-              (get_executor_id(mapping_id_mut, arch, vec_width_bits, nr), mapping_id_mut, task);
-        else
-            ERROR_AND_EXIT("Cannot split by " << split);
-      }
+       return new SpMM_SOP<sop::KD_PIFloatSplitN>
+          (get_executor_id(mapping_id_mut, arch, vec_width_bits, nr), mapping_id_mut, task, outer_schedule);
 
       return nullptr;
     };
@@ -73,7 +59,7 @@
     if (options.has_child("load_balance"))
       options["load_balance"] >> load_balance;
 
-    std::string outer_schedule = "NKM";
+    int outer_schedule = 0;
     if (options.has_child("outer_schedule"))
       options["outer_schedule"] >> outer_schedule;
 
@@ -87,45 +73,24 @@
         mapping_id_mut = options["mapping_id"];
       }
 
-      if (outer_schedule == "NKM") {
-        if (load_balance) {
-          if (packed) {
-            return new SpMM_SOP<sop::KD_IntelFloatLoadBalancedPackedNKM>
-              (get_executor_id(mapping_id_mut, arch, vec_width_bits, nr), mapping_id_mut, task);
-          } else {
-            return new SpMM_SOP<sop::KD_IntelFloatLoadBalancedNKM>
-              (get_executor_id(mapping_id_mut, arch, vec_width_bits, nr), mapping_id_mut, task);
-          }
+      if (load_balance) {
+        if (packed) {
+          return new SpMM_SOP<sop::KD_IntelFloatLoadBalancedPackedNKM>
+            (get_executor_id(mapping_id_mut, arch, vec_width_bits, nr), mapping_id_mut, task, outer_schedule);
         } else {
-          if (packed) {
-            return new SpMM_SOP<sop::KD_IntelFloatPackedNKM>
-              (get_executor_id(mapping_id_mut, arch, vec_width_bits, nr), mapping_id_mut, task);
-          } else {
-            return new SpMM_SOP<sop::KD_IntelFloatNKM>
-              (get_executor_id(mapping_id_mut, arch, vec_width_bits, nr), mapping_id_mut, task);
-          }
-        }
-      } else if (outer_schedule == "KNM") {
-        if (load_balance) {
-          if (packed) {
-            return new SpMM_SOP<sop::KD_IntelFloatLoadBalancedPackedKNM>
-              (get_executor_id(mapping_id_mut, arch, vec_width_bits, nr), mapping_id_mut, task);
-          } else {
-            return new SpMM_SOP<sop::KD_IntelFloatLoadBalancedKNM>
-              (get_executor_id(mapping_id_mut, arch, vec_width_bits, nr), mapping_id_mut, task);
-          }
-        } else {
-          if (packed) {
-            return new SpMM_SOP<sop::KD_IntelFloatCPackedKNM>
-              (get_executor_id(mapping_id_mut, arch, vec_width_bits, nr), mapping_id_mut, task);
-          } else {
-            return new SpMM_SOP<sop::KD_IntelFloatKNM>
-              (get_executor_id(mapping_id_mut, arch, vec_width_bits, nr), mapping_id_mut, task);
-          }
+          return new SpMM_SOP<sop::KD_IntelFloatLoadBalancedNKM>
+            (get_executor_id(mapping_id_mut, arch, vec_width_bits, nr), mapping_id_mut, task, outer_schedule);
         }
       } else {
-        ERROR_AND_EXIT("Unknown outer schedule " << outer_schedule);
+        if (packed) {
+          return new SpMM_SOP<sop::KD_IntelFloatPackedNKM>
+            (get_executor_id(mapping_id_mut, arch, vec_width_bits, nr), mapping_id_mut, task, outer_schedule);
+        } else {
+          return new SpMM_SOP<sop::KD_IntelFloatNKM>
+            (get_executor_id(mapping_id_mut, arch, vec_width_bits, nr), mapping_id_mut, task, outer_schedule);
+        }
       }
+
       return nullptr;
     };
 }}

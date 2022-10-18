@@ -8,5 +8,3 @@ mobilenet/80/conv1x1_6_196.smtx,196
 mobilenet/80/conv1x1_7_196.smtx,196
 mobilenet/80/conv1x1_8_196.smtx,196
 mobilenet/80/conv1x1_9_196.smtx,196
-mobilenet/80/conv1x1_10_49.smtx,49
-mobilenet/80/conv1x1_11_49.smtx,49

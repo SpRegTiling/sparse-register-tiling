@@ -16,6 +16,7 @@
 
 #include "SpMMFunctor.h"
 #include "COO.h"
+#include "Enums.h"
 
 #include "spmm_config.h"
 #include "sop.h"
@@ -66,43 +67,19 @@ class SpMM_SOP : public SpMMFunctor<typename KernelDesc::Scalar> {
 
     std::string executor_id;
     std::string mapping_id;
-
+    sop::TileConfig tile_config;
 
 public:
     SpMM_SOP(std::string executor_id,
              std::string mapping_id,
-             typename Super::Task &task) :
+             typename Super::Task &task,
+             int schedule) :
             Super(task),
             executor_id(executor_id),
             mapping_id(mapping_id) {
 
-        typename Super::Task& t = this->task;
-
-        sop::TileConfig tile_config;
-        tile_config.N_c = config.n_tile;
-        tile_config.M_c = config.m_tile;
-        tile_config.K_c = config.k_tile;
-        tile_config.tiling_strategy =
-            config.tiling_strategy ? sop::CAKE_TILING : sop::MANUAL_TILING;
-
-        delete sop_matmul;
-        sop_matmul = nullptr;
+        tile_config.runtimeSchedule = schedule;
     }
-
-//    void log_extra_info(cpp_testbed::csv_row_t& row) override {
-//        csv_row_insert(row, "total_tile_count", stats.total_tile_count);
-//
-//        csv_row_insert(row, "sop_tiles_count", stats.sop_tiles_count);
-//        csv_row_insert(row, "sop_tiles_nnz_count", stats.sop_tiles_nnz_count);
-//        csv_row_insert(row, "sop_tiles_padding", stats.sop_tiles_padding);
-//
-//        csv_row_insert(row, "csr_tiles_count", stats.csr_tiles_count);
-//        csv_row_insert(row, "csr_tiles_nnz_count", stats.csr_tiles_nnz_count);
-//
-//        csv_row_insert(row, "dense_tiles_count", stats.dense_tiles_count);
-//        csv_row_insert(row, "dense_tiles_padding", stats.dense_tiles_padding);
-//        csv_row_insert(row, "dense_tiles_nnz_count", stats.dense_tiles_nnz_count);
-//    }
 
     std::string get_config_rep_impl() override {
         return config.rep();
@@ -127,7 +104,6 @@ public:
             || old_config.max_tlb_entries != config.max_tlb_entries
             || old_config.tlb_page_size != config.tlb_page_size) {
 
-            sop::TileConfig tile_config;
             tile_config.N_c = config.n_tile;
             tile_config.M_c = config.m_tile;
             tile_config.K_c = config.k_tile;
@@ -158,6 +134,30 @@ public:
             sop_matmul = nullptr;
         }
         return true;
+    }
+
+    void setup() override {
+      typename Super::Task& t = this->task;
+      if (!sop_matmul) {
+        tile_config.N_c = config.n_tile;
+        tile_config.M_c = config.m_tile;
+        tile_config.K_c = config.k_tile;
+        tile_config.beta = float(config.beta_10x) / 10.f;
+        tile_config.sparse_a = config.sparse_a;
+        tile_config.tiling_strategy = (sop::TilingStrategy) config.tiling_strategy;
+        tile_config.tlb_page_size = config.tlb_page_size;
+        tile_config.max_tlb_entries = config.max_tlb_entries;
+
+        sop_matmul = new sop::MatMulSpecialized<KernelDesc>(
+                t.m(), t.k(), t.n(),
+                t.A->Lx, t.A->Lp, t.A->Li,
+                tile_config, t.nThreads,
+                executor_id,
+                mapping_id
+        );
+
+        sop_matmul->allocate_executor(t.n());
+      }
     }
 
     ~SpMM_SOP() {
