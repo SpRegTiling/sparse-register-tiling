@@ -67,3 +67,4 @@ tools/paper/plotting/plots/
 tools/paper/plotting/.cache/
 cmake-build-*
 /tools/paper/sdb/codegen/spmm-nano-bench/tools/paper/experiments/generated/*
+*.csv#

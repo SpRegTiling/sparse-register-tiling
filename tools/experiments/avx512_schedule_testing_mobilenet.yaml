@@ -3,12 +3,12 @@ options:
   scalar_type: float
   n_threads: [ 8 ]
   b_cols: -1 # -1 means use from filelist
-  output_file: mobilenet_80.csv
+  output_file: mobilenet_70.csv
   save_tuning_results: False
   expand_config_parameters: [ m_tile, k_tile, n_tile, density_threshold, agg, pct_nnz ]
 
 matrices:
-  filelist: ../../tools/filelists/mobilenet_80.txt
+  filelist: ../../tools/filelists/mobilenet_70.txt
 
 tuning:
   parameter_grids:

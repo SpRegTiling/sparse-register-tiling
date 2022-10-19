@@ -34,8 +34,13 @@
         "Packing and load-balance are not currently "
         "supported together");
 
-       return new SpMM_SOP<sop::KD_PIFloatSplitN>
+      if (load_balance) {
+        return new SpMM_SOP<sop::KD_PIFloatLoadBalanced>
           (get_executor_id(mapping_id_mut, arch, vec_width_bits, nr), mapping_id_mut, task, outer_schedule);
+      } else {
+        return new SpMM_SOP<sop::KD_PIFloat>
+          (get_executor_id(mapping_id_mut, arch, vec_width_bits, nr), mapping_id_mut, task, outer_schedule);
+      }
 
       return nullptr;
     };
@@ -74,18 +79,18 @@
 
       if (load_balance) {
         if (packed) {
-          return new SpMM_SOP<sop::KD_IntelFloatLoadBalancedPackedNKM>
+          return new SpMM_SOP<sop::KD_IntelFloatLoadBalancedPacked>
             (get_executor_id(mapping_id_mut, arch, vec_width_bits, nr), mapping_id_mut, task, outer_schedule);
         } else {
-          return new SpMM_SOP<sop::KD_IntelFloatLoadBalancedNKM>
+          return new SpMM_SOP<sop::KD_IntelFloatLoadBalanced>
             (get_executor_id(mapping_id_mut, arch, vec_width_bits, nr), mapping_id_mut, task, outer_schedule);
         }
       } else {
         if (packed) {
-          return new SpMM_SOP<sop::KD_IntelFloatPackedNKM>
+          return new SpMM_SOP<sop::KD_IntelFloatPacked>
             (get_executor_id(mapping_id_mut, arch, vec_width_bits, nr), mapping_id_mut, task, outer_schedule);
         } else {
-          return new SpMM_SOP<sop::KD_IntelFloatNKM>
+          return new SpMM_SOP<sop::KD_IntelFloat>
             (get_executor_id(mapping_id_mut, arch, vec_width_bits, nr), mapping_id_mut, task, outer_schedule);
         }
       }
