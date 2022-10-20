@@ -27,37 +27,38 @@
 
 //#define MIN_MAX
 
-XNN_INLINE static size_t divide_round_up(size_t n, size_t q) {
-return XNN_UNPREDICTABLE(n % q == 0) ? n / q : n / q + 1;
+size_t divide_round_up(size_t n, size_t q) {
+return (n % q == 0) ? n / q : n / q + 1;
 }
 
 void xnn_f32_spmm_minmax_ukernel_16x1__neon_parallel(
   size_t input_size, // ncols
   size_t nc, // nrows
-  const float*restrict input,
-  const float*restrict weights,
+  const float*restrict input, // B
+  const float*restrict weights, // A
   const int32_t*restrict widx_dmap,
   const uint32_t*restrict nidx_nnzmap,
-  float*restrict output,
+  float*restrict output, // C
   size_t output_stride,
   size_t num_threads
 )
 {
+    size_t mc = input_size;
  if (num_threads > 1) {
   const size_t mr = mc;
   const size_t target_tiles_per_thread = 5;
   const size_t max_mc = divide_round_up(mc, num_threads * target_tiles_per_thread);
   if (max_mc < mc) {
-   mc = min(mc, divide_round_up(mc, max_mc * mr) * mr);
+   mc = std::min(mc, divide_round_up(mc, max_mc * mr) * mr);
   }
  }
-#pragma omp prallel
+#pragma omp parallel for
  for(int i = 0; i<input_size; i+=mc){
   size_t offset =  i;
   const float*restrict input_part = input + offset;
-  const float*restrict output_part = output + offset;
+  float*restrict output_part = output + offset;
   xnn_f32_spmm_minmax_ukernel_16x1__neon(mc, nc, input_part, weights, widx_dmap,
-                                         nidx_dmap, nidx_nnzmap, output_part,
+                                         nidx_nnzmap, output_part,
                                          output_stride);
  }
 }

@@ -657,7 +657,7 @@ class SpMMExperiment {
                     return left.second < right.second;
                 });
 
-                for (int i = 0; i < std::min((size_t) 10, times.size()); i++) {
+                for (int i = 0; i < std::min((size_t) 30, times.size()); i++) {
                     auto& method_uid = times[i].first;
                     auto& name = names[method_uid];
                     auto& executor = executors[method_uid];
