@@ -26,8 +26,10 @@ cluster_info = {
 }
 
 cluster = "niagara"
-cluster_dir, arch, threads = cluster_info[cluster]
 subdir = "oct_10"
+part = "part1"
+
+cluster_dir, arch, threads = cluster_info[cluster]
 
 
 def after_loadhook(filename, df):
@@ -40,12 +42,12 @@ def after_loadhook(filename, df):
     return df
 
 
-files = glob.glob(f"{cluster_dir}/results/{subdir}/dlmc_*_{arch}_*.csv")
+files = glob.glob(f"{cluster_dir}/results/{subdir}/dlmc_{part}_{arch}_*.csv")
 files = [f for f in files if "sota" not in f]
-df, df_reloaded = cached_merge_and_load(files, "dlmc_merged_v2", afterload_hook=after_loadhook, force_use_cache=False)
+df, df_reloaded = cached_merge_and_load(files, f"dlmc_{part}_merged_v2", afterload_hook=after_loadhook, force_use_cache=False)
 
 
-@cache_df_processes("dlmc_merged_postprocessed_v2")
+@cache_df_processes(f"dlmc_{part}_merged_postprocessed_v2")
 def postprocess(df):
     df["gflops"] = 2 * df["n"] * df["nnz"]
     df["gflops/s"] = (df["gflops"] / df["time median"]) / 1e9
@@ -89,6 +91,7 @@ def postprocess(df):
     def compute_best_nano(x):
         x["best_nano"] = False
         nanos = x[x["name"].str.contains("NANO")]
+        x["num_nano"] = len(nanos)
         if not nanos.empty:
             x.loc[nanos["time median"].idxmin(), "best_nano"] = True
         return x

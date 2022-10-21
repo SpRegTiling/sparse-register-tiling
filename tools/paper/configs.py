@@ -1,9 +1,45 @@
+import re
 
 vec_width = {
     "AVX2": 256,
     "AVX512": 512,
     "NEON": 128
 }
+
+schedules ={
+    "KNM": 0,
+    "NKM": 1,
+    "MNK": 2,
+    "NMK": 3,
+    "KMN": 4,
+    "MKN": 5,
+    "KM": 6,
+    "MK": 7,
+    "KN": 8,
+    "NK": 9,
+    "MN": 10,
+    "NM": 11,
+    "K": 12,
+    "N": 13,
+    "M": 14,
+}
+
+
+def nano_from_name(arch, s):
+    assert "tuned" not in s
+
+    mapping = s.split("_")[-1]
+    packed = "packed" in s
+    load_balance = "LB" in s
+    sparse_a = "SA" in s
+    mr_nr = re.search(r'M(\d)N(\d)', s)
+    size = int(mr_nr.group(1))
+    nr = int(mr_nr.group(2))
+    outer_schedule = s.split("_")[2]
+    tlb_comp = int(re.search(r'TLB(\d+)', s).group(1)) if 'TLB' in s else None
+    beta = float(re.search(r'_B(\d+)', s).group(1)) / 10 if '_B' in s else 1.0
+
+    return nano(arch, size, nr, mapping, outer_schedule, packed, load_balance, None, tlb_comp, sparse_a, beta)
 
 
 def nano(arch, size, nr, mapping, outer_schedule,
@@ -43,7 +79,7 @@ def nano(arch, size, nr, mapping, outer_schedule,
             "arch": arch,
             "vec_width_bits": default_arch_vec_width[arch],
             "nr": nr,
-            "outer_schedule": outer_schedule,
+            "outer_schedule": schedules[outer_schedule],
         }
     }
 

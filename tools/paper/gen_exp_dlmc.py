@@ -1,4 +1,4 @@
-from tools.paper.configs import nano, csb
+from tools.paper.configs import nano, csb, nano_from_name
 from tools.paper.clusters import gen_cluster_scripts
 
 from collections.abc import Iterable
@@ -33,7 +33,7 @@ def gen_dlmc_bench_exp(arch, test_methods, filelist, b_cols, num_threads, suffix
         suffix = "_" + suffix
 
     options = {
-        "profile": False,
+        "profile": True,
         "scalar_type": "float",
         "b_cols": b_cols,
         "n_threads": num_threads,
@@ -110,15 +110,15 @@ for arch in ["AVX2", "AVX512", "NEON"]:
         }
 
         method_packs = {
-        "aspt": [
-            {
-                "name": "ASpT",
-                "method_id": "aspt",
-                "options": {
-                    "vec_width": "not-supported"
-                }
-            }
-        ],
+        # "aspt": [
+        #     {
+        #         "name": "ASpT",
+        #         "method_id": "aspt",
+        #         "options": {
+        #             "vec_width": "not-supported"
+        #         }
+        #     }
+        # ],
         # "taco": [
         #     {
         #         "name": "TACO_4",
@@ -178,95 +178,40 @@ for arch in ["AVX2", "AVX512", "NEON"]:
                 }
             }
         ],
-        "nano4_identity_NKM": [
-            nano(arch, 4, 4, "identity", "NKM"),
-            nano(arch, 4, 4, "identity", "NKM", load_balance=True, tlb_comp=32),
-            nano(arch, 4, 4, "identity", "NKM", load_balance=True, tlb_comp=64),
-            nano(arch, 4, 4, "identity", "NKM", load_balance=True, sparse_a=True),
-            nano(arch, 4, 4, "identity", "NKM", load_balance=True, sparse_a=True, tlb_comp=48),
-            nano(arch, 4, 4, "identity", "NKM", load_balance=True, sparse_a=True, tlb_comp=64),
-            nano(arch, 4, 4, "identity", "NKM", load_balance=True, sparse_a=True, tlb_comp=128),
-            nano(arch, 4, 6, "identity", "NKM"),
-            nano(arch, 4, 6, "identity", "NKM", load_balance=True, sparse_a=True, tlb_comp=48),
-            nano(arch, 4, 6, "identity", "NKM", load_balance=True, sparse_a=True, tlb_comp=64),
-            nano(arch, 4, 6, "identity", "NKM", load_balance=True, sparse_a=True, tlb_comp=128),
+        "nano4_bests_part1": [
+            nano_from_name("AVX512", "NANO_M4N4_NKM_LB_TLB128_SA_identity"),
+            nano_from_name("AVX512", "NANO_M4N4_KNM_LB_TLB128_SA_identity"),
+            nano_from_name("AVX512", "NANO_M4N4_KNM_LB_SA_identity"),
+            nano_from_name("AVX512", "NANO_M4N4_KNM_identity"),
+            nano_from_name("AVX512", "NANO_M4N4_NKM_identity"),
         ],
-        "nano4_orig_NKM": [
-            nano(arch, 4, 4, "orig", "NKM",     load_balance=True),
-            nano(arch, 4, 4, "orig", "NKM",     load_balance=True, sparse_a=True, tlb_comp=64),
-            nano(arch, 4, 6, "orig", "NKM",     load_balance=True),
-            nano(arch, 4, 6, "orig", "NKM",     load_balance=True, sparse_a=True, tlb_comp=64),
+        "nano4_bests_part2": [
+            nano_from_name("AVX512", "NANO_M4N4_NKM_LB_orig"),
+            nano_from_name("AVX512", "NANO_M4N4_KNM_LB_orig"),
+            nano_from_name("AVX512", "NANO_M4N4_NKM_LB_SA_identity"),
+            nano_from_name("AVX512", "NANO_M4N4_NKM_LB_TLB64_SA_orig"),
+            nano_from_name("AVX512", "NANO_M4N4_NKM_LB_TLB64_SA_identity"),
         ],
-        "nano8_orig_NKM":  [
-            nano(arch, 8, 2, "orig", "NKM"),
-            nano(arch, 8, 2, "orig", "NKM", load_balance=True),
-            nano(arch, 8, 2, "orig", "NKM", load_balance=True, tlb_comp=64),
-            nano(arch, 8, 2, "orig", "NKM", load_balance=True, sparse_a=True, tlb_comp=48),
-            nano(arch, 8, 2, "orig", "NKM", load_balance=True, sparse_a=True, tlb_comp=64),
-            nano(arch, 8, 2, "orig", "NKM", load_balance=True, sparse_a=True, tlb_comp=128),
-            nano(arch, 8, 3, "orig", "NKM"),
-            nano(arch, 8, 3, "orig", "NKM", load_balance=True),
-            nano(arch, 8, 3, "orig", "NKM", load_balance=True, sparse_a=True, tlb_comp=48),
-            nano(arch, 8, 3, "orig", "NKM", load_balance=True, sparse_a=True, tlb_comp=64),
-            nano(arch, 8, 3, "orig", "NKM", load_balance=True, sparse_a=True, tlb_comp=128),
+        "nano8_bests_part1": [
+            nano_from_name("AVX512", "NANO_M8N2_KNM_alt"),
+            nano_from_name("AVX512", "NANO_M8N2_NKM_alt"),
+            nano_from_name("AVX512", "NANO_M8N3_NKM_LB_TLB128_SA_orig"),
+            nano_from_name("AVX512", "NANO_M8N2_KNM_orig"),
+            nano_from_name("AVX512", "NANO_M8N2_NKM_orig"),
         ],
-        "nano8_alt_NKM":  [
-            nano(arch, 8, 3, "alt", "NKM"),
-            nano(arch, 8, 3, "alt", "NKM",  load_balance=True, sparse_a=True, tlb_comp=64),
-            nano(arch, 8, 2, "alt", "NKM"),
-            nano(arch, 8, 2, "alt", "NKM",  load_balance=True, sparse_a=True, tlb_comp=64),
+        "nano8_bests_part2": [
+            nano_from_name("AVX512", "NANO_M8N3_KNM_LB_TLB128_SA_orig"),
+            nano_from_name("AVX512", "NANO_M8N2_KNM_LB_TLB64_SA_alt"),
+            nano_from_name("AVX512", "NANO_M8N2_NKM_LB_TLB64_SA_alt"),
+            nano_from_name("AVX512", "NANO_M8N3_KNM_LB_orig"),
+            nano_from_name("AVX512", "NANO_M8N2_KNM_LB_TLB128_SA_orig"),
         ],
-        "nano4_identity_KNM": [
-            nano(arch, 4, 4, "identity", "KNM"),
-            nano(arch, 4, 4, "identity", "KNM", load_balance=True, tlb_comp=32),
-            nano(arch, 4, 4, "identity", "KNM", load_balance=True, tlb_comp=64),
-            nano(arch, 4, 4, "identity", "KNM", load_balance=True, sparse_a=True),
-            nano(arch, 4, 4, "identity", "KNM", load_balance=True, sparse_a=True, tlb_comp=48),
-            nano(arch, 4, 4, "identity", "KNM", load_balance=True, sparse_a=True, tlb_comp=64),
-            nano(arch, 4, 4, "identity", "KNM", load_balance=True, sparse_a=True, tlb_comp=128),
-            nano(arch, 4, 6, "identity", "KNM"),
-            nano(arch, 4, 6, "identity", "KNM", load_balance=True, sparse_a=True, tlb_comp=48),
-            nano(arch, 4, 6, "identity", "KNM", load_balance=True, sparse_a=True, tlb_comp=64),
-            nano(arch, 4, 6, "identity", "KNM", load_balance=True, sparse_a=True, tlb_comp=128),
-        ],
-        "nano4_orig_KNM": [
-            nano(arch, 4, 4, "orig", "KNM",     load_balance=True),
-            nano(arch, 4, 4, "orig", "KNM",     load_balance=True, sparse_a=True, tlb_comp=64),
-            nano(arch, 4, 6, "orig", "KNM",     load_balance=True),
-            nano(arch, 4, 6, "orig", "KNM",     load_balance=True, sparse_a=True, tlb_comp=64),
-        ],
-        "nano8_orig_KNM":  [
-            nano(arch, 8, 2, "orig", "KNM"),
-            nano(arch, 8, 2, "orig", "KNM", load_balance=True),
-            nano(arch, 8, 2, "orig", "KNM", load_balance=True, tlb_comp=64),
-            nano(arch, 8, 2, "orig", "KNM", load_balance=True, sparse_a=True, tlb_comp=48),
-            nano(arch, 8, 2, "orig", "KNM", load_balance=True, sparse_a=True, tlb_comp=64),
-            nano(arch, 8, 2, "orig", "KNM", load_balance=True, sparse_a=True, tlb_comp=128),
-            nano(arch, 8, 3, "orig", "KNM"),
-            nano(arch, 8, 3, "orig", "KNM", load_balance=True),
-            nano(arch, 8, 3, "orig", "KNM", load_balance=True, sparse_a=True, tlb_comp=48),
-            nano(arch, 8, 3, "orig", "KNM", load_balance=True, sparse_a=True, tlb_comp=64),
-            nano(arch, 8, 3, "orig", "KNM", load_balance=True, sparse_a=True, tlb_comp=128),
-        ],
-        "nano8_alt_KNM":  [
-            nano(arch, 8, 3, "alt", "KNM"),
-            nano(arch, 8, 3, "alt", "KNM",  load_balance=True, sparse_a=True, tlb_comp=64),
-            nano(arch, 8, 2, "alt", "KNM"),
-            nano(arch, 8, 2, "alt", "KNM",  load_balance=True, sparse_a=True, tlb_comp=64),
-        ],
-        "nano_tuned_NKM":  [
-            nano(arch, 4, 4, "identity", "NKM", load_balance=True, tune="SOP4"),
-            nano(arch, 4, 4, "orig",     "NKM", load_balance=True, tune="SOP4"),
-            nano(arch, 8, 2, "orig",     "NKM", load_balance=True, tune="SOP4"),
-            nano(arch, 8, 2, "alt",      "NKM", load_balance=True, tune="SOP4")
-        ],
-        # "nano_tuned_KNM":  [
-        #     nano(arch, 4, 4, "identity", "KNM", load_balance=True, tune="SOP4"),
-        #     nano(arch, 4, 4, "orig",     "KNM", load_balance=True, tune="SOP4"),
-        #     nano(arch, 8, 2, "orig",     "KNM", load_balance=True, tune="SOP4"),
-        #     nano(arch, 8, 2, "alt",      "KNM", load_balance=True, tune="SOP4")
+        # "nano4_orig_NKM": [
+        #     nano(arch, 4, 4, "orig", "NKM",     load_balance=True),
+        #     nano(arch, 4, 4, "orig", "NKM",     load_balance=True, sparse_a=True, tlb_comp=64),
+        #     nano(arch, 4, 6, "orig", "NKM",     load_balance=True),
+        #     nano(arch, 4, 6, "orig", "NKM",     load_balance=True, sparse_a=True, tlb_comp=64),
         # ],
-
         # "csb": [
         #     csb(arch, "CSR", 32),
         #     csb(arch, "CSR", 32, sparse_a=True, tlb_comp=64),
