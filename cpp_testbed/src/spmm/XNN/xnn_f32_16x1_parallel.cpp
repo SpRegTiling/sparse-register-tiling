@@ -52,7 +52,7 @@ void xnn_f32_spmm_minmax_ukernel_16x1__neon_parallel(
    mc = std::min(mc, divide_round_up(mc, max_mc * mr) * mr);
   }
  }
-#pragma omp parallel for
+#pragma omp parallel for num_threads(num_threads)
  for(int i = 0; i<input_size; i+=mc){
   size_t offset =  i;
   const float*restrict input_part = input + offset;
