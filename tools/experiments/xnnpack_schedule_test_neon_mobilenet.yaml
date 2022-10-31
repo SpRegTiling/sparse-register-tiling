@@ -1,0 +1,278 @@
+options:
+  profile: True
+  scalar_type: float
+  n_threads: [ 1, 4 ]
+  b_cols: -1 # -1 means use from filelist
+  output_file: mobilenet_70.csv
+  save_tuning_results: False
+  expand_config_parameters: [ m_tile, k_tile, n_tile, density_threshold, agg, pct_nnz ]
+
+matrices:
+  filelist: ../../tools/filelists/mobilenet_70.txt
+
+tuning:
+  parameter_grids:
+    - name: MKN_Grid
+      m_tile: [ 4, 8, 32, 64, 512]
+      k_tile: [ 1024, 512, 256, 128, 64, 32 ]
+      n_tile: [ 48, 96, 192, 288, 384 ]
+      tiling_strategy: [ 0 ]
+
+methods:
+  - name: XNN
+    method_id: xnn
+
+  ##
+  # Single Threaded
+  ##
+
+#  - name: NANO_BCOLS_1024_THREADS_1
+#    method_id: nano
+#    options:
+#      arch: NEON
+#      vec_width_bits: 128
+#      packed: False
+#      mapping_id: 61fee
+#      nr: 4
+#      split: N
+#    config:
+#      tiling_strategy: 0
+#      n_tile: 64
+#      m_tile: 128
+#      k_tile: 64
+
+#  - name: NANO_BCOLS_512_THREADS_1
+#    method_id: nano
+#    options:
+#      arch: NEON
+#      vec_width_bits: 128
+#      packed: False
+#      mapping_id: 61fee
+#      nr: 4
+#      split: N
+#    config:
+#      tiling_strategy: 2
+#      n_tile: 16
+#      m_tile: 512
+#      k_tile: 128
+#
+
+  ############################################
+  - name: NANO_BCOLS_128_THREADS_1_nmKNM
+    method_id: nano
+    options:
+      arch: NEON
+      vec_width_bits: 128
+      outer_schedule: 0
+      packed: False
+      mapping_id: 61fee
+      nr: 6
+    config:
+      tiling_strategy: 0
+    tune:
+      grid: MKN_Grid
+
+  - name: NANO_BCOLS_128_THREADS_1_nmNKM
+    method_id: nano
+    options:
+      arch: NEON
+      vec_width_bits: 128
+      outer_schedule: 1
+      packed: False
+      mapping_id: 61fee
+      nr: 6
+    config:
+      tiling_strategy: 0
+    tune:
+      grid: MKN_Grid
+
+  - name: NANO_BCOLS_128_THREADS_1_nmKMN
+    method_id: nano
+    options:
+      arch: NEON
+      vec_width_bits: 128
+      outer_schedule: 4
+      packed: False
+      mapping_id: 61fee
+      nr: 6
+    config:
+      tiling_strategy: 0
+    tune:
+      grid: MKN_Grid
+
+  - name: NANO_BCOLS_128_THREADS_1_nmMKN
+    method_id: nano
+    options:
+      arch: NEON
+      vec_width_bits: 128
+      outer_schedule: 5
+      packed: False
+      mapping_id: 61fee
+      nr: 6
+    config:
+      tiling_strategy: 0
+    tune:
+      grid: MKN_Grid
+
+  - name: NANO_BCOLS_128_THREADS_1_nmKM
+    method_id: nano
+    options:
+      arch: NEON
+      vec_width_bits: 128
+      outer_schedule: 6
+      packed: False
+      mapping_id: 61fee
+      nr: 6
+    config:
+      tiling_strategy: 0
+    tune:
+      grid: MKN_Grid
+
+  - name: NANO_BCOLS_128_THREADS_1_nmKN
+    method_id: nano
+    options:
+      arch: NEON
+      vec_width_bits: 128
+      outer_schedule: 8
+      packed: False
+      mapping_id: 61fee
+      nr: 6
+    config:
+      tiling_strategy: 0
+    tune:
+      grid: MKN_Grid
+
+  - name: NANO_BCOLS_128_THREADS_1_nmMN
+    method_id: nano
+    options:
+      arch: NEON
+      vec_width_bits: 128
+      outer_schedule: 10
+      packed: False
+      mapping_id: 61fee
+      nr: 6
+    config:
+      tiling_strategy: 0
+    tune:
+      grid: MKN_Grid
+
+  - name: NANO_BCOLS_128_THREADS_1_nmNM
+    method_id: nano
+    options:
+      arch: NEON
+      vec_width_bits: 128
+      outer_schedule: 11
+      packed: False
+      mapping_id: 61fee
+      nr: 6
+    config:
+      tiling_strategy: 0
+    tune:
+      grid: MKN_Grid
+
+  - name: NANO_BCOLS_128_THREADS_1_nmN
+    method_id: nano
+    options:
+      arch: NEON
+      vec_width_bits: 128
+      outer_schedule: 13
+      packed: False
+      mapping_id: 61fee
+      nr: 6
+    config:
+      tiling_strategy: 0
+    tune:
+      grid: MKN_Grid
+
+  - name: NANO_BCOLS_128_THREADS_1_nmM
+    method_id: nano
+    options:
+      arch: NEON
+      vec_width_bits: 128
+      outer_schedule: 14
+      packed: False
+      mapping_id: 61fee
+      nr: 6
+    config:
+      tiling_strategy: 0
+    tune:
+      grid: MKN_Grid
+#
+#  - name: NANO_BCOLS_0_THREADS_1
+#    method_id: nano
+#    options:
+#      arch: NEON
+#      vec_width_bits: 128
+#      packed: False
+#      mapping_id: 61fee
+#      nr: 6
+#      split: M
+#    config:
+#      tiling_strategy: 0
+#      n_tile: 72
+#      m_tile: 64
+#      k_tile: 128
+
+  ##
+  # Multi Threaded
+  ##
+
+#  - name: NANO_BCOLS_1024_THREADS_4
+#    method_id: nano
+#    options:
+#      arch: NEON
+#      vec_width_bits: 128
+#      packed: False
+#      mapping_id: 61fee
+#      nr: 4
+#      split: N
+#    config:
+#      tiling_strategy: 0
+#      n_tile: 64
+#      m_tile: 128
+#      k_tile: 64
+#
+#  - name: NANO_BCOLS_512_THREADS_4
+#    method_id: nano
+#    options:
+#      arch: NEON
+#      vec_width_bits: 128
+#      packed: False
+#      mapping_id: 61fee
+#      nr: 6
+#      split: N
+#    config:
+#      tiling_strategy: 0
+#      n_tile: 24
+#      m_tile: 512
+#      k_tile: 128
+
+#  - name: NANO_BCOLS_128_THREADS_4
+#    method_id: nano
+#    options:
+#      arch: NEON
+#      vec_width_bits: 128
+#      packed: False
+#      mapping_id: 61fee
+#      nr: 6
+#      split: M
+#    config:
+#      tiling_strategy: 0
+#      n_tile: 216
+#      m_tile: 64
+#      k_tile: 32
+
+#  - name: NANO_BCOLS_0_THREADS_4
+#    method_id: nano
+#    options:
+#      arch: NEON
+#      vec_width_bits: 128
+#      packed: False
+#      mapping_id: 61fee
+#      nr: 6
+#      split: M
+#    config:
+#      tiling_strategy: 0
+#      n_tile: 72
+#      m_tile: 64
+#      k_tile: 64

@@ -36,6 +36,18 @@ void xnn_f32_spmm_minmax_ukernel_16x1__neon(
         size_t output_stride
 );
 
+void xnn_f32_spmm_minmax_ukernel_16x1__neon_parallel(
+        size_t input_size, // ncols
+        size_t nc, // nrows
+        const float*restrict input,
+        const float*restrict weights,
+        const int32_t*restrict widx_dmap,
+        const uint32_t*restrict nidx_nnzmap,
+        float*restrict output,
+        size_t output_stride,
+        size_t num_threads
+);
+
 template<typename Scalar>
 class SpMM_XNN : public SpMMFunctor<Scalar> {
     using Super = SpMMFunctor<Scalar>;
@@ -118,17 +130,29 @@ public:
     // operator function () on objects of increment
     void operator()() {
         typename Super::Task& t = this->task;
-
-        xnn_f32_spmm_minmax_ukernel_16x1__neon(
-            t.n() * sizeof(float),
-            t.m(),
-            t.B + first_nnz_diff * t.n(),
-            weights,
-            col_increment,
-            row_nnz,
-            t.C,
-            t.n() * sizeof(float)
-        );
+    if(false) {
+     xnn_f32_spmm_minmax_ukernel_16x1__neon(
+       t.n() * sizeof(float),
+       t.m(),
+       t.B + first_nnz_diff * t.n(),
+       weights,
+       col_increment,
+       row_nnz,
+       t.C,
+       t.n() * sizeof(float)
+     );
+    }else{
+     xnn_f32_spmm_minmax_ukernel_16x1__neon_parallel(
+       t.n() * sizeof(float),
+       t.m(),
+       t.B + first_nnz_diff * t.n(),
+       weights,
+       col_increment,
+       row_nnz,
+       t.C,
+       t.n() * sizeof(float),
+       t.nThreads
+     );
+     }
     }
 };
-
