@@ -58,6 +58,27 @@ bool report_packing_time = false;
  *  Benchmark utils
  **********************************************************/
 
+// Return clockrate in Hz
+uint64_t GetCurrentCpuFrequency() {
+#ifdef __linux__
+    int freq = 0;
+    char cpuinfo_name[512];
+    int cpu = sched_getcpu();
+    snprintf(cpuinfo_name, sizeof(cpuinfo_name),
+             "/sys/devices/system/cpu/cpu%d/cpufreq/scaling_cur_freq", cpu);
+
+    FILE* f = fopen(cpuinfo_name, "r");
+    if (f) {
+        if (fscanf(f, "%d", &freq)) {
+            fclose(f);
+            return uint64_t(freq) * 1000;
+        }
+        fclose(f);
+    }
+#endif  // __linux__
+    return 0;
+}
+
 template<typename Scalar>
 Scalar *random_matrix(int m, int n) {
     Scalar *mtx = new(std::align_val_t(4096)) Scalar[m * n];
@@ -521,6 +542,10 @@ class SpMMExperiment {
 
                         benchmark::RegisterBenchmark(method_uid.c_str(), [executor](benchmark::State& st) {
                             for (auto _: st) { (*executor)(); }
+                            const uint64_t cpu_frequency = GetCurrentCpuFrequency();
+                            if (cpu_frequency != 0) {
+                                st.counters["cpufreq"] = cpu_frequency;
+                            }
                         })->Unit(benchmark::kMicrosecond);
                     }
 
@@ -636,7 +661,9 @@ class SpMMExperiment {
 
                         csv_row_insert(csv_row, "time " + run.aggregate_name, run.GetAdjustedRealTime());
                         csv_row_insert(csv_row, "time cpu " + run.aggregate_name, run.GetAdjustedCPUTime());
+                        csv_row_insert(csv_row, "cpufreq", run.counters["cpufreq"]);
                         csv_row_insert(csv_row, "iterations", run.iterations);
+
                     }
                 }
 

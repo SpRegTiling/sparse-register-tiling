@@ -51,6 +51,7 @@ sbatch <<EOT
 #SBATCH --export=ALL
 #SBATCH --job-name="$EXPERIMENT_NAME"
 #SBATCH --nodes=1
+#SBATCH --account=def-mmehride
 #SBATCH --output="log_$EXPERIMENT_NAME.%j.%N.out"
 #SBATCH -t $2:00:00
 #SBATCH --constraint=cascade

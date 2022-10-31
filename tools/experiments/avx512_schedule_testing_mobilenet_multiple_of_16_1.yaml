@@ -1,14 +1,14 @@
 options:
   profile: True
   scalar_type: float
-  n_threads: [ 4 ]
+  n_threads: [ 1 ]
   b_cols: -1 # -1 means use from filelist
-  output_file: mobilenet_70_3.csv
+  output_file: mobilenet_70_1_multiple_of_16.csv
   save_tuning_results: False
   expand_config_parameters: [ m_tile, k_tile, n_tile, density_threshold, agg, pct_nnz ]
 
 matrices:
-  filelist: ../../tools/filelists/mobilenet_70.txt
+  filelist: ../../tools/filelists/mobilenet_70_multiple_of_16.txt
 
 tuning:
   parameter_grids:
@@ -73,22 +73,6 @@ methods:
       vec_width_bits: 512
 
   - config:
-      beta_10x: 30
-      max_tlb_entries: 64
-      sparse_a: 0
-      tiling_strategy: 2
-    method_id: nano
-    name: SchedTest-nmKNM-packed-beta30
-    options:
-      arch: AVX512
-      load_balance: false
-      mapping_id: 61fee
-      nr: 4
-      outer_schedule: 0
-      packed: true
-      vec_width_bits: 512
-
-  - config:
       beta_10x: 10
       max_tlb_entries: 64
       sparse_a: 0
@@ -103,23 +87,6 @@ methods:
       outer_schedule: 0
       packed: true
       vec_width_bits: 512
-
-  - config:
-      beta_10x: 30
-      max_tlb_entries: 64
-      sparse_a: 0
-      tiling_strategy: 2
-    method_id: nano
-    name: SchedTest-nmKNM-packed-nr6
-    options:
-      arch: AVX512
-      load_balance: false
-      mapping_id: 61fee
-      nr: 6
-      outer_schedule: 0
-      packed: true
-      vec_width_bits: 512
-
 
   - config:
       beta_10x: 10
@@ -219,15 +186,12 @@ methods:
       vec_width_bits: 512
 
   - config:
-      beta_10x: 30
-      m_tile: 512
-      k_tile: 512
-      n_tile: 128
+      beta_10x: 10
       max_tlb_entries: 64
       sparse_a: 0
-      tiling_strategy: 0
+      tiling_strategy: 2
     method_id: nano
-    name: SchedTest-nmMN-packed-manual-tile
+    name: SchedTest-nmMN-packed
     options:
       arch: AVX512
       load_balance: false
@@ -237,37 +201,21 @@ methods:
       packed: true
       vec_width_bits: 512
 
-#  - config:
-#      beta_10x: 10
-#      max_tlb_entries: 64
-#      sparse_a: 0
-#      tiling_strategy: 2
-#    method_id: nano
-#    name: SchedTest-nmNM-256
-#    options:
-#      arch: AVX512
-#      load_balance: false
-#      mapping_id: 61fee
-#      nr: 4
-#      outer_schedule: 11
-#      packed: false
-#      vec_width_bits: 256
-
-#  - config:
-#      beta_10x: 10
-#      max_tlb_entries: 64
-#      sparse_a: 0
-#      tiling_strategy: 2
-#    method_id: nano
-#    name: SchedTest-nmNM-8
-#    options:
-#      arch: AVX512
-#      load_balance: false
-#      mapping_id: 400fa
-#      nr: 3
-#      outer_schedule: 11
-#      packed: false
-#      vec_width_bits: 512
+  - config:
+      beta_10x: 10
+      max_tlb_entries: 64
+      sparse_a: 0
+      tiling_strategy: 2
+    method_id: nano
+    name: SchedTest-nmNM
+    options:
+      arch: AVX512
+      load_balance: false
+      mapping_id: 61fee
+      nr: 4
+      outer_schedule: 11
+      packed: false
+      vec_width_bits: 512
 
   - config:
       beta_10x: 10
@@ -291,23 +239,7 @@ methods:
       sparse_a: 0
       tiling_strategy: 2
     method_id: nano
-    name: SchedTest-nmN-nr6
-    options:
-      arch: AVX512
-      load_balance: false
-      mapping_id: 61fee
-      nr: 6
-      outer_schedule: 13
-      packed: false
-      vec_width_bits: 512
-
-  - config:
-      beta_10x: 30
-      max_tlb_entries: 64
-      sparse_a: 0
-      tiling_strategy: 2
-    method_id: nano
-    name: SchedTest-nmN-packed-beta30
+    name: SchedTest-nmN-packed
     options:
       arch: AVX512
       load_balance: false
@@ -316,23 +248,6 @@ methods:
       outer_schedule: 13
       packed: true
       vec_width_bits: 512
-
-  - config:
-      beta_10x: 10
-      max_tlb_entries: 64
-      sparse_a: 0
-      tiling_strategy: 2
-    method_id: nano
-    name: SchedTest-nmN-packed-nr6
-    options:
-      arch: AVX512
-      load_balance: false
-      mapping_id: 61fee
-      nr: 6
-      outer_schedule: 13
-      packed: true
-      vec_width_bits: 512
-
 
   - config:
       beta_10x: 10

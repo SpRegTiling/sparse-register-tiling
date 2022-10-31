@@ -1,11 +1,12 @@
 from tools.paper.configs import nano, csb, nano_from_name
-from tools.paper.clusters import gen_cluster_scripts
 
 from collections.abc import Iterable
 from collections import defaultdict
 import os; SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 import yaml
 import shutil
+
+from tools.paper.method_packs import method_packs
 
 sub_dir = 'dlmc'
 pack_names = set()
@@ -33,7 +34,7 @@ def gen_dlmc_bench_exp(arch, test_methods, filelist, b_cols, num_threads, suffix
         suffix = "_" + suffix
 
     options = {
-        "profile": True,
+        "profile": False,
         "scalar_type": "float",
         "b_cols": b_cols,
         "n_threads": num_threads,
@@ -94,7 +95,7 @@ def gen_dlmc_bench_exp(arch, test_methods, filelist, b_cols, num_threads, suffix
 
 
 # All-DLMC Experiments
-for arch in ["AVX2", "AVX512", "NEON"]:
+for arch in ["AVX512", "NEON"]:
     max_threads_by_arch = {
         "AVX2": [32, 64],
         "AVX512": [32],
@@ -107,117 +108,6 @@ for arch in ["AVX2", "AVX512", "NEON"]:
             8: [1, 8],
             32: [1, 16, 32],
             64: [1, 16, 32, 64],
-        }
-
-        method_packs = {
-        # "aspt": [
-        #     {
-        #         "name": "ASpT",
-        #         "method_id": "aspt",
-        #         "options": {
-        #             "vec_width": "not-supported"
-        #         }
-        #     }
-        # ],
-        # "taco": [
-        #     {
-        #         "name": "TACO_4",
-        #         "method_id": "taco",
-        #         "options": {
-        #             "width": 4
-        #         }
-        #     },
-        #     {
-        #         "name": "TACO_16",
-        #         "method_id": "taco",
-        #         "options": {
-        #             "width": 16
-        #         }
-        #     },
-        # ],
-        "mkl": [
-            {
-                "name": "MKL_Dense",
-                "method_id": "mkl_dense"
-            },
-            {
-                "name": "MKL_Sparse",
-                "method_id": "mkl",
-                "options": {
-                    "inspector": False
-                }
-            },
-            {
-                "name": "MKL_Sparse_IE",
-                "method_id": "mkl",
-                "options": {
-                    "inspector": True
-                }
-            }
-        ],
-        "mkl_bsr": [
-            {
-                "name": "MKL_BSR_B2",
-                "method_id": "mkl_bsr",
-                "options": {
-                    "block_size": 2
-                }
-            },
-            {
-                "name": "MKL_BSR_B4",
-                "method_id": "mkl_bsr",
-                "options": {
-                    "block_size": 4
-                }
-            },
-            {
-                "name": "MKL_BSR_B8",
-                "method_id": "mkl_bsr",
-                "options": {
-                    "block_size": 8
-                }
-            }
-        ],
-        "nano4_bests_part1": [
-            nano_from_name("AVX512", "NANO_M4N4_NKM_LB_TLB128_SA_identity"),
-            nano_from_name("AVX512", "NANO_M4N4_KNM_LB_TLB128_SA_identity"),
-            nano_from_name("AVX512", "NANO_M4N4_KNM_LB_SA_identity"),
-            nano_from_name("AVX512", "NANO_M4N4_KNM_identity"),
-            nano_from_name("AVX512", "NANO_M4N4_NKM_identity"),
-        ],
-        "nano4_bests_part2": [
-            nano_from_name("AVX512", "NANO_M4N4_NKM_LB_orig"),
-            nano_from_name("AVX512", "NANO_M4N4_KNM_LB_orig"),
-            nano_from_name("AVX512", "NANO_M4N4_NKM_LB_SA_identity"),
-            nano_from_name("AVX512", "NANO_M4N4_NKM_LB_TLB64_SA_orig"),
-            nano_from_name("AVX512", "NANO_M4N4_NKM_LB_TLB64_SA_identity"),
-        ],
-        "nano8_bests_part1": [
-            nano_from_name("AVX512", "NANO_M8N2_KNM_alt"),
-            nano_from_name("AVX512", "NANO_M8N2_NKM_alt"),
-            nano_from_name("AVX512", "NANO_M8N3_NKM_LB_TLB128_SA_orig"),
-            nano_from_name("AVX512", "NANO_M8N2_KNM_orig"),
-            nano_from_name("AVX512", "NANO_M8N2_NKM_orig"),
-        ],
-        "nano8_bests_part2": [
-            nano_from_name("AVX512", "NANO_M8N3_KNM_LB_TLB128_SA_orig"),
-            nano_from_name("AVX512", "NANO_M8N2_KNM_LB_TLB64_SA_alt"),
-            nano_from_name("AVX512", "NANO_M8N2_NKM_LB_TLB64_SA_alt"),
-            nano_from_name("AVX512", "NANO_M8N3_KNM_LB_orig"),
-            nano_from_name("AVX512", "NANO_M8N2_KNM_LB_TLB128_SA_orig"),
-        ],
-        # "nano4_orig_NKM": [
-        #     nano(arch, 4, 4, "orig", "NKM",     load_balance=True),
-        #     nano(arch, 4, 4, "orig", "NKM",     load_balance=True, sparse_a=True, tlb_comp=64),
-        #     nano(arch, 4, 6, "orig", "NKM",     load_balance=True),
-        #     nano(arch, 4, 6, "orig", "NKM",     load_balance=True, sparse_a=True, tlb_comp=64),
-        # ],
-        # "csb": [
-        #     csb(arch, "CSR", 32),
-        #     csb(arch, "CSR", 32, sparse_a=True, tlb_comp=64),
-        #     csb(arch, "CSR", 64),
-        #     csb(arch, "CSR", 64, sparse_a=True, tlb_comp=64),
-        # ]
         }
 
         all_files = []
