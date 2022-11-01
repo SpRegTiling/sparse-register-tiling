@@ -127,7 +127,7 @@ methods:
       packed: False
       mapping_id: 61fee
       nr: 4
-      split: M
+      outer_schedule: 14 # nmM
     tune:
       grid: Grid_MR4_SPLIT_M
 
@@ -152,7 +152,7 @@ methods:
       mapping_id: 61fee
       load_balance: True
       nr: 6
-      split: M
+      outer_schedule: 14 # nmM
     tune:
       grid: Grid_MR4_SPLIT_M
 
@@ -295,3 +295,196 @@ methods:
       outer_schedule: 13 # nmN
     tune:
       grid: Grid_NR2_SPLIT_N
+
+  #
+  # NANO 4 methods
+  #
+
+  - name: NANO_4x6_identity_split_KM
+    method_id: nano
+    options:
+      arch: NEON
+      vec_width_bits: 128
+      packed: False
+      mapping_id: 61fee
+      nr: 6
+      outer_schedule: 6 #nmKM
+    tune:
+      grid: Grid_MR4_SPLIT_KM
+
+  - name: NANO_4x4_identity_split_KM
+    method_id: nano
+    options:
+      arch: NEON
+      vec_width_bits: 128
+      packed: False
+      mapping_id: 61fee
+      nr: 4
+      outer_schedule: 6 #nmKM
+    tune:
+      grid: Grid_MR4_SPLIT_KM
+
+  - name: NANO_4x2_identity_split_KM
+    method_id: nano
+    options:
+      arch: NEON
+      vec_width_bits: 128
+      packed: False
+      mapping_id: 61fee
+      nr: 2
+      outer_schedule: 6 #nmKM
+    tune:
+      grid: Grid_MR4_SPLIT_KM
+
+  - name: NANO_4x6_identity_split_KM_load_balanced
+    method_id: nano
+    options:
+      arch: NEON
+      vec_width_bits: 128
+      packed: False
+      mapping_id: 61fee
+      load_balance: True
+      nr: 6
+      outer_schedule: 6 #nmKM
+    tune:
+      grid: Grid_MR4_SPLIT_KM
+
+  - name: NANO_4x4_identity_split_KM_load_balanced
+    method_id: nano
+    options:
+      arch: NEON
+      vec_width_bits: 128
+      packed: False
+      mapping_id: 61fee
+      load_balance: True
+      nr: 4
+      outer_schedule: 6 #nmKM
+    tune:
+      grid: Grid_MR4_SPLIT_KM
+
+  - name: NANO_4x2_identity_split_KM_load_balanced
+    method_id: nano
+    options:
+      arch: NEON
+      vec_width_bits: 128
+      packed: False
+      mapping_id: 61fee
+      load_balance: True
+      nr: 2
+      outer_schedule: 6 #nmKM
+    tune:
+      grid: Grid_MR4_SPLIT_KM
+
+  - name: NANO_4x6_identity_split_KN
+    method_id: nano
+    options:
+      arch: NEON
+      vec_width_bits: 128
+      packed: False
+      mapping_id: 61fee
+      nr: 6
+      outer_schedule: 8 #nmKN
+    tune:
+      grid: Grid_NR6_SPLIT_KN
+
+  - name: NANO_4x4_identity_split_KN
+    method_id: nano
+    options:
+      arch: NEON
+      vec_width_bits: 128
+      packed: False
+      mapping_id: 61fee
+      nr: 4
+      outer_schedule: 8 #nmKN
+    tune:
+      grid: Grid_NR4_SPLIT_KN
+
+  - name: NANO_4x2_identity_split_KN
+    method_id: nano
+    options:
+      arch: NEON
+      vec_width_bits: 128
+      packed: False
+      mapping_id: 61fee
+      nr: 2
+      outer_schedule: 8 #nmKN
+    tune:
+      grid: Grid_NR2_SPLIT_KN
+
+  #
+  # NANO 8 methods
+  #
+
+  - name: NANO_8x3_orig_split_KM
+    method_id: nano
+    options:
+      arch: NEON
+      vec_width_bits: 128
+      packed: False
+      mapping_id: 400fa
+      nr: 3
+      outer_schedule: 6 #nmKM
+    tune:
+      grid: Grid_MR8_SPLIT_KM
+
+  - name: NANO_8x2_orig_split_KM
+    method_id: nano
+    options:
+      arch: NEON
+      vec_width_bits: 128
+      packed: False
+      mapping_id: 400fa
+      nr: 2
+      outer_schedule: 6 #nmKM
+    tune:
+      grid: Grid_MR8_SPLIT_KM
+
+  - name: NANO_8x3_orig_split_KM_load_balanced
+    method_id: nano
+    options:
+      arch: NEON
+      vec_width_bits: 128
+      packed: False
+      mapping_id: 400fa
+      load_balance: True
+      nr: 3
+      outer_schedule: 6 #nmKM
+    tune:
+      grid: Grid_MR8_SPLIT_KM
+
+  - name: NANO_8x2_orig_split_KM_load_balanced
+    method_id: nano
+    options:
+      arch: NEON
+      vec_width_bits: 128
+      packed: False
+      mapping_id: 400fa
+      load_balance: True
+      nr: 2
+      outer_schedule: 6 #nmKM
+    tune:
+      grid: Grid_MR8_SPLIT_KM
+
+  - name: NANO_8x3_orig_split_KN
+    method_id: nano
+    options:
+      arch: NEON
+      vec_width_bits: 128
+      packed: False
+      mapping_id: 400fa
+      nr: 3
+      outer_schedule: 8 #nmKN
+    tune:
+      grid: Grid_NR3_SPLIT_KN
+
+  - name: NANO_8x2_orig_split_KN
+    method_id: nano
+    options:
+      arch: NEON
+      vec_width_bits: 128
+      packed: False
+      mapping_id: 400fa
+      nr: 2
+      outer_schedule: 8 #nmKN
+    tune:
+      grid: Grid_NR2_SPLIT_KN
