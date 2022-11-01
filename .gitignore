@@ -47,14 +47,14 @@ my_runs.md
 results/
 outputs
 /plots/*
-/spmm_benchmarks/plots/*
+/sbench/plots/*
 geckodriver.log
 /cmake-build-debug/
 /cmake-build-release/
 *.csv
 *_lucas.py
 /dis.txt
-/spmm_benchmarks/SOP/_C/generated/*
+/sbench/SOP/_C/generated/*
 *.pickle
 *.png
 /spmm_benchmarks/SOP/speacialized_mappings/*.txt

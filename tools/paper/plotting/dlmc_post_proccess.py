@@ -21,7 +21,7 @@ alt.data_transformers.enable('default', max_rows=1000000)
 
 cluster_info = {
   "graham": ("/home/lwilkinson/graham", "AVX2", 32),
-  "niagara": ("/home/lwilkinson/niagara", "AVX512", 32),
+  "niagara": ("/home/lwilkinson/niagara/2", "AVX512", 32),
 }
 
 cluster = "niagara"
@@ -37,6 +37,7 @@ def after_loadhook(filename, df):
 
   df["run"] = method_pack
   return df
+
 
 files = glob.glob(f"{cluster_dir}/results/{subdir}/all_dlmc_*_{arch}_*.csv")
 files = [f for f in files if "sota" not in f]

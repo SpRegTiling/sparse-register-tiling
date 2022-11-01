@@ -82,7 +82,9 @@ df = post_process.compute_for_group(df,
 
 print(df["n"].unique())
 df["is_nano"] = df["name"].str.contains("NANO")
-df["include"] = ~df["is_nano"] | (df["is_nano"] & (df["best_nano"] | df["best_sub1_nano"]))
+df["include"] = df["name"].isin(
+    ["ASpT", "MKL_BSR_B8", "MKL_Dense", "MKL_Sparse", "MKL_Dense "]
+) | (df["is_nano"] & (df["best_nano"] | df["best_sub1_nano"]))
 
 df = filter(df, matrixPath=matrix_path, numThreads=1, n=256, include=True)
 # Divide by 2, papi counts FMA as 2 flops
@@ -100,7 +102,7 @@ CPU min MHz:           1000.0000
 
 freq = 3_200_000_000
 compute_bound_min_time = (df["SP_FLOPS_TOTAL"].min() / (freq*2*16)) * 1_000_000
-load_bound_min_time = ((df["SP_FLOPS_TOTAL"].min() / (freq*2*16)) *6) * 1_000_000
+load_bound_min_time = ((df["SP_FLOPS_TOTAL"].min() / (freq*2*16)) *2.5) * 1_000_000
 
 chart = alt.Chart(df).mark_point().encode(
     x='loads_per_fma',
@@ -117,7 +119,7 @@ line1 = alt.Chart(
     alt.Y('time median'),
 )
 line2 = alt.Chart(
-    pd.DataFrame({'loads_per_fma': [1, 6], 'time median': [compute_bound_min_time, load_bound_min_time]})).mark_line().encode(
+    pd.DataFrame({'loads_per_fma': [1, 2.5], 'time median': [compute_bound_min_time, load_bound_min_time]})).mark_line().encode(
     alt.X('loads_per_fma'),
     alt.Y('time median'),
 )
