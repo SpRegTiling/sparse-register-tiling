@@ -23,7 +23,7 @@ struct XNNConfig: ConfigBase {
 
 
 //#define MIN_MAX
-//#define PRESCALE_DIFF
+#define PRESCALE_DIFF
 
 void xnn_f32_spmm_minmax_ukernel_16x1__neon(
         size_t mc,
@@ -130,29 +130,16 @@ public:
     // operator function () on objects of increment
     void operator()() {
         typename Super::Task& t = this->task;
-    if(false) {
-     xnn_f32_spmm_minmax_ukernel_16x1__neon(
-       t.n() * sizeof(float),
-       t.m(),
-       t.B + first_nnz_diff * t.n(),
-       weights,
-       col_increment,
-       row_nnz,
-       t.C,
-       t.n() * sizeof(float)
-     );
-    }else{
-     xnn_f32_spmm_minmax_ukernel_16x1__neon_parallel(
-       t.n() * sizeof(float),
-       t.m(),
-       t.B + first_nnz_diff * t.n(),
-       weights,
-       col_increment,
-       row_nnz,
-       t.C,
-       t.n() * sizeof(float),
-       t.nThreads
-     );
-     }
+        xnn_f32_spmm_minmax_ukernel_16x1__neon_parallel(
+            t.n() * sizeof(float),
+            t.m(),
+            t.B + first_nnz_diff * t.n(),
+            weights,
+            col_increment,
+            row_nnz,
+            t.C,
+            t.n() * sizeof(float),
+            t.nThreads
+        );
     }
 };

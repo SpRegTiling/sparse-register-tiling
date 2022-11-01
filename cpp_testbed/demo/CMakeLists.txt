@@ -61,9 +61,11 @@ add_executable(SPMM_demo SPMM_demo.cpp
         ${SOP_GENERATED_SRCS}
 )
 
-target_compile_options(SPMM_demo PRIVATE -save-temps=obj -funroll-loops ${SPMM_METHODS_CXX_FLAGS})
+link_directories(/home/pi/arm_compute-v22.08-bin-linux-arm64-v8a-neon/lib/arm64-v8a-neon/)
+target_compile_options(SPMM_demo PRIVATE -save-temps=obj -funroll-loops ${SPMM_METHODS_CXX_FLAGS} -lpthreads)
 target_include_directories(SPMM_demo PUBLIC  ${SPMM_DEMO_INCLUDES}  ${SPMM_INCLUDE}  ${SPMM_METHODS_INCLUDE_DIRS}
         ${MKL_INCLUDE_DIR} ${ASpT_INCLUDE_DIRS} ${SOP_ALL_INCLUDES})
+target_link_directories(SPMM_demo PUBLIC /home/pi/arm_compute-v22.08-bin-linux-arm64-v8a-neon/lib/arm64-v8a-neon/)
 target_link_libraries(SPMM_demo ${SPMM_METHODS_LIBRARIES} ${SPMM_DEMO_LIBS}
-        -lstdc++fs benchmark ryml::ryml) # stdc++fs for c++ filesystem
+        -lstdc++fs benchmark ryml::ryml -lpthread) # stdc++fs for c++ filesystem
 link_vtune_if_available(SPMM_demo)

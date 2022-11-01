@@ -17,13 +17,13 @@ tuning:
     #   N dimension so the n_tile size doesn't matter
     - name: Grid_MR4_SPLIT_M
       m_tile: [ 4, 8, 16, 32, 64 ]
-      k_tile: [ 1024, 512, 256, 128, 64, 32 ]
+      k_tile: [ 0 ]
       n_tile: [ 512 ]
       tiling_strategy: [ 0 ] # 0 for manual tiling
 
     - name: Grid_MR8_SPLIT_M
       m_tile: [ 8, 16, 32, 64 ]
-      k_tile: [ 1024, 512, 256, 128, 64, 32 ]
+      k_tile: [ 0 ]
       n_tile: [ 512 ]
       tiling_strategy: [ 0 ] # 0 for manual tiling
 
@@ -31,23 +31,63 @@ tuning:
     #   M dimension so the m_tile size doesn't matter
     - name: Grid_NR2_SPLIT_N
       m_tile: [ 512 ]
-      k_tile: [ 1024, 512, 256, 128, 64, 32 ]
+      k_tile: [ 0 ]
       n_tile: [ 8, 16, 32, 64, 128 ] # Nr is 2 vectors or 2 * 4 = 8 elements therefore the n_tile must be a multiple of 8
       tiling_strategy: [ 0 ]
 
     - name: Grid_NR3_SPLIT_N
       m_tile: [ 512 ]
-      k_tile: [ 1024, 512, 256, 128, 64, 32 ]
+      k_tile: [ 0 ]
       n_tile: [ 12, 24, 36, 48, 72, 96, 144 ] # Nr is 3 vectors or 3 * 4 = 12 elements therefore the n_tile must be a multiple of 12
       tiling_strategy: [ 0 ]
 
     - name: Grid_NR4_SPLIT_N
       m_tile: [ 512 ]
-      k_tile: [ 1024, 512, 256, 128, 64, 32 ]
+      k_tile: [ 0 ]
       n_tile: [ 16, 32, 64, 128 ] # Nr is 4 vectors or 4* 4 = 16 elements therefore the n_tile must be a multiple of 16
       tiling_strategy: [ 0 ]
 
     - name: Grid_NR6_SPLIT_N
+      m_tile: [ 512 ]
+      k_tile: [ 0 ]
+      n_tile: [ 24, 48, 72, 96, 144 ] # Nr is 6 vectors or 6 * 4 = 24 elements therefore the n_tile must be a multiple of 24
+      tiling_strategy: [ 0 ]
+
+    # Split M Grids, when we split across the M dimension we traverse the full
+    #   N dimension so the n_tile size doesn't matter
+    - name: Grid_MR4_SPLIT_KM
+      m_tile: [ 4, 8, 16, 32, 64 ]
+      k_tile: [ 1024, 512, 256, 128, 64, 32 ]
+      n_tile: [ 512 ]
+      tiling_strategy: [ 0 ] # 0 for manual tiling
+
+    - name: Grid_MR8_SPLIT_KM
+      m_tile: [ 8, 16, 32, 64 ]
+      k_tile: [ 1024, 512, 256, 128, 64, 32 ]
+      n_tile: [ 512 ]
+      tiling_strategy: [ 0 ] # 0 for manual tiling
+
+    # Split N Grids, when we split across the M dimension we traverse the full
+    #   M dimension so the m_tile size doesn't matter
+    - name: Grid_NR2_SPLIT_KN
+      m_tile: [ 512 ]
+      k_tile: [ 1024, 512, 256, 128, 64, 32 ]
+      n_tile: [ 8, 16, 32, 64, 128 ] # Nr is 2 vectors or 2 * 4 = 8 elements therefore the n_tile must be a multiple of 8
+      tiling_strategy: [ 0 ]
+
+    - name: Grid_NR3_SPLIT_KN
+      m_tile: [ 512 ]
+      k_tile: [ 1024, 512, 256, 128, 64, 32 ]
+      n_tile: [ 12, 24, 36, 48, 72, 96, 144 ] # Nr is 3 vectors or 3 * 4 = 12 elements therefore the n_tile must be a multiple of 12
+      tiling_strategy: [ 0 ]
+
+    - name: Grid_NR4_SPLIT_KN
+      m_tile: [ 512 ]
+      k_tile: [ 1024, 512, 256, 128, 64, 32 ]
+      n_tile: [ 16, 32, 64, 128 ] # Nr is 4 vectors or 4* 4 = 16 elements therefore the n_tile must be a multiple of 16
+      tiling_strategy: [ 0 ]
+
+    - name: Grid_NR6_SPLIT_KN
       m_tile: [ 512 ]
       k_tile: [ 1024, 512, 256, 128, 64, 32 ]
       n_tile: [ 24, 48, 72, 96, 144 ] # Nr is 6 vectors or 6 * 4 = 24 elements therefore the n_tile must be a multiple of 24
@@ -56,6 +96,12 @@ tuning:
 methods:
   - name: XNN
     method_id: xnn
+
+  - name: ARMPL
+    method_id: armpl_dense
+
+  - name: ARMCL
+    method_id: armcl_dense
 
   #
   # NANO 4 methods
@@ -69,7 +115,7 @@ methods:
       packed: False
       mapping_id: 61fee
       nr: 6
-      split: M
+      outer_schedule: 14 # nmM
     tune:
       grid: Grid_MR4_SPLIT_M
 
@@ -93,7 +139,7 @@ methods:
       packed: False
       mapping_id: 61fee
       nr: 2
-      split: M
+      outer_schedule: 14 # nmM
     tune:
       grid: Grid_MR4_SPLIT_M
 
@@ -119,7 +165,7 @@ methods:
       mapping_id: 61fee
       load_balance: True
       nr: 4
-      split: M
+      outer_schedule: 14 # nmM
     tune:
       grid: Grid_MR4_SPLIT_M
 
@@ -132,7 +178,7 @@ methods:
       mapping_id: 61fee
       load_balance: True
       nr: 2
-      split: M
+      outer_schedule: 14 # nmM
     tune:
       grid: Grid_MR4_SPLIT_M
 
@@ -144,7 +190,7 @@ methods:
       packed: False
       mapping_id: 61fee
       nr: 6
-      split: N
+      outer_schedule: 13 # nmN
     tune:
       grid: Grid_NR6_SPLIT_N
 
@@ -156,7 +202,7 @@ methods:
       packed: False
       mapping_id: 61fee
       nr: 4
-      split: N
+      outer_schedule: 13 # nmN
     tune:
       grid: Grid_NR4_SPLIT_N
 
@@ -168,7 +214,7 @@ methods:
       packed: False
       mapping_id: 61fee
       nr: 2
-      split: N
+      outer_schedule: 13 # nmN
     tune:
       grid: Grid_NR2_SPLIT_N
 
@@ -184,7 +230,7 @@ methods:
       packed: False
       mapping_id: 400fa
       nr: 3
-      split: M
+      outer_schedule: 14 # nmM
     tune:
       grid: Grid_MR8_SPLIT_M
 
@@ -196,7 +242,7 @@ methods:
       packed: False
       mapping_id: 400fa
       nr: 2
-      split: M
+      outer_schedule: 14 # nmM
     tune:
       grid: Grid_MR8_SPLIT_M
 
@@ -209,7 +255,7 @@ methods:
       mapping_id: 400fa
       load_balance: True
       nr: 3
-      split: M
+      outer_schedule: 14 # nmM
     tune:
       grid: Grid_MR8_SPLIT_M
 
@@ -222,7 +268,7 @@ methods:
       mapping_id: 400fa
       load_balance: True
       nr: 2
-      split: M
+      outer_schedule: 14 # nmM
     tune:
       grid: Grid_MR8_SPLIT_M
 
@@ -234,7 +280,7 @@ methods:
       packed: False
       mapping_id: 400fa
       nr: 3
-      split: N
+      outer_schedule: 13 # nmN
     tune:
       grid: Grid_NR3_SPLIT_N
 
@@ -246,6 +292,6 @@ methods:
       packed: False
       mapping_id: 400fa
       nr: 2
-      split: N
+      outer_schedule: 13 # nmN
     tune:
       grid: Grid_NR2_SPLIT_N

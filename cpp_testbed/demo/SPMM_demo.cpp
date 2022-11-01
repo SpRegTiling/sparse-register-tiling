@@ -40,6 +40,10 @@
 #include <mkl.h>
 #endif
 
+#ifdef ARMPL
+#include "armpl.h"
+#endif
+
 #ifdef PAPI_AVAILABLE
 #include "Profiler.h"
 #endif
@@ -565,6 +569,7 @@ class SpMMExperiment {
                 }
 
                 omp_set_num_threads(nThreads);
+                omp_set_dynamic(0);
 #ifdef MKL
                 mkl_set_num_threads(nThreads);
                 mkl_set_num_threads_local(nThreads);
@@ -574,6 +579,10 @@ class SpMMExperiment {
                     std::cerr << "Max threads does not match" << std::endl;
                     exit(-1);
                 }
+#endif
+
+#ifdef ARMPL
+                armpl_set_num_threads(nThreads);
 #endif
 
                 // Cant setup inside OMP environment

@@ -18,8 +18,8 @@ using additional_options_t = std::map<std::string, std::string>;
 
 #if defined(SPMM_MKL_ENABLED) && SPMM_MKL_ENABLED
 #   define REFERENCE_METHOD "mkl_dense"
-#elif defined(SPMM_XNN_ENABLED) && SPMM_XNN_ENABLED
-#   define REFERENCE_METHOD "xnn"
+#elif defined(SPMM_ARMPL_ENABLED) && SPMM_ARMPL_ENABLED
+#   define REFERENCE_METHOD "armpl_dense"
 #else
     static_assert(false, "Cannot find a reasonable reference method to use");
 #endif
