@@ -47,6 +47,7 @@ protected:
 
 public:
     SpMMFunctor(Task &task): task(task) {}
+    std::string name; // todo cleanup
 
     virtual void setup() {}; // Can be used for setup after the configs have been set, will be run in parallel
     virtual void copy_output() {};
@@ -74,6 +75,7 @@ public:
 
         // Compute keys to tune over
         for (const auto& [param_name, search_values] : grid) {
+            bool key_set = false;
 
             for (const auto& value : search_values) {
                 if (param_name == "m_tile" && value > task.m()) continue;
@@ -81,6 +83,11 @@ public:
                 if (param_name == "k_tile" && value > task.k()) continue;
 
                 current_config[param_name] = value;
+                key_set = true;
+            }
+
+            if (!key_set && search_values.size() > 0) {
+                current_config[param_name] = search_values[0];
             }
 
             keys.insert(param_name);
@@ -92,17 +99,28 @@ public:
             auto param = *tune_over.begin();
             int dim_test_cases = grid.find(param)->second.size();
 
+            bool none_smaller = true;
+            bool run_once = false;
+            int smallest = std::numeric_limits<int>::max();
+            for (const auto& value : grid.find(param)->second) {
+                if (value < smallest) { smallest = value; }
+
+                if (value <= current_config[param]) {
+                    none_smaller = false;
+                    break;
+                }
+            }
+
             //#pragma omp parallel for if(parallelize)
             for (const int value : grid.find(param)->second) {
-                // If a dimension (parameter) has one test case we can skip it or nothing
-                //   will get tuned
-                if (dim_test_cases > 1) {
-                    if (param == "m_tile" && value > task.m()) continue;
-                    if (param == "n_tile" && value > task.n()) continue;
-                    if (param == "k_tile" && value > task.k()) continue;
+                if (none_smaller) {
+                    if (run_once) continue;
+                    current_config[param] = smallest;
+                } else {
+                    current_config[param] = value;
                 }
 
-                current_config[param] = value;
+                run_once = true;
                 auto remaining_params = tune_over;
                 remaining_params.erase(param);
 
@@ -158,7 +176,7 @@ public:
         _tune_over(keys, false);
 
         if (tuned_config.empty()) {
-            std::cerr << "ERROR tuning returned an empty config" << std::endl;
+            std::cerr << "ERROR tuning returned an empty config " << name << std::endl;
             exit(1);
         }
 

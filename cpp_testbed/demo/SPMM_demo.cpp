@@ -495,6 +495,7 @@ class SpMMExperiment {
                     auto name = method.name;
 
                     auto executor = method.methodFactory(additional_options, spmm_task);
+                    executor->name = name;
                     ERROR_AND_EXIT_IF(!executor, "Failed to create executor: " << name);
 
                     std::stringstream ss; ss << (uintptr_t)executor;
