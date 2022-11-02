@@ -92,6 +92,11 @@ df["flops"] = df["n"] * df["nnz"]
 print(df["flops"])
 print(df["SP_FLOPS_TOTAL"].min())
 
+df.loc[df['is_nano'], "name"] = "Sparse Register Tiling"
+df.loc[df['name'] == 'MKL_BSR_B8', "name"] = "Register Blocking, (MKL BSR)"
+df.loc[df['name'] == 'MKL_Sparse', "name"] = "MKL Sparse (CSR)"
+df.loc[df['name'] == 'MKL_Dense ', "name"] = "MKL Dense"
+
 """
 Model name:            Intel(R) Xeon(R) Gold 6248 CPU @ 2.50GHz
 Stepping:              7
@@ -105,12 +110,20 @@ compute_bound_min_time = (df["SP_FLOPS_TOTAL"].min() / (freq*2*16)) * 1_000_000
 load_bound_min_time = ((df["SP_FLOPS_TOTAL"].min() / (freq*2*16)) *2.5) * 1_000_000
 
 chart = alt.Chart(df).mark_point().encode(
-    x='loads_per_fma',
-    y=alt.Y(
-        'time median'
-    ),
-    size='SP_FLOPS_TOTAL',
+    x=alt.X('loads_per_fma', title='load \u00B5ops / fma \u00B5ops'),
+    y=alt.Y('time median', title='Execution Time (\u00B5s)'),
+    size=alt.Size('SP_FLOPS_TOTAL', title='Total FLOPs'),
     color='name'
+)
+
+text = alt.Chart(df).mark_text(
+    align='left',
+    baseline='middle',
+    dx=10
+).encode(
+    x=alt.X('loads_per_fma'),
+    y=alt.Y('time median'),
+    text='name'
 )
 
 line1 = alt.Chart(
@@ -124,5 +137,5 @@ line2 = alt.Chart(
     alt.Y('time median'),
 )
 
-(chart + line1 + line2).show()
+(chart + line1 + line2 + text).show()
 print(len(df))
