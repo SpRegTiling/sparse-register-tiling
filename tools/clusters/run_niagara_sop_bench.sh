@@ -9,9 +9,9 @@ sbatch <<EOT
 #SBATCH --job-name="log_sop_bench"
 #SBATCH --nodes=1
 #SBATCH --output="log_sop_bench.%j.%N.out"
-#SBATCH -t 10:00:00
+#SBATCH -t 01:00:00
 #SBATCH --constraint=cascade
+#SBATCH --account=def-kazem
 
-singularity run --bind dnn-spmm-bench:/dnn-spmm-bench --bind dlmc:/mnt/datasets/dlmc --env PYTHONPATH=/dnn-spmm-bench dnn-spmm-bench.sif python /dnn-spmm-bench/spmm_benchmarks/SOP/sop_bench.py
-
+singularity run --bind spmm-nano-bench:/mnt/spmm-nano-bench --bind dlmc:/mnt/datasets/dlmc -H /mnt/spmm-nano-bench spmm-nano-bench.sif python sbench/SOP/sop_bench_ilp_sweep.py 4
 EOT

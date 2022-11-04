@@ -84,7 +84,7 @@ class SOPModule:
         return self.c_module.executor(N_c, csr, B, num_runs)
 
 
-def make_sop_module(acc: Acc, patterns, pattern_mapping, regen=True) -> SOPModule:
+def make_sop_module(acc: Acc, patterns, pattern_mapping, regen=False) -> SOPModule:
     global kernel_cache
     assert 0 not in patterns, "Zero is not a valid pattern"
 

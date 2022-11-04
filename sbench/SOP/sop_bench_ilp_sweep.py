@@ -99,7 +99,8 @@ def file_dic_todic(file_in):
     dic_pat, value_list = {}, []
     file1 = open(file_in, 'r')
     lines = file1.readlines()
-    for line in lines:
+    M_r = int(lines[0])
+    for line in lines[1:]:
         entry = line.split(',')
         cur_value = 0
         for idx_v, v in enumerate(entry):
@@ -108,7 +109,7 @@ def file_dic_todic(file_in):
                 value_list.append(cur_value)
             else:
                 dic_pat[int(v)] = cur_value
-    return value_list, dic_pat
+    return value_list, dic_pat, M_r
 
 
 def random_sp_matrix(shape, sparsity):
@@ -116,23 +117,6 @@ def random_sp_matrix(shape, sparsity):
 
 
 def rand_matrices():
-    dir_name = "/home/lwilkinson/Downloads/rand_probs"
-    list_of_paths = os.listdir(dir_name)
-    # for path in list_of_paths:
-    #     matrix, dic_mat, sop_height, wdt = read_unit_codelet_probability(os.path.join(dir_name, path))
-    #     yield torch.Tensor(matrix), path, int(path.split("_")[3].strip("%"))/100
-
-    # tile_shape = [48, 128]
-    # tile_to_test = [
-    #     ('random (70%)', random_sp_matrix(shape=tile_shape, sparsity=0.7), 0.7),
-    #     ('random (80%)', random_sp_matrix(shape=tile_shape, sparsity=0.8), 0.8),
-    #     ('random (90%)', random_sp_matrix(shape=tile_shape, sparsity=0.9), 0.9),
-    #     ('random (95%)', random_sp_matrix(shape=tile_shape, sparsity=0.95), 0.95),
-    # ]
-    #
-    # for name, tile, sparsity in tile_to_test:
-    #     yield tile, name, sparsity
-
     tile_shape = [48, 64]
     tile_to_test = [
         ('random (70%)', random_sp_matrix(shape=tile_shape, sparsity=0.7), 0.7),
@@ -146,25 +130,26 @@ def rand_matrices():
 
 
 def ilp_mappings(dir_name, filter):
-    #dir_name = "/home/lwilkinson/Downloads/nano4_70_95"
     list_of_paths = os.listdir(dir_name)
     for path in list_of_paths:
         if filter in path and 'txt' in path:
             print("testing {}".format(path))
-            patterns, mapping = file_dic_todic(os.path.join(dir_name, path))
+            patterns, mapping, M_r = file_dic_todic(os.path.join(dir_name, path))
             print(patterns, mapping)
             mapping.update({0: 0})
-            yield patterns, mapping, path
+            yield patterns, mapping, path, M_r
 
 
 if __name__ == "__main__":
+    import sys
+    M_r = int(sys.argv[1])
+
     csv_rows = []
-    bCols = 64
+    bCols = 128
 
     for matrix, mtx_path, sparsity in rand_matrices():
         if matrix.shape[0] == 4:
             matrix = matrix.repeat(2, 1)
-        print(matrix.shape)
         sp_str = "random_" + str(int(sparsity * 100))
         print(sp_str)
 
@@ -177,9 +162,9 @@ if __name__ == "__main__":
         B = torch.ones((matrix.shape[1], bCols))
         sol = matrix @ B
 
-        def run_patterns(_patterns, _mapping, name):
+        def run_patterns(_patterns, _mapping, name, acc_M):
             acc_N = min(bCols // 16, 2)
-            module = sop_driver.make_sop_module(Acc(4, acc_N), _patterns, _mapping)
+            module = sop_driver.make_sop_module(Acc(acc_M, acc_N), _patterns, _mapping)
             print(module.kernel_id)
             sop_tile = module.make_sop_tile(matrix)
 
@@ -189,11 +174,11 @@ if __name__ == "__main__":
                 times.append(time)
             time = np.median(np.array(times))
 
-            print("SOP4", name, len(_patterns), mtx_path, time, sop_tile.padding(), torch.allclose(result, sol))
+            print(f"SOP{M_r}", name, len(_patterns), mtx_path, time, sop_tile.padding(), torch.allclose(result, sol))
 
             csv_rows.append({
-                "method": "SOP4",
-                "submethod": "SOP4 " + name,
+                "method": f"SOP{M_r}",
+                "submethod": "fSOP{M_r} " + name,
                 "time": time,
                 "correct": torch.allclose(result, sol),
                 "padding": sop_tile.padding(),
@@ -201,47 +186,12 @@ if __name__ == "__main__":
                 **csv_row_params
             })
 
-        #print("SOP4_" + sp_str)
-        for patterns, mapping, path in ilp_mappings("/home/lwilkinson/Downloads/nano4_70_95", sp_str):
+        for patterns, mapping, path, M_r in ilp_mappings(SCRIPT_DIR + f'/sweep_mappings/{M_r}', sp_str):
             run_patterns(patterns, lambda x: mapping[x], "ILP")
-        # for config in sop4_strategies:
-        #     if len(config.all_patterns()) == 15: continue
-        #     run_patterns(config.all_patterns(), config.map_pattern, "Hand")
-        # run_patterns(list(range(1, 2**4)), lambda x: x, "All Patterns")
-
-        def run_patterns(_patterns, _mapping, name):
-            acc_N = min(bCols // 16, 2)
-            module = sop_driver.make_sop_module(Acc(8, acc_N), _patterns, _mapping)
-            sop_tile = module.make_sop_tile(matrix)
-
-            times = []
-            for run in range(RUNS_TO_MEDIAN):
-                time, result = module.execute_tile(sop_tile, B)
-                times.append(time)
-            time = np.median(np.array(times))
-
-            print("SOP8", name, mtx_path, time, len(_patterns), sop_tile.padding(), torch.allclose(result, sol))
-            csv_rows.append({
-                "method": "SOP8",
-                "submethod": "SOP8 " + name,
-                "time": time,
-                "correct": torch.allclose(result, sol),
-                "padding": sop_tile.padding(),
-                "num_patterns": len(_patterns),
-                **csv_row_params
-            })
-
-        for patterns, mapping, path in ilp_mappings("/home/lwilkinson/Downloads/nano8_70_95", sp_str):
-            run_patterns(patterns, lambda x: mapping[x], "ILP")
-        for config in sop8_strategies:
-            if len(config.all_patterns()) == 255: continue
-            run_patterns(config.all_patterns(), config.map_pattern, "Hand")
-        #
-        # run_patterns([i for i in range(1, 2**8)], lambda x: x, "All Patterns")
 
 
 df = pd.DataFrame(csv_rows)
-df.to_csv('sop_bench_ilp.csv')
+df.to_csv(f'sop_bench_ilp_sweep_{M_r}.csv')
 print(df)
 
 
