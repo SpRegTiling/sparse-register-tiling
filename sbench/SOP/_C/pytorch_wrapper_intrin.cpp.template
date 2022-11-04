@@ -26,7 +26,7 @@
 #include "ExecutorFactory.h"
 
 #define ENABLE_PACKED_C_KERNELS
-#include "template_KERNEL_ID.h"
+#include "template_MICROKERNEL_HEADER"
 
 #include "sop.h"
 #include "Tile.h"
@@ -38,7 +38,7 @@
 namespace template_NAMESPACE {
 
 using VecType = Vec<float, 512>;
-using MicroKernel = template_MICROKERNEL_TYPENAME;
+using MicroKernel = sop::template_MICROKERNEL_TYPENAME;
 using _MicroKernelDesc = MicroKernelDesc<MicroKernel>;
 
 static int num_nkern = MicroKernel::num_nkern_patterns();
@@ -276,6 +276,7 @@ __ALWAYS_INLINE static void sop_multiple_panel_executor(
 
     MicroKernel::Mask clean_up_mask = MicroKernel::precomp_mask(N_c);
     //std::cout << N_c << " " << n << " " << clean_up_mask << std::endl;
+    auto ukernel = MicroKernel();
 
     for (int t = 0; t < num_panels; t++) {
         const auto& panel_desc = panel_descs[t];
@@ -286,26 +287,18 @@ __ALWAYS_INLINE static void sop_multiple_panel_executor(
         int                     num_col_indices = panel_desc.num_col_indices;
 
         for (int j = 0; j < N_c - (N_r - 1); j += N_r) {
-            MicroKernel::_microkernel_max_acc(
-                m, k, n,
-                pattern_counts, col_indices, values, num_col_indices,
-                B + j , C + j + (t * MicroKernel::M_r) * n,
-                load_c
+            ukernel.vectorized(
+                C + j + (t * MicroKernel::M_r) * n, n,
+                C + j + (t * MicroKernel::M_r) * n, n,
+                B + j, n,
+                pattern_counts, col_indices, values,
+                load_c, false
             );
         }
 
         if (clean_up) {
             std::cerr << "reimplement clean up" << std::endl;
             exit(-1);
-
-//            MicroKernel::panel_executor_cleanup(
-//                clean_up,
-//                m, k, n,
-//                panel_descs[t],
-//                B + (N_c - clean_up),
-//                C + (t * MicroKernel::M_r) * n + (N_c - clean_up),
-//                clean_up_mask, load_c
-//            );
         }
     }
 }

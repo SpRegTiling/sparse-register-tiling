@@ -6,7 +6,7 @@ import math
 import glob
 import hashlib
 
-import SOP.codegen.ukernel_codegen as ukernel_codegen
+import spmm_nano_kernels.codegen.base_ukernel_codegen as ukernel_codegen
 from sbench.SOP.sop_cost_model import Acc
 from sbench.SOP.sop_utils import Acc, pattern_code
 
@@ -17,11 +17,13 @@ cflags = ['-DUSE_JIT=1', '-std=c++17', '-Ofast', '-ffast-math',
           '-ffp-contract=fast']
 
 include_dirs = [
-    f'{SCRIPT_DIR}/../../SOP/include',
-    f'{SCRIPT_DIR}/../../SOP/third_party/vectorclass',
+    f'{SCRIPT_DIR}/../../spmm_nano_kernels/include',
+    f'{SCRIPT_DIR}/../../spmm_nano_kernels/generated/AVX512/include',
     f'{SCRIPT_DIR}/../../third_party',
-    f'{SCRIPT_DIR}/../../third_party/vectorclass',
-    f'{SCRIPT_DIR}/_C/generated'
+    f'{SCRIPT_DIR}/../../spmm_nano_kernels/third_party/version2/vectorclass',
+    f'{SCRIPT_DIR}/../../spmm_nano_kernels/third_party/rte',
+    f'{SCRIPT_DIR}/_C/generated',
+    f'{SCRIPT_DIR}/_C/generated/AVX512/include',
 ]
 
 sop_sources = glob.glob(f'{SCRIPT_DIR}/../../SOP/src/**/*.cpp', recursive=True)
@@ -82,26 +84,31 @@ class SOPModule:
         return self.c_module.executor(N_c, csr, B, num_runs)
 
 
-def make_sop_module(acc: Acc, patterns, pattern_mapping, regen=False) -> SOPModule:
+def make_sop_module(acc: Acc, patterns, pattern_mapping, regen=True) -> SOPModule:
     global kernel_cache
     assert 0 not in patterns, "Zero is not a valid pattern"
 
     pattern_check_sum = sum([0]) + len(patterns)
+    codegen = ukernel_codegen.UKernelCodegenBase(Mr=acc.M, nanokernels=list(patterns),
+                                                 output_root=f'{SCRIPT_DIR}/_C/generated')
 
-    microkernel_typename = ukernel_codegen.microkernel_typename('float', 512, [acc.M, acc.N], patterns)
+    microkernel_typename = codegen.typename('float', 'AVX512', 512, acc.N)
+
+    print(microkernel_typename)
 
     if not regen and microkernel_typename in kernel_cache:
         c_module = kernel_cache[microkernel_typename]
     else:
         if regen or not os.path.exists(f'{SCRIPT_DIR}/_C/generated/pytorch_wrapper_{microkernel_typename}.cpp'):
             print(f'Generating: {SCRIPT_DIR}/_C/generated/{microkernel_typename}.h')
-            ukernel_codegen.ukernel_codegen([acc.M, acc.N], patterns, output_root=f'{SCRIPT_DIR}/_C/generated',
-                                            namespace=f'sop_bench_{microkernel_typename}')
-
             print(f'Generating: {SCRIPT_DIR}/_C/generated/pytorch_wrapper_{microkernel_typename}.cpp')
+            codegen.gen_header(acc.N, 'AVX512', 512)
+            header_location = f'{codegen.nanokernel_hash}/{microkernel_typename}.h'
+
             with open(f'{SCRIPT_DIR}/_C/pytorch_wrapper_intrin.cpp.template') as f:
                 template = f.read()
                 template = template \
+                    .replace('template_MICROKERNEL_HEADER', header_location) \
                     .replace("template_KERNEL_ID", microkernel_typename) \
                     .replace("template_MAX_ACC_WIDTH", str(acc.N)) \
                     .replace("template_PANEL_HIEGHT", str(acc.M)) \

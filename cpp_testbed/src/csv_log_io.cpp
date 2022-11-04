@@ -25,6 +25,8 @@ std::string to_string_with_precision(const T a_value, const int n)
 
 typedef std::map<std::string, std::pair<std::ofstream, std::set<std::string>>> csv_files_cache_t;
 static csv_files_cache_t  csv_files_cache;
+static std::set<std::string> csv_files_append;
+
 
 void add_missing_columns(std::map<std::string, csv_row_t>& rows) {
     std::vector<std::string> keys;
@@ -42,6 +44,9 @@ void add_missing_columns(std::map<std::string, csv_row_t>& rows) {
             }
         }
     }
+}
+void mark_file_for_append(std::string filepath) {
+    csv_files_append.insert(filepath);
 }
 
 void write_csv_rows(
@@ -63,10 +68,15 @@ void write_csv_row(
   auto column_names = std::set(keys.begin(), keys.end());
 
   if (file_cache == csv_files_cache.end()) {
+    bool append = csv_files_append.contains(filepath);
+
     // First time we have seen this file so we need to open up a `ofstream` and initialize the column names
-    csv_files_cache[filepath] = std::make_pair(std::ofstream(filepath), std::move(column_names));
+    csv_files_cache[filepath] = std::make_pair(
+      std::ofstream(filepath, append ? std::ios_base::app : std::ios_base::out),
+      std::move(column_names)
+    );
     file_cache = csv_files_cache.find(filepath);
-    write_header = true;
+    write_header = !append;
   } else {
     auto& column_names_written = file_cache->second.second;
     assert(column_names_written == column_names && "Column names do not match the first row written");

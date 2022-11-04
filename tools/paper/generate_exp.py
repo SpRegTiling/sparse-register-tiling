@@ -1,4 +1,4 @@
-from spmm_benchmarks.loaders.dlmc import DLMCPathIterator
+from sbench.loaders.dlmc import DLMCPathIterator
 from tools.paper.configs import nano, csb
 import os; SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 import yaml

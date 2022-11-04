@@ -20,6 +20,8 @@
 #include "utils/misc.h"
 #include "utils/error.h"
 
+#include "cxxopts.hpp"
+
 // Google Benchmark
 #include "benchmark/benchmark.h"
 
@@ -184,6 +186,16 @@ public:
  *  Experiment
  **********************************************************/
 
+struct Overrides {
+    std::optional<std::string> matrix;
+    std::optional<std::string> outputFile;
+    std::optional<std::string> filelist;
+    std::optional<int> nThreads;
+    std::optional<int> bCols;
+    std::optional<bool> profile;
+    std::optional<bool> append;
+};
+
 template<typename Scalar>
 class SpMMExperiment {
     struct Method {
@@ -220,6 +232,7 @@ class SpMMExperiment {
 
     bool profile = false;
     bool save_tuning_results = false;
+    bool csv_append = false;
 
     RowDistance* construct_distance(std::string distance_name, SparsityPattern& pattern) {
         if (!distance_mapping.count(distance_name)) {
@@ -263,7 +276,7 @@ class SpMMExperiment {
             exit(-1);
         }
 
-        auto split_line = [](std::string line) -> std::vector<std::string> {
+        auto split_line = [](const std::string& line) -> std::vector<std::string> {
             std::stringstream test(line);
             std::string segment;
             std::vector<std::string> seglist;
@@ -756,7 +769,8 @@ class SpMMExperiment {
     }
 
 public:
-    SpMMExperiment(const ryml::NodeRef& config, std::vector<std::string> search_dirs):
+    SpMMExperiment(const ryml::NodeRef& config, std::vector<std::string> search_dirs,
+                   Overrides overrides):
         cake_cntx(cake_query_cntx()) {
         std::cout << "Detected cache sizes " << cake_cntx->L2/1024 << "kb ";
         std::cout << cake_cntx->L3/1024 << "kb" << std::endl;
@@ -775,12 +789,20 @@ public:
             UNPACK_OPTION("filelist_has_additional_options", filelist_has_additional_options);
 #undef UNPACK_OPTION
 
-            if (options.has_child("b_cols")) {
+            if (overrides.profile) profile = *overrides.profile;
+
+            if (overrides.outputFile) outputFile = *overrides.outputFile;
+            if (overrides.append && *overrides.append) mark_file_for_append(outputFile);
+
+            if (overrides.bCols) {
+                globalBColsToTest = {*overrides.bCols};
+            } else if (options.has_child("b_cols")) {
                 auto b_cols = options["b_cols"];
                 if (b_cols.type() & ryml::SEQ) {
                     options["b_cols"] >> globalBColsToTest;
                 } else if (b_cols.type() & ryml::VAL) {
-                    int tmp; b_cols >> tmp;
+                    int tmp;
+                    b_cols >> tmp;
                     if (tmp > 0) {
                         globalBColsToTest = {tmp};
                     } else {
@@ -793,13 +815,16 @@ public:
                 }
             }
 
-            if (options.has_child("n_threads")) {
+            if (overrides.nThreads) {
+                nThreadsToTest = {*overrides.nThreads};
+            } else if (options.has_child("n_threads")) {
                 auto n_threads = options["n_threads"];
                 if (n_threads.type() & ryml::SEQ) {
                     options["n_threads"] >> nThreadsToTest;
                 } else if (n_threads.type() & ryml::VAL) {
-                    int tmp; n_threads >> tmp;
-                    nThreadsToTest = { tmp };
+                    int tmp;
+                    n_threads >> tmp;
+                    nThreadsToTest = {tmp};
                 } else {
                     std::cerr << "Unsupported n_threads structure" << std::endl;
                     exit(-1);
@@ -807,31 +832,37 @@ public:
             }
         }
 
-        if (config.has_child("matrices")) {
-            auto matrices = config["matrices"];
-            if (parse_b_cols_from_filelist && !matrices.has_child("filelist")) {
-                std::cerr << "If b_cols is specified as -1, ";
-                std::cerr << "a filelist must be provided" << std::endl;
-                exit(-1);
-            }
+        if (overrides.matrix) {
+            matricesToTest.push_back(resolve_path(*overrides.matrix, search_dirs));
+        } else if (overrides.filelist) {
+            parse_filelist(*overrides.filelist, search_dirs,
+                           parse_b_cols_from_filelist,
+                           filelist_has_additional_options);
+        } else if (config.has_child("matrices")) {
+                auto matrices = config["matrices"];
+                if (parse_b_cols_from_filelist && !matrices.has_child("filelist")) {
+                    std::cerr << "If b_cols is specified as -1, ";
+                    std::cerr << "a filelist must be provided" << std::endl;
+                    exit(-1);
+                }
 
-            if (matrices.has_child("filelist")) {
-                std::string filelist; matrices["filelist"] >> filelist;
-                using_filelist = true;
-                parse_filelist(filelist, search_dirs,
-                               parse_b_cols_from_filelist,
-                               filelist_has_additional_options);
-            }
+                if (matrices.has_child("filelist")) {
+                    std::string filelist; matrices["filelist"] >> filelist;
+                    using_filelist = true;
+                    parse_filelist(filelist, search_dirs,
+                                   parse_b_cols_from_filelist,
+                                   filelist_has_additional_options);
+                }
 
-            if (matrices.has_child("paths")) {
-                ERROR_AND_EXIT_IF(parse_b_cols_from_filelist ||
-                                  filelist_has_additional_options,
-                                  "Cannot paths with options "
-                                  "parse_b_cols_from_filelist or "
-                                  "filelist_has_additional_options");
-                parse_matrix_paths(matrices["paths"], search_dirs);
+                if (matrices.has_child("paths")) {
+                    ERROR_AND_EXIT_IF(parse_b_cols_from_filelist ||
+                                      filelist_has_additional_options,
+                                      "Cannot paths with options "
+                                      "parse_b_cols_from_filelist or "
+                                      "filelist_has_additional_options");
+                    parse_matrix_paths(matrices["paths"], search_dirs);
+                }
             }
-        }
 
         for(c4::yml::ConstNodeRef n : config["methods"].children()) {
             methods.push_back(parse_method(n));
@@ -952,9 +983,43 @@ CharContainer file_get_contents(const char *filename)
  **********************************************************/
 
 int main(int argc, char *argv[]) {
-    auto config = cpp_testbed::parseInput(argc, argv);
+    cxxopts::Options options("DDT", "Generates vectorized code from memory streams");
 
-    std::string contents = file_get_contents<std::string>(config.experimentPath.c_str());
+    options.add_options()
+            ("h,help", "Prints help text")
+            ("m,matrix", "Path to matrix market file.", cxxopts::value<std::string>())
+            ("a,append", "Append to existing csv", cxxopts::value<bool>())
+            ("e,experiment", "Path the experiment config file.", cxxopts::value<std::string>()->default_value(""))
+            ("f,file_list", "Path a file containing a list of matrices to process.", cxxopts::value<std::string>())
+            ("d,dataset_dir", "Path a folder containing the dataset(s).", cxxopts::value<std::string>()->default_value(""))
+            ("o,output", "Output file", cxxopts::value<std::string>())
+            ("t,threads", "Number of parallel threads", cxxopts::value<int>())
+            ("b,bcols", "Number of columns in dense matrix for SpMM", cxxopts::value<int>())
+            ("p,profile", "Use PAPI to profile");
+
+    auto args = options.parse(argc, argv);
+
+    if (args.count("help")) {
+        std::cout << options.help() << std::endl;
+        exit(0);
+    }
+
+    Overrides overrides;
+
+    if (args.count("matrix")) overrides.matrix = args["matrix"].as<std::string>();
+    if (args.count("append")) overrides.append = args["append"].as<bool>();
+    if (args.count("file_list")) overrides.filelist = args["file_list"].as<std::string>();
+    if (args.count("output")) overrides.outputFile = args["output"].as<std::string>();
+    if (args.count("threads")) overrides.nThreads = args["threads"].as<int>();
+    if (args.count("bcols")) overrides.bCols = args["bcols"].as<int>();
+    if (args.count("profile")) overrides.profile = args["profile"].as<bool>();
+
+
+    auto experimentPath = args["experiment"].as<std::string>();
+    auto datasetDir = args["dataset_dir"].as<std::string>();
+
+
+    std::string contents = file_get_contents<std::string>(experimentPath.c_str());
     ryml::Tree tree = ryml::parse_in_arena(ryml::to_csubstr(contents));
     ryml::NodeRef root = tree.rootref();
 
@@ -965,11 +1030,11 @@ int main(int argc, char *argv[]) {
         std::cerr << "No scalar_type set, defaulting to float" << std::endl;
     }
 
-    int result = -1;
-    std::string experimentDir = std::filesystem::path(config.experimentPath).parent_path().string() + "/";
+    std::string experimentDir = std::filesystem::path(experimentPath).parent_path().string() + "/";
 
+    int result = -1;
     if (scalar_type == "float") {
-        auto experiment = SpMMExperiment<float>(root, { config.datasetDir, experimentDir });
+        auto experiment = SpMMExperiment<float>(root, { datasetDir, experimentDir }, overrides);
         result = experiment();
     } else if (scalar_type == "double")  {
         std::cerr << "Double current unsupported by the baselines " << scalar_type << std::endl;

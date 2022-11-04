@@ -153,7 +153,7 @@ def powerset(iterable, convert_tuple_to_set=False):
         return [combinations(s, r) for r in range(1, len(s)+1)]
 
 
-def create_universal_set(R: set, approx_algo="MERGE_ONLY"):
+def create_universal_set(R: set, Q: set, approx_algo="MERGE_ONLY"):
     Q_to_R = create_Q_to_R_map(R)
 
     # MERGE_ONLY i.e Q only
@@ -171,7 +171,8 @@ def compute_costs(S: List[Set[RElement]], fS: callable):
     return cost
 
 
-def set_cover(set_to_cover: Set[RElement], universal_set: List[Set[RElement]], cost: List[float], max_num_subset: int):
+def set_cover(set_to_cover: Set[RElement], universal_set: List[Set[RElement]], cost: List[float],
+              max_num_subset: int, force_num_subsets=False):
     n = len(universal_set)  # 2^16
     with Model() as M:
         M.setLogHandler(sys.stdout)
@@ -193,7 +194,10 @@ def set_cover(set_to_cover: Set[RElement], universal_set: List[Set[RElement]], c
         M.constraint(Expr.mul(x, M_constraint), Domain.equalsTo(1.0))
 
         # Constrain the number of subsets
-        M.constraint(Expr.sum(x, 1), Domain.lessThan(max_num_subset))
+        if force_num_subsets:
+            M.constraint(Expr.sum(x, 1), Domain.equalsTo(max_num_subset))
+        else:
+            M.constraint(Expr.sum(x, 1), Domain.lessThan(max_num_subset))
 
         # Set the objective (min sum of costs)
         M.objective(ObjectiveSense.Minimize, Expr.dot(cost, x))
@@ -284,7 +288,7 @@ if __name__ == '__main__':
         R = generate_R_for(Q)
 
         print("  Generating approximate powerset...")
-        U = create_universal_set(R)
+        U = create_universal_set(R, Q)
 
         print("  Computing costs...")
         cost = compute_costs(U, partial(fS, fQ=fQ))

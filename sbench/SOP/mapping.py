@@ -9,6 +9,8 @@ def save_mapping(M_r, mapping: callable, subdir="mappings"):
 
     id = hashlib.md5(str(mapping_dict).encode('utf-8')).hexdigest()[-5:]
 
+    os.makedirs(SCRIPT_DIR + f"/{subdir}/", exist_ok=True)
+
     with open(SCRIPT_DIR + "/{}/mapping_{}.txt".format(subdir, id), "w+") as f:
         f.write("{}\n".format(M_r))
         for k, v in mapping_dict.items():
