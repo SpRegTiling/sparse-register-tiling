@@ -1,9 +1,13 @@
+import sys
+
 import matplotlib.pyplot as plt
 import mosek
 import numpy as np
 import scipy.sparse
 import os; SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 import math
+
+from sbench.SOP.mapping import save_mapping
 
 from utils import *
 from mosek_test import *
@@ -12,10 +16,6 @@ from collections import defaultdict
 from typing import List, Set, Dict
 
 from dataclasses import dataclass
-
-from sbench.SOP.distribution import extract_distribution
-from sbench.SOP.mapping import save_mapping
-from sbench.loaders.filelist import FilelistPathIterator
 
 #
 #   Utils
@@ -153,6 +153,23 @@ def powerset(iterable, convert_tuple_to_set=False):
         return [combinations(s, r) for r in range(1, len(s)+1)]
 
 
+def powerset_overlap_only(iterable, convert_tuple_to_set=False):
+    """
+    powerset([1,2,3]) --> (1,) (2,) (3,) (1,2) (1,3) (2,3) (1,2,3)
+        NOTE: ignoring empty set
+    """
+    s = list(iterable)
+    for c in combinations(s, 5):
+        print(c)
+        print(set().union(*c))
+        sys.exit(-1)
+
+    if convert_tuple_to_set:
+        return [set().union(*c) for r in range(1, len(s)+1) for c in combinations(s, r)]
+    else:
+        return [combinations(s, r) for r in range(1, len(s)+1)]
+
+
 def create_universal_set(R: set, Q: set, approx_algo="MERGE_ONLY"):
     Q_to_R = create_Q_to_R_map(R)
 
@@ -160,6 +177,18 @@ def create_universal_set(R: set, Q: set, approx_algo="MERGE_ONLY"):
     if approx_algo == "MERGE_ONLY":
         QR = [Q_to_R[q] for q in Q]
         return powerset(QR, convert_tuple_to_set=True)
+    elif approx_algo == "MUST_OVERLAP":
+        Qs = sorted(Q, key=lambda q: q.nnz, reverse=True)
+        U = []
+
+        for i, Qi in enumerate(Qs):
+            QR = [Q_to_R[q] for q in Qs[i+1:i+16]]
+            ps = powerset(QR, convert_tuple_to_set=True)
+            U += ps
+            U += [p.union(Q_to_R[Qi]) for p in ps]
+            print(len(U))
+
+        return U
     else:
         raise Exception("Unknown approximation algorithm")
 
@@ -173,6 +202,10 @@ def compute_costs(S: List[Set[RElement]], fS: callable):
 
 def set_cover(set_to_cover: Set[RElement], universal_set: List[Set[RElement]], cost: List[float],
               max_num_subset: int, force_num_subsets=False):
+
+    from sbench.SOP.distribution import extract_distribution
+    from sbench.loaders.filelist import FilelistPathIterator
+
     n = len(universal_set)  # 2^16
     with Model() as M:
         M.setLogHandler(sys.stdout)

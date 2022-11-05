@@ -7,6 +7,7 @@
 #include <assert.h>
 #include <vector>
 #include <iostream>
+#include <set>
 
 namespace cpp_testbed {
 
@@ -68,7 +69,7 @@ void write_csv_row(
   auto column_names = std::set(keys.begin(), keys.end());
 
   if (file_cache == csv_files_cache.end()) {
-    bool append = csv_files_append.contains(filepath);
+    bool append = csv_files_append.find(filepath) != csv_files_append.end();
 
     // First time we have seen this file so we need to open up a `ofstream` and initialize the column names
     csv_files_cache[filepath] = std::make_pair(

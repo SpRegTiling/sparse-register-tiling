@@ -28,7 +28,7 @@ PLOT_SPEEDUP = True
 color_scheme = 'purpleblue'
 
 cluster = 'niagara'
-df = pd.read_csv(SCRIPT_DIR + '/.cache/figure_2_merged_postprocessed.csv')
+df = pd.read_csv('/sdb/paper_results/figure2/figure_2_merged_postprocessed.csv')
 
 b_colss = sorted(df["n"].unique())
 n_threadss = df["numThreads"].unique()

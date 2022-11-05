@@ -34,6 +34,8 @@ def compute_pruning_method_and_model(df):
     df["pruningMethod"] = df["matrixPath"].str.split("/").str[-3]
     df["model"] = df["matrixPath"].str.split("/").str[-4]
     df["sparsityFolder"] = df["matrixPath"].str.split("/").str[-2]
+    df["matrixName"] = df["matrixPath"].str.split("/").str[-1].str.replace(".mtx", "").str.replace(".smtx", "")
+    df["matrixId"] = df["sparsityFolder"] + "|" + df["model"] + "|" + df["pruningMethod"] + "|" + df["matrixName"]
     df["sparsityFolder"] = round(df["sparsityFolder"].astype(float), 2)
     return df
 
@@ -51,7 +53,7 @@ def compute_matrix_properties(df, sparsity_round=True):
     return df
 
 
-def compute_for_group(df, funcs, group_by=["matrixPath", "n", "numThreads"]):
+def compute_for_group(df, funcs, group_by=["matrixId", "n", "numThreads"]):
     def compute(x):
         for func in funcs:
             x = func(x)
@@ -61,7 +63,7 @@ def compute_for_group(df, funcs, group_by=["matrixPath", "n", "numThreads"]):
     return df
 
 
-def compute_speed_up_vs(df, name, group_by=["matrixPath", "n", "numThreads"]):
+def compute_speed_up_vs(df, name, group_by=["matrixId", "n", "numThreads"]):
     def compute_time_vs(x):
         runs = x[x["name"] == name]
         if not runs.empty:
@@ -73,7 +75,7 @@ def compute_speed_up_vs(df, name, group_by=["matrixPath", "n", "numThreads"]):
     return df
 
 
-def compute_speed_up_vs_multidense(df, prefer, group_by=["matrixPath", "n"]):
+def compute_speed_up_vs_multidense(df, prefer, group_by=["matrixId", "n"]):
     def compute_time_vs(x):
         dense_runs = x[x["name"] == f'MLK_Dense {prefer}']
         if dense_runs.empty:
@@ -87,7 +89,7 @@ def compute_speed_up_vs_multidense(df, prefer, group_by=["matrixPath", "n"]):
     return df
 
 
-def compute_scaling(df, group_by=["matrixPath", "n", "name"]):
+def compute_scaling(df, group_by=["matrixId", "n", "name"]):
     def compute_time_vs(x):
         baseline = x[x["numThreads"] == 1].iloc[0]["time median"]
         x[f'scaling'] = baseline / x["time median"]
@@ -97,7 +99,7 @@ def compute_scaling(df, group_by=["matrixPath", "n", "name"]):
     return df
 
 
-def compute_best(df, group_by=["matrixPath", "n", "numThreads", "name"]):
+def compute_best(df, group_by=["matrixId", "n", "numThreads", "name"]):
     def compute_best(x):
         x["best"] = False
         x.loc[x["time median"].idxmin(), "best"] = True
@@ -106,7 +108,7 @@ def compute_best(df, group_by=["matrixPath", "n", "numThreads", "name"]):
     return df.groupby(group_by, group_keys=False).apply(compute_best).reset_index(drop=True)
 
 
-def compute_global_best(df, group_by=["matrixPath", "n", "numThreads"]):
+def compute_global_best(df, group_by=["matrixId", "n", "numThreads"]):
     def compute_best(x):
         x["global_best"] = False
         x.loc[x["time median"].idxmin(), "global_best"] = True

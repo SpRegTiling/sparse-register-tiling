@@ -1,0 +1,15 @@
+options:
+  profile: False
+  scalar_type: float
+  n_threads: [ 1, 16, 32 ]
+  b_cols: [ 512, 1024 ]
+  output_file: ss_mini_results.csv
+  save_tuning_results: False
+  expand_config_parameters: [ m_tile, k_tile, n_tile, density_threshold, agg, pct_nnz ]
+
+matrices:
+  filelist: ../../tools/filelists/ss_mini.txt
+
+methods:
+  - method_id: aspt
+    name: ASpT

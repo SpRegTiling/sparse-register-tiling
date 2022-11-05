@@ -54,6 +54,7 @@ def postprocess(df):
 
     print("compute_matrix_properties ...")
     df = post_process.compute_matrix_properties(df)
+    #df = post_process.compute_pruning_method_and_model(df)
 
     def compute_time_vs_MKL_Sparse(x):
         runs = x[x["name"] == 'MKL_Sparse']
@@ -95,7 +96,7 @@ def postprocess(df):
                                         group_by=["matrixPath", "n", "numThreads"])
 
     print("compute_scaling...")
-    df = post_process.compute_scaling(df)
+    df = post_process.compute_scaling(df, group_by=["matrixPath", "n", "name"])
     print("done postprocessing")
 
     return df
