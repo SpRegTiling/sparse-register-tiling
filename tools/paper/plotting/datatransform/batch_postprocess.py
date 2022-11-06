@@ -1,11 +1,12 @@
 # create all tasks
 import sys
 import os
-import post_process
 from multiprocessing import Process
 import pandas as pd
 import glob
-from plot_utils import *
+import tools.paper.plotting.post_process as post_process
+
+from tools.paper.plotting.plot_utils import *
 
 SUBFOLDER = sys.argv[1] + '/'
 CACHEFOLDER = os.path.join(RESULTS_DIR, "cache",  SUBFOLDER) + "/"
@@ -134,16 +135,16 @@ def per_part_postprocess(files, partname):
     speedup_vs_sparse = arm_compute_time_vs_sparse if "pi" in SUBFOLDER else mkl_compute_time_vs_sparse
 
     df = post_process.compute_for_group(df,
-                                        [speedup_vs_dense, speedup_vs_sparse,
-                                         compute_best, compute_best_nano],
+                                        [compute_best, compute_best_nano],
                                         group_by=["matrixPath", "n", "numThreads"])
     df.to_csv(CACHEFOLDER + partname + "_per_part.csv")
 
 
 if PER_PART_POSTPROCESS:
     processes = []
-    for i in range(1, 6):
+    for i in range(1, 2):
         files = [path.split('/')[-1] for path in glob.glob(CACHEFOLDER + f"/*dlmc_part{i}_*_per_file.csv")]
+        print("PER PART", i, files)
         processes.append(Process(target=per_part_postprocess, args=(files, f'part{i}')))
 
     for process in processes:
@@ -173,7 +174,7 @@ def filter(df, **kwargs):
 
 if RESTORE_GROUPS:
     dfs = []
-    dfs = [pd.read_csv(CACHEFOLDER + f"part{i}_per_part.csv") for i in range(1, 6)]
+    dfs = [pd.read_csv(CACHEFOLDER + f"part{i}_per_part.csv") for i in range(1, 2)]
 
     df = pd.concat(dfs)
 

@@ -43,6 +43,7 @@ def compute_pruning_method_and_model(df):
 def compute_matrix_properties(df, sparsity_round=True):
     if sparsity_round:
         df["sparsity"] = round(1 - df["nnz"] / (df["m"] * df["k"]), 2)
+        df["sparsit_raw"] = 1 - df["nnz"] / (df["m"] * df["k"])
     else:
         df["sparsity"] = 1 - df["nnz"] / (df["m"] * df["k"])
 

@@ -1,13 +1,18 @@
 import altair_saver
 import matplotlib.pyplot as plt
 import os;
-
+import numpy as np
 import pandas as pd
 
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 
 PLOT_DIR = "/sdb/paper_plots/"
 RESULTS_DIR = "/sdb/paper_results/"
+
+
+def rand_jitter(arr):
+    stdev = .005 * (max(arr) - min(arr))
+    return arr + np.random.randn(len(arr)) * stdev
 
 
 def filter(df, **kwargs):
