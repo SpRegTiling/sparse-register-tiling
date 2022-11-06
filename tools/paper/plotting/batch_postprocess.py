@@ -5,14 +5,14 @@ import post_process
 from multiprocessing import Process
 import pandas as pd
 import glob
+from plot_utils import *
 
-PAPER_RESULTS_DIR = '/sdb/paper_results/'
 SUBFOLDER = sys.argv[1] + '/'
-CACHEFOLDER = os.path.join(PAPER_RESULTS_DIR, "cache",  SUBFOLDER) + "/"
+CACHEFOLDER = os.path.join(RESULTS_DIR, "cache",  SUBFOLDER) + "/"
 
 os.makedirs(CACHEFOLDER, exist_ok=True)
 
-PER_FILE_POSTPROCESS = False
+PER_FILE_POSTPROCESS = True
 PER_PART_POSTPROCESS = True
 RESTORE_GROUPS = True
 
@@ -23,8 +23,15 @@ RESTORE_GROUPS = True
 
 
 def per_file_postprocess(filename):
-    df = pd.read_csv(PAPER_RESULTS_DIR + SUBFOLDER + filename)
+    df = pd.read_csv(RESULTS_DIR + SUBFOLDER + filename)
     df = df[df["correct"] == "correct"]
+
+    method_pack = "_".join(filename.split("/")[-1].split("_")[3:-3])
+    df["run"] = method_pack
+    df["name"] = df["name"].replace("MKL_Dense", "MKL_Dense " + method_pack)
+    nano_methods = df['name'].str.contains(r'M[0-9]N[0-9]', regex=True)
+    df.loc[nano_methods, 'name'] = "NANO_" + df.loc[nano_methods, 'name']
+    df["is_nano"] = df['name'].str.contains(r'M[0-9]N[0-9]', regex=True)
 
     df["gflops"] = 2 * df["n"] * df["nnz"]
     df["gflops/s"] = (df["gflops"] / df["time median"]) / 1e9
@@ -52,7 +59,7 @@ def per_file_postprocess(filename):
 
 
 if PER_FILE_POSTPROCESS:
-    files = [path.split('/')[-1] for path in glob.glob(PAPER_RESULTS_DIR + SUBFOLDER + "/*.csv")]
+    files = [path.split('/')[-1] for path in glob.glob(RESULTS_DIR + SUBFOLDER + "/*.csv")]
     print(files)
     processes = [Process(target=per_file_postprocess, args=(file,)) for file in files]
     for process in processes:
@@ -116,7 +123,7 @@ def per_part_postprocess(files, partname):
 
     def compute_best_nano(x):
         x["best_nano"] = False
-        nanos = x[x["name"].str.contains("NANO")]
+        nanos = x[x["is_nano"] == True]
         x["num_nano"] = len(nanos)
         if not nanos.empty:
             x.loc[nanos["time median"].idxmin(), "best_nano"] = True

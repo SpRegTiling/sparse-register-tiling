@@ -28,7 +28,7 @@ PLOT_SPEEDUP = True
 color_scheme = 'purpleblue'
 
 cluster = 'niagara'
-df = pd.read_csv('/sdb/paper_results/figure2/figure_2_merged_postprocessed.csv')
+df = pd.read_csv(RESULTS_DIR + '/figure2/figure_2_merged_postprocessed.csv')
 
 b_colss = sorted(df["n"].unique())
 n_threadss = df["numThreads"].unique()
@@ -58,7 +58,9 @@ def filter(df, **kwargs):
             bool_index = bool_index & _bool_index
     return df[bool_index]
 
+
 df["loads_per_fma"] = df["L1_DCA"] / ((df["SP_AVXW"] + df["SP_AVX"] + df["SP_SSE"] + df["SP_SINGLE"]) / 2)
+
 
 def compute_nano(x):
     x["best_nano"] = False
@@ -66,6 +68,7 @@ def compute_nano(x):
     if not nanos.empty:
         x.loc[nanos["time median"].idxmin(), "best_nano"] = True
     return x
+
 
 def compute_nano_sub_1(x):
     x["best_sub1_nano"] = False

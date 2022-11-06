@@ -1,8 +1,38 @@
 import altair_saver
 import matplotlib.pyplot as plt
-import os; SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
+import os;
 
-PLOT_DIR = SCRIPT_DIR + "/plots/"
+import pandas as pd
+
+SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
+
+PLOT_DIR = "/sdb/paper_plots/"
+RESULTS_DIR = "/sdb/paper_results/"
+
+
+def filter(df, **kwargs):
+    bool_index = None
+    for key, value in kwargs.items():
+        if isinstance(value, list):
+            _bool_index = df[key].isin(value)
+        else:
+            _bool_index = df[key] == value
+        if bool_index is None:
+            bool_index = _bool_index
+        else:
+            bool_index = bool_index & _bool_index
+    return df[bool_index]
+
+
+def load_dlmc_df(subdir, nthreads=None, bcols=None):
+    assert nthreads or bcols
+
+    if nthreads is not None and bcols is not None:
+        return pd.read_csv(RESULTS_DIR + '/cache/' + subdir + f'/dlmc_bcols_{bcols}_nthreads_{nthreads}.csv')
+    elif nthreads is not None:
+        return pd.read_csv(RESULTS_DIR + '/cache/' + subdir + f'/dlmc_nthreads_{nthreads}.csv')
+    elif bcols is not None:
+        return pd.read_csv(RESULTS_DIR + '/cache/' + subdir + f'/dlmc_bcols_{bcols}.csv')
 
 
 def create_chart_grid(charts, row_width):
@@ -30,8 +60,8 @@ def chart_save(chart, filename):
     altair_saver.save(chart, filepath, fmt="png", scale_fator=4)
 
 
-def plot_save(plot, filename):
+def plot_save(filename):
     filepath = PLOT_DIR + filename
-    filepath = filepath.replace(".png", "") + ".png"
+    filepath = filepath.replace(".pdf", "") + ".pdf"
     os.makedirs(os.path.dirname(filepath), exist_ok=True)
     plt.savefig(filepath)
