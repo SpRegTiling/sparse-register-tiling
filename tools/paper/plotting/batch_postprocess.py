@@ -111,9 +111,13 @@ def per_part_postprocess(files, partname):
         if dense_runs.empty:
             dense_runs = x[x["name"].str.contains("ARMCL")]
 
-        baseline = dense_runs.iloc[0]["time median"]
-        x[f'Speed-up vs ARMCL'] = baseline / x["time median"]
-        x[f'Speed-up vs Dense'] = baseline / x["time median"]
+        try:
+            baseline = dense_runs.iloc[0]["time median"]
+            x[f'Speed-up vs ARMCL'] = baseline / x["time median"]
+            x[f'Speed-up vs Dense'] = baseline / x["time median"]
+        except:
+            x[f'Speed-up vs ARMCL'] = -1
+            x[f'Speed-up vs Dense'] = -1
         return x
 
     def compute_best(x):
