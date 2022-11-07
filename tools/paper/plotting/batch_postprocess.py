@@ -122,7 +122,7 @@ def per_part_postprocess(files, partname):
 
     def compute_best(x):
         x["best"] = False
-        x.loc[x["time median"].idxmin(), "best"] = True
+        x.loc[x['time median'] == x['time median'].min(), 'best'] = True
         return x
 
     def compute_best_nano(x):
@@ -130,7 +130,7 @@ def per_part_postprocess(files, partname):
         nanos = x[x["is_nano"] == True]
         x["num_nano"] = len(nanos)
         if not nanos.empty:
-            x.loc[nanos["time median"].idxmin(), "best_nano"] = True
+            x.loc[x['time median'] == nanos['time median'].min(), "best_nano"] = True
         return x
 
     print("computing for groups ...")

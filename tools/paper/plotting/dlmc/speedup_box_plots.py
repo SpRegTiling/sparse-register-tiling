@@ -14,8 +14,18 @@ NTHREADS = {
 }[SUBFOLDER]
 
 METHOD2 = {
-    'cascadelake/': r'MKL_Dense',
-    'raspberrypi/': r'ARMCL',
+    'cascadelake/': 'MKL_Dense',
+    'raspberrypi/': 'ARMCL',
+}[SUBFOLDER]
+
+METHOD2_name = {
+    'cascadelake/': 'MKL (sgemm)',
+    'raspberrypi/': 'ARMCL',
+}[SUBFOLDER]
+
+BASELINE = {
+    'cascadelake/': 'MKL (spmm)',
+    'raspberrypi/': 'XNNPACK (spmm, 16x1)',
 }[SUBFOLDER]
 
 df = load_dlmc_df(SUBFOLDER)
@@ -23,10 +33,13 @@ df = load_dlmc_df(SUBFOLDER)
 # print(df)
 
 # df = filter(df, best_nano=True)
-df = df[(df["sparsity"] <= 0.95) & (df["sparsity"] >= 0.7) & (df["n"] < 1024) & (df["m"] * df['k'] > 64 * 64)]
+df = df[(df["sparsity"] <= 0.95) & (df["sparsity"] >= 0.6) & (df["n"] < 1024) & (df["m"] * df['k'] > 64 * 64)]
 df = df[(df['matrixPath'].str.split('/').str[-3] == 'magnitude_pruning')|(df['matrixPath'].str.split('/').str[-3] == 'random_pruning')]
 
 # print(df)
+if sys.argv[1] == 'cascadelake':
+    df.loc[df['numThreads'] == 16, 'numThreads'] = 20
+    df = df[df['numThreads'] != 32]
 
 # x_labels = ['0.6', '0.7', '0.8', '0.9', '0.95', '0.98']
 x_labels = list(df['sparsityFolder'].unique())
@@ -55,7 +68,7 @@ def plot(ax, color, bias, data, label='nn'):
         boxprops=dict(facecolor=color),
         capprops=dict(color=color),
         whiskerprops=dict(color=color),
-        flierprops=dict(color=color, markeredgecolor=color),
+        flierprops=dict(color=color, markeredgecolor=color, marker='o', markersize=2),
         medianprops=dict(color='black'),
         widths=0.25)
     
@@ -70,29 +83,32 @@ for i in range(len(numThreadsList)):
                      &(df["is_nano"] == True)&(df['best_nano'] == True)
                      &(df['numThreads']==numThreadsList[i])
                      &(df['n']==bColsList[j])
+                     &(~df['Speed-up vs Sparse'].isna())
+                     &(df['Speed-up vs Sparse'] < 3)
                     ]['Speed-up vs Sparse'].tolist() for spFolder in x_labels
         ]
         
-        mklsp_data = [
+        sp_data = [
             df[(df['sparsityFolder']==spFolder)
                      &(df["name"].str.contains(METHOD2, regex=True))
                      &(df['numThreads']==numThreadsList[i])
                      &(df['n']==bColsList[j])
+                     &(df['Speed-up vs Sparse'] < 3)
                     ]['Speed-up vs Sparse'].tolist() for spFolder in x_labels
         ]
         
         # axs[i, j].gca().axhline(y=1.0, color='r', linestyle='-')
         axs[i, j].plot([0.5, len(x_labels)+0.5],[1, 1], color='purple')
         nano_p = plot(axs[i, j], 'steelblue', 0, nano_data, 'cuda')
-        mklsp_p = plot(axs[i, j], 'forestgreen', 0.3, mklsp_data, 'blocked_ell')
+        sp_p = plot(axs[i, j], 'lightcoral', 0.3, sp_data, 'blocked_ell')
         axs[i, j].set_xticks(x_ticks)
         axs[i, j].set_xticklabels(x_labels)
-        axs[i, j].legend([nano_p["boxes"][0], mklsp_p["boxes"][0]], ['Nano', METHOD2], loc='upper right')
+        axs[i, j].legend([nano_p["boxes"][0], sp_p["boxes"][0]], ['Sparse Register Tiling', METHOD2_name], loc='upper right')
         axs[i, j].set_xlim([0.5, len(x_labels)+0.5])
         if i == len(numThreadsList)-1:
             axs[i, j].set_xlabel('Sparsity')
         if j == 0:
-            axs[i, j].set_ylabel('Speed-up vs Sparse')
+            axs[i, j].set_ylabel(f'Speed-up vs {BASELINE}')
         axs[i, j].set_title(f'Threads={numThreadsList[i]}, B Columns={bColsList[j]}')
         
 plt.subplots_adjust(hspace=0.3, wspace=0.2)
