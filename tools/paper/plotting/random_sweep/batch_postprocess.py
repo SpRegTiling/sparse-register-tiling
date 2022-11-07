@@ -1,18 +1,18 @@
 # create all tasks
 import sys
 import os
-import post_process
 from multiprocessing import Process
 import pandas as pd
 import glob
-from plot_utils import *
+from tools.paper.plotting.plot_utils import *
+from tools.paper.plotting import post_process
 
 SUBFOLDER = sys.argv[1] + '/'
 CACHEFOLDER = os.path.join(RESULTS_DIR, "cache",  SUBFOLDER) + "/"
 
 os.makedirs(CACHEFOLDER, exist_ok=True)
 
-PER_FILE_POSTPROCESS = False
+PER_FILE_POSTPROCESS = True
 PER_PART_POSTPROCESS = True
 RESTORE_GROUPS = True
 
@@ -39,8 +39,8 @@ def per_file_postprocess(filename):
     print("compute_matrix_properties ...")
     df = post_process.compute_matrix_properties(df)
 
-    print("compute_pruning_method_and_model ...")
-    df = post_process.compute_pruning_method_and_model(df)
+    # print("compute_pruning_method_and_model ...")
+    # df = post_process.compute_pruning_method_and_model(df)
 
     print("compute schedule ...")
     df["schedule"] = df["name"].str.extract(r'(NKM|KNM)', expand=False)
@@ -52,7 +52,7 @@ def per_file_postprocess(filename):
     df["Nr"] = pd.to_numeric(df['Nr'], errors='coerce').astype("Int32")
 
     print("compute_scaling...")
-    df = post_process.compute_scaling(df)
+    df = post_process.compute_scaling(df, group_by=["matrixPath", "n", "numThreads"])
     print("done per file postprocessing")
 
     os.makedirs('/'.join((CACHEFOLDER + filename).split('/')[:-1]), exist_ok=True)
@@ -113,13 +113,9 @@ def per_part_postprocess(files, partname):
         if dense_runs.empty:
             dense_runs = x[x["name"].str.contains("ARMCL")]
 
-        try:
-            baseline = dense_runs.iloc[0]["time median"]
-            x[f'Speed-up vs ARMCL'] = baseline / x["time median"]
-            x[f'Speed-up vs Dense'] = baseline / x["time median"]
-        except:
-            x[f'Speed-up vs ARMCL'] = -1
-            x[f'Speed-up vs Dense'] = -1
+        baseline = dense_runs.iloc[0]["time median"]
+        x[f'Speed-up vs ARMCL'] = baseline / x["time median"]
+        x[f'Speed-up vs Dense'] = baseline / x["time median"]
         return x
 
     def compute_best(x):
@@ -138,23 +134,20 @@ def per_part_postprocess(files, partname):
     print("computing for groups ...")
     speedup_vs_dense = arm_compute_time_vs_dense if "pi" in SUBFOLDER else mkl_compute_time_vs_densemulti
     speedup_vs_sparse = arm_compute_time_vs_sparse if "pi" in SUBFOLDER else mkl_compute_time_vs_sparse
-    df["part"] = partname
 
     os.makedirs('/'.join((CACHEFOLDER + partname).split('/')[:-1]), exist_ok=True)
     df = post_process.compute_for_group(df,
                                         [speedup_vs_dense, speedup_vs_sparse,
                                          compute_best, compute_best_nano],
-                                        group_by=["matrixId", "n", "numThreads"])
+                                        group_by=["matrixPath", "n", "numThreads"])
     df.to_csv(CACHEFOLDER + partname + "_per_part.csv")
 
 
 if PER_PART_POSTPROCESS:
     processes = []
-    for i in range(1, 6):
-        files = [path.split(f'{SUBFOLDER}')[-1]
-                 for path in glob.glob(CACHEFOLDER + f"/**/*dlmc_part{i}_*_per_file.csv", recursive=True)
-                 if "profile" not in path]
-        processes.append(Process(target=per_part_postprocess, args=(files, f'part{i}')))
+    files = [path.split(f'{SUBFOLDER}')[-1]
+             for path in glob.glob(CACHEFOLDER + f"/**/*_per_file.csv", recursive=True)]
+    processes.append(Process(target=per_part_postprocess, args=(files, f'random_merged')))
 
     for process in processes:
         process.start()
@@ -183,16 +176,16 @@ def filter(df, **kwargs):
 
 if RESTORE_GROUPS:
     dfs = []
-    dfs = [pd.read_csv(CACHEFOLDER + f"part{i}_per_part.csv") for i in range(1, 6)]
+    dfs = [pd.read_csv(CACHEFOLDER + f"random_merged_per_part.csv") for i in range(1, 2)]
 
     df = pd.concat(dfs)
 
     for bcol in df["n"].unique():
-        filter(df, n=bcol).to_csv(CACHEFOLDER + f"dlmc_bcols_{bcol}.csv")
+        filter(df, n=bcol).to_csv(CACHEFOLDER + f"random_bcols_{bcol}.csv")
 
     for nthread in df["numThreads"].unique():
-        filter(df, numThreads=nthread).to_csv(CACHEFOLDER + f"dlmc_nthreads_{nthread}.csv")
+        filter(df, numThreads=nthread).to_csv(CACHEFOLDER + f"random_nthreads_{nthread}.csv")
 
     for bcol in df["n"].unique():
         for nthread in df["numThreads"].unique():
-            filter(df, n=bcol, numThreads=nthread).to_csv(CACHEFOLDER + f"dlmc_bcols_{bcol}_nthreads_{nthread}.csv")
+            filter(df, n=bcol, numThreads=nthread).to_csv(CACHEFOLDER + f"random_bcols_{bcol}_nthreads_{nthread}.csv")

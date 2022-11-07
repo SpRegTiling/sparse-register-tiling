@@ -43,7 +43,7 @@ def compute_pruning_method_and_model(df):
 def compute_matrix_properties(df, sparsity_round=True):
     if sparsity_round:
         df["sparsity"] = round(1 - df["nnz"] / (df["m"] * df["k"]), 2)
-        df["sparsit_raw"] = 1 - df["nnz"] / (df["m"] * df["k"])
+        df["sparsity_raw"] = 1 - df["nnz"] / (df["m"] * df["k"])
     else:
         df["sparsity"] = 1 - df["nnz"] / (df["m"] * df["k"])
 
@@ -91,10 +91,14 @@ def compute_speed_up_vs_multidense(df, prefer, group_by=["matrixId", "n"]):
 
 
 def compute_scaling(df, group_by=["matrixId", "n", "name"]):
+
     def compute_time_vs(x):
-        baseline = x[x["numThreads"] == 1].iloc[0]["time median"]
-        x[f'scaling'] = baseline / x["time median"]
-        return x
+        try:
+            baseline = x[x["numThreads"] == 1].iloc[0]["time median"]
+            x[f'scaling'] = baseline / x["time median"]
+            return x
+        except:
+            return x
 
     df = df.groupby(group_by, group_keys=False).apply(compute_time_vs).reset_index(drop=True)
     return df
