@@ -1,8 +1,9 @@
 import altair_saver
 import matplotlib.pyplot as plt
-import os;
+import os
 import numpy as np
 import pandas as pd
+import glob
 
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 
@@ -30,7 +31,7 @@ def filter(df, **kwargs):
 
 
 def load_dlmc_df(subdir, nthreads=None, bcols=None):
-    assert nthreads or bcols
+    # assert nthreads or bcols
 
     if nthreads is not None and bcols is not None:
         return pd.read_csv(RESULTS_DIR + '/cache/' + subdir + f'/dlmc_bcols_{bcols}_nthreads_{nthreads}.csv')
@@ -38,6 +39,9 @@ def load_dlmc_df(subdir, nthreads=None, bcols=None):
         return pd.read_csv(RESULTS_DIR + '/cache/' + subdir + f'/dlmc_nthreads_{nthreads}.csv')
     elif bcols is not None:
         return pd.read_csv(RESULTS_DIR + '/cache/' + subdir + f'/dlmc_bcols_{bcols}.csv')
+    else:
+        all_files = glob.glob(os.path.join(RESULTS_DIR + 'cache/' + subdir, "*_per_part.csv" ))
+        return pd.concat((pd.read_csv(f) for f in all_files), axis=0, ignore_index=True)
 
 
 def create_chart_grid(charts, row_width):

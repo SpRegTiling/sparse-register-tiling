@@ -49,6 +49,7 @@ def compute_matrix_properties(df, sparsity_round=True):
 
     df["aspect ratio"] = round(df["m"] / df["k"], 2)
     df["aspect ratio +/-"] = df[['m', 'k']].max(axis=1) / df[['m', 'k']].min(axis=1)
+    df["sparsityFolder"] = df["matrixPath"].str.split("/").str[-2]
 
     df.loc[df["m"] < df["k"], "aspect ratio +/-"] *= -1
     return df
