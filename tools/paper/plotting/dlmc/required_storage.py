@@ -35,7 +35,7 @@ print(df["m_tile"].unique())
 print(df["k_tile"].unique())
 
 #
-#   Correct for miscalulation of storage when recording, recorded floats and ints as 8 bytes (size of ptr)
+#   Correct for miscalculation of storage when recording, recorded floats and ints as 8 bytes (size of ptr)
 #     recorded extra overhead that is not actually needed (df["num_panels"] * 3 * 64) for alignment
 #     and  df["num_panels"] * 40 for legacy flags, add back 8 bytes per panel which is realistically needed
 #

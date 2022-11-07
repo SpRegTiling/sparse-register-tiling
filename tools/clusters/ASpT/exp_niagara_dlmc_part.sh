@@ -72,8 +72,8 @@ export OMP_PROC_BIND=true
 
 append=''
 while read p; do
-  echo "$SPMM_BIN_PATH -e $1 -d $DATASET_DIR_PATH -m \$p -o results/dlmc_part${3}_AVX512_${EXPERIMENT_NAME}_32.csv $append $4"
-  $SPMM_BIN_PATH -e $1 -d $DATASET_DIR_PATH -m \$p -o results/dlmc_part${3}_AVX512_${EXPERIMENT_NAME}_32.csv $append $4
+  echo "$SPMM_BIN_PATH -e $1 -d $DATASET_DIR_PATH -m \$p -o results/dlmc_part${3}_AVX512_${EXPERIMENT_NAME}_32.csv \$append $4"
+  $SPMM_BIN_PATH -e $1 -d $DATASET_DIR_PATH -m \$p -o results/dlmc_part${3}_AVX512_${EXPERIMENT_NAME}_32.csv \$append $4
   append='-a'
 done < $SOURCE_PATH/tools/filelists/dlmc_part$3.txt
 

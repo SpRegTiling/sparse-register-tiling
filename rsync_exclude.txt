@@ -9,8 +9,8 @@ plots/
 docs/
 notebooks/
 data/
-spmm_benchmarks/*.pickle
-spmm_benchmarks/ilp_pad/output/
-spmm_benchmarks/plots/
-spmm_benchmarks/SOP/_C/generated/
+sbench/*.pickle
+sbench/ilp_pad/output/
+sbench/plots/
+sbench/SOP/_C/generated/
 .git

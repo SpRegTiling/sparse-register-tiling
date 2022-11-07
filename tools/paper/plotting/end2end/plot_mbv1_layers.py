@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from collections import defaultdict
-
+from tools.paper.plotting.plot_utils import *
 
 def filter(df, **kwargs):
     bool_index = None
@@ -70,21 +70,23 @@ for benchmark in results["benchmarks"]:
 
 print(dense_baseline_times_per_threadcount)
 
+
 for threads in sorted(results_per_threadcount.keys()):
+    print("Dense", dense_baseline_times_per_threadcount[threads] / 1000)
     print(f"\nVs Dense, Threads: {threads}\n")
     for benchmark_name, time in total_time_per_threadcount[threads].items():
-        print(Label(benchmark_name), dense_baseline_times_per_threadcount[threads] / time)
+        print(Label(benchmark_name), time/1000, dense_baseline_times_per_threadcount[threads], dense_baseline_times_per_threadcount[threads] / time)
 
 
 for threads in sorted(results_per_threadcount.keys()):
     print(f"\nVs Sparse, Threads: {threads}\n")
     for benchmark_name, time in total_time_per_threadcount[threads].items():
         if benchmark_name[1] == 0.0: continue
-        print(Label(benchmark_name), sparse_baseline_times_per_threadcount[threads][benchmark_name[1]] / time)
+        print(Label(benchmark_name), time/1000, sparse_baseline_times_per_threadcount[threads][benchmark_name[1]], sparse_baseline_times_per_threadcount[threads][benchmark_name[1]] / time)
 
 
 for threads in sorted(results_per_threadcount.keys()):
-    fig, axs = plt.subplots(3, 1)
+    fig, axs = plt.subplots(2, 1)
 
     LINE_STYLES = {
         "XNN Dense": '-',
@@ -103,7 +105,7 @@ for threads in sorted(results_per_threadcount.keys()):
         print(benchmark_name, times)
         line_style = LINE_STYLES[benchmark_name[0]]
         color = COLORS[benchmark_name[1]]
-        axs[0].plot(range(1, len(times)+1), times, marker='x', label=Label(benchmark_name),
+        axs[0].plot(range(1, len(times)+1), times/1000, marker='x', label=Label(benchmark_name),
                     linestyle=line_style, color=color)
 
     for i in optimized_layers:
@@ -113,32 +115,38 @@ for threads in sorted(results_per_threadcount.keys()):
     for benchmark_name, times in results_per_threadcount[threads].items():
         line_style = LINE_STYLES[benchmark_name[0]]
         color = COLORS[benchmark_name[1]]
-        axs[1].plot(range(1, len(times)+1), np.cumsum(times), marker='x', label=Label(benchmark_name),
+        axs[1].plot(range(1, len(times)+1), np.cumsum(times)/1000, marker='x', label=Label(benchmark_name),
                     linestyle=line_style, color=color)
 
     for i in optimized_layers:
         # only one line may be specified; full height
         axs[1].axvline(x=i, color='b', label=None, linewidth=0.5)
 
-    for i in optimized_layers:
-        # only one line may be specified; full height
-        axs[2].axvline(x=i, color='b', label=None, linewidth=0.5)
+    # for i in optimized_layers:
+    #     # only one line may be specified; full height
+    #     axs[2].axvline(x=i, color='b', label=None, linewidth=0.5)
 
-    baseline_times = results_per_threadcount[threads][("XNN Dense", 0.0)]
+    #baseline_times = results_per_threadcount[threads][("XNN Dense", 0.0)]
 
-    for benchmark_name, times in results_per_threadcount[threads].items():
-        line_style = LINE_STYLES[benchmark_name[0]]
-        color = COLORS[benchmark_name[1]]
-        axs[2].plot(range(1, len(times)+1), baseline_times / times,
-                    marker='x', label=Label(benchmark_name),
-                    linestyle=line_style, color=color)
-
-    axs[2].axhline(y=1, color='black', linestyle='-', linewidth=0.5)
-    axs[2].set_ylim(0, 3)
+    # for benchmark_name, times in results_per_threadcount[threads].items():
+    #     line_style = LINE_STYLES[benchmark_name[0]]
+    #     color = COLORS[benchmark_name[1]]
+    #     axs[2].plot(range(1, len(times)+1), baseline_times / times,
+    #                 marker='x', label=Label(benchmark_name),
+    #                 linestyle=line_style, color=color)
+    #
+    # axs[2].axhline(y=1, color='black', linestyle='-', linewidth=0.5)
+    # axs[2].set_ylim(0, 3)
 
     axs[0].legend(loc='upper left')
     axs[1].legend(loc='upper left')
-    axs[2].legend(loc='upper left')
+    #axs[2].legend(loc='upper left')
 
-    plt.show()
+    axs[0].set_ylabel('Layer Time (ms)')
+    axs[1].set_ylabel('Cumulative Time (ms)')
+    axs[1].set_xlabel('Layer')
+
+    plt.tight_layout()
+
+    plot_save(f'end2end_bench_v1_{threads}.pdf')
 

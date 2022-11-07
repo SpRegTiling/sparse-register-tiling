@@ -16,6 +16,7 @@ from collections import defaultdict
 from typing import List, Set, Dict
 
 from dataclasses import dataclass
+from math import comb
 
 #
 #   Utils
@@ -178,17 +179,39 @@ def create_universal_set(R: set, Q: set, approx_algo="MERGE_ONLY"):
         QR = [Q_to_R[q] for q in Q]
         return powerset(QR, convert_tuple_to_set=True)
     elif approx_algo == "MUST_OVERLAP":
-        Qs = sorted(Q, key=lambda q: q.nnz, reverse=True)
+        Qs = sorted(Q, key=lambda q: q.nnz*2*len(Q) + q.bit_pattern, reverse=True)
         U = []
 
         for i, Qi in enumerate(Qs):
-            QR = [Q_to_R[q] for q in Qs[i+1:i+16]]
-            ps = powerset(QR, convert_tuple_to_set=True)
-            U += ps
-            U += [p.union(Q_to_R[Qi]) for p in ps]
+            if len(Q) >= 255:
+                neighbor_group = 8
+                QR = [Q_to_R[q] for q in Qs[i+1:i+neighbor_group]]
+                ps = powerset(QR, convert_tuple_to_set=True)
+                U += ps
+                U += [p.union(Q_to_R[Qi]) for p in ps]
+                QR = [Q_to_R[q] for q in Qs[i+1:i+32:4]]
+                ps = powerset(QR, convert_tuple_to_set=True)
+                U += ps
+                U += [p.union(Q_to_R[Qi]) for p in ps]
+                U += [set().union(*[Q_to_R[q] for q in Qs[i:]])]
+
+                start = i+neighbor_group
+                for ii in range(start, len(Qs)):
+                    U += [set().union(*[Q_to_R[q] for q in Qs[i:ii]])]
+
+            elif len(Q) >= 63:
+                QR = [Q_to_R[q] for q in Qs[i+1:i+15]]
+                ps = powerset(QR, convert_tuple_to_set=True)
+                U += ps
+                U += [p.union(Q_to_R[Qi]) for p in ps]
+            elif len(Q) >= 15:
+                QR = [Q_to_R[q] for q in Qs[i+1:i+16]]
+                ps = powerset(QR, convert_tuple_to_set=True)
+                U += ps
+                U += [p.union(Q_to_R[Qi]) for p in ps]
             print(len(U))
 
-        return U
+        return U + [R]
     else:
         raise Exception("Unknown approximation algorithm")
 
