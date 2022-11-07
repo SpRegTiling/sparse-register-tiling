@@ -32,3 +32,5 @@ ax.axhline(y=1.0, color='r', linestyle='-')
 plt.ylabel('Speed-up vs MKL Sparse')
 plt.xlabel('Problem Size (GFLOPs)')
 plot_save(f"scatters/{SUBFOLDER}/vs_dense_gflopss")
+
+print("Num matrices", df["matrixId"].nunique())

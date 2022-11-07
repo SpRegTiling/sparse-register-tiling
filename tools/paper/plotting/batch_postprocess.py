@@ -12,7 +12,7 @@ CACHEFOLDER = os.path.join(RESULTS_DIR, "cache",  SUBFOLDER) + "/"
 
 os.makedirs(CACHEFOLDER, exist_ok=True)
 
-PER_FILE_POSTPROCESS = True
+PER_FILE_POSTPROCESS = False
 PER_PART_POSTPROCESS = True
 RESTORE_GROUPS = True
 
@@ -55,11 +55,13 @@ def per_file_postprocess(filename):
     df = post_process.compute_scaling(df)
     print("done per file postprocessing")
 
+    os.makedirs('/'.join((CACHEFOLDER + filename).split('/')[:-1]), exist_ok=True)
     df.to_csv(CACHEFOLDER + filename.replace(".csv", "_per_file.csv"))
 
 
 if PER_FILE_POSTPROCESS:
-    files = [path.split('/')[-1] for path in glob.glob(RESULTS_DIR + SUBFOLDER + "/*.csv")]
+    files = [path.split(f'{SUBFOLDER}')[-1]
+             for path in glob.glob(RESULTS_DIR + SUBFOLDER + "/**/*.csv", recursive=True)]
     print(files)
     processes = [Process(target=per_file_postprocess, args=(file,)) for file in files]
     for process in processes:
@@ -136,18 +138,22 @@ def per_part_postprocess(files, partname):
     print("computing for groups ...")
     speedup_vs_dense = arm_compute_time_vs_dense if "pi" in SUBFOLDER else mkl_compute_time_vs_densemulti
     speedup_vs_sparse = arm_compute_time_vs_sparse if "pi" in SUBFOLDER else mkl_compute_time_vs_sparse
+    df["part"] = partname
 
+    os.makedirs('/'.join((CACHEFOLDER + partname).split('/')[:-1]), exist_ok=True)
     df = post_process.compute_for_group(df,
                                         [speedup_vs_dense, speedup_vs_sparse,
                                          compute_best, compute_best_nano],
-                                        group_by=["matrixPath", "n", "numThreads"])
+                                        group_by=["matrixId", "n", "numThreads"])
     df.to_csv(CACHEFOLDER + partname + "_per_part.csv")
 
 
 if PER_PART_POSTPROCESS:
     processes = []
     for i in range(1, 6):
-        files = [path.split('/')[-1] for path in glob.glob(CACHEFOLDER + f"/*dlmc_part{i}_*_per_file.csv")]
+        files = [path.split(f'{SUBFOLDER}')[-1]
+                 for path in glob.glob(CACHEFOLDER + f"/**/*dlmc_part{i}_*_per_file.csv", recursive=True)
+                 if "profile" not in path]
         processes.append(Process(target=per_part_postprocess, args=(files, f'part{i}')))
 
     for process in processes:

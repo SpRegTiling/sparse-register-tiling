@@ -5,6 +5,8 @@ import numpy as np
 import gmpy
 import pandas as pd
 import scipy
+import sys
+import json
 
 from typing import List
 
@@ -96,28 +98,27 @@ def read_unit_codelet_probability(file_name):
 
 
 def file_dic_todic(file_in):
-    dic_pat, value_list = {}, []
+    dic_pat, patterns = {}, set()
     file1 = open(file_in, 'r')
     lines = file1.readlines()
     M_r = int(lines[0])
     for line in lines[1:]:
-        entry = line.split(',')
-        cur_value = 0
-        for idx_v, v in enumerate(entry):
-            if idx_v == 0:
-                cur_value = int(v)
-                value_list.append(cur_value)
-            else:
-                dic_pat[int(v)] = cur_value
-    return value_list, dic_pat, M_r
+        line = line.split(':')
+        dic_pat[int(line[0])] = json.loads(line[1])
+        for pat in dic_pat[int(line[0])]:
+            patterns.add(pat)
+
+    return list(patterns), dic_pat, M_r
 
 
 def random_sp_matrix(shape, sparsity):
     return (torch.rand(shape) <= (1 - sparsity)).to(dtype=torch.float)
 
 
+tile_shape = [24, 128]
+
+
 def rand_matrices():
-    tile_shape = [48, 64]
     tile_to_test = [
         ('random (70%)', random_sp_matrix(shape=tile_shape, sparsity=0.7), 0.7),
         ('random (80%)', random_sp_matrix(shape=tile_shape, sparsity=0.8), 0.8),
@@ -129,10 +130,11 @@ def rand_matrices():
         yield tile, name, sparsity
 
 
-def ilp_mappings(dir_name, filter):
+def ilp_mappings(dir_name, filter=None):
     list_of_paths = os.listdir(dir_name)
+    print(list_of_paths, dir_name)
     for path in list_of_paths:
-        if filter in path and 'txt' in path:
+        if (filter is None or filter in path) and 'txt' in path:
             print("testing {}".format(path))
             patterns, mapping, M_r = file_dic_todic(os.path.join(dir_name, path))
             print(patterns, mapping)
@@ -142,10 +144,13 @@ def ilp_mappings(dir_name, filter):
 
 if __name__ == "__main__":
     import sys
-    M_r = int(sys.argv[1])
+    M_r = int(sys.argv[2])
+    FOLDER_TO_RUN = sys.argv[1]
 
     csv_rows = []
-    bCols = 128
+    bCols = 32
+
+    print(FOLDER_TO_RUN)
 
     for matrix, mtx_path, sparsity in rand_matrices():
         if matrix.shape[0] == 4:
@@ -170,7 +175,7 @@ if __name__ == "__main__":
 
             times = []
             for run in range(RUNS_TO_MEDIAN):
-                time, result = module.execute_tile(sop_tile, B)
+                time, result = module.execute_tile(sop_tile, B, num_runs=1024)
                 times.append(time)
             time = np.median(np.array(times))
 
@@ -186,13 +191,16 @@ if __name__ == "__main__":
                 **csv_row_params
             })
 
-        for patterns, mapping, path, M_r in ilp_mappings(SCRIPT_DIR + f'/sweep_mappings/{M_r}', sp_str):
-            run_patterns(patterns, lambda x: mapping[x], "ILP")
+        OUTPUT_DIR = FOLDER_TO_RUN.replace('SOP', 'SOP/results/')
+        os.makedirs(OUTPUT_DIR, exist_ok=True)
 
+        for patterns, mapping, path, M_r in ilp_mappings(FOLDER_TO_RUN):
+            print(path)
+            run_patterns(patterns, lambda x: mapping[x], "ILP", M_r)
 
-df = pd.DataFrame(csv_rows)
-df.to_csv(f'sop_bench_ilp_sweep_{M_r}.csv')
-print(df)
+            df = pd.DataFrame(csv_rows)
+            df.to_csv(OUTPUT_DIR + f'/ilp_sweep_{M_r}_{tile_shape[0]}_{tile_shape[1]}_{bCols}.csv')
+            print(df)
 
 
 #

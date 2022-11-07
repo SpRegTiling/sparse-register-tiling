@@ -17,7 +17,7 @@ os.makedirs(GENERATED_DIR, exist_ok=True)
 
 
 def gen_random_sweep_exp(arch, test_methods, filelist, b_cols, num_threads, suffix = ""):
-    filelist_name = 'random_sweep_select'
+    filelist_name = 'random_sweep_30_100'
 
     if suffix != "" and suffix[0] != "_":
         suffix = "_" + suffix
@@ -65,7 +65,7 @@ def flatten(coll):
 for arch in ["AVX512", "NEON"]:
     max_threads_by_arch = {
         "AVX2": [32, 64],
-        "AVX512": [32],
+        "AVX512": [20],
         "NEON": [4]
     }
 
@@ -74,6 +74,7 @@ for arch in ["AVX512", "NEON"]:
             4: [1, 4],
             8: [1, 8],
             32: [1, 16, 32],
+            20: [1, 16, 20],
             64: [1, 16, 32, 64],
         }
 

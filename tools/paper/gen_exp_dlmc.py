@@ -98,7 +98,7 @@ def gen_dlmc_bench_exp(arch, test_methods, filelist, b_cols, num_threads, suffix
 for arch in ["AVX512", "NEON"]:
     max_threads_by_arch = {
         "AVX2": [32, 64],
-        "AVX512": [32],
+        "AVX512": [32, 20],
         "NEON": [4]
     }
 
@@ -106,12 +106,13 @@ for arch in ["AVX512", "NEON"]:
         n_threads = {
             4: [1, 4],
             8: [1, 8],
+            20: [20],
             32: [1, 16, 32],
             64: [1, 16, 32, 64],
         }
 
         all_files = []
-        for pack_name, methods in method_packs.items():
+        for pack_name, methods in method_packs[arch].items():
             pack_names.add(pack_name)
 
             for part in range(1, dlmc_parts+1):

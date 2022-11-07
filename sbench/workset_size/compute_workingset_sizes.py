@@ -4,6 +4,8 @@ import random
 from typing import List
 import os; SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 
+from scipy.stats import variation
+
 #from spmm_benchmarks.loaders.suitesparse import SuiteSparseLoader
 from sbench.loaders.dlmc import DLMCLoader
 from sbench.loaders.suitesparse import SuiteSparseLoader
@@ -29,30 +31,30 @@ SUITE_SPARSE_MATRICES_PATHS = ['raefsky1/raefsky1.mtx', 'lpi_ex72a/lpi_ex72a.mtx
 if __name__ == "__main__":
     random.seed(10)
     SS_MATRICES_TO_PLOT = 507
-    SS_MATRICES_TO_SELECT_FROM = 5000
+    SS_MATRICES_TO_SELECT_FROM = 10000
     # Matrices that consume too much ram for our current setup
     SS_SKIP_LIST = ["mc2depi", "wikipedia-20051105", "circuit5M_dc", "memchip", "mycielskian19", "mycielskian20", "333SP", "ss"]
-    MAX_SS_MATRIX_SIZE = 4e6
+    MAX_SS_MATRIX_SIZE = 5e5S
 
-    # import ssgetpy
-    # matrix_list = ssgetpy.search(rowbounds=[0, MAX_SS_MATRIX_SIZE],
-    #                              colbounds=[0, MAX_SS_MATRIX_SIZE],
-    #                              limit=SS_MATRICES_TO_SELECT_FROM)
-    # matrix_ids = [matrix.id for matrix in matrix_list]
-    # random.shuffle(matrix_ids)
-    #
-    # ss_loader = SuiteSparseLoader(matrix_ids=matrix_ids[:SS_MATRICES_TO_PLOT], skip_list=SS_SKIP_LIST, loader=load_csr)
-    #print(matrix_ids[:SS_MATRICES_TO_PLOT])
+    import ssgetpy
+    matrix_list = ssgetpy.search(rowbounds=[0, MAX_SS_MATRIX_SIZE],
+                                 colbounds=[0, MAX_SS_MATRIX_SIZE],
+                                 limit=SS_MATRICES_TO_SELECT_FROM)
+    matrix_ids = [matrix.id for matrix in matrix_list]
+    random.shuffle(matrix_ids)
+
+    ss_loader = SuiteSparseLoader(matrix_ids=matrix_ids[:SS_MATRICES_TO_PLOT], skip_list=SS_SKIP_LIST, loader=load_csr)
+    print(matrix_ids[:SS_MATRICES_TO_PLOT])
     PLOT_DIR = SCRIPT_DIR + "/../plots/"
 
     torch.set_grad_enabled(False)
-    tile_shapes = [(x, x) for x in range(16, 512, 4)]
+    tile_shapes = [(x, x) for x in range(8, 513, 4)]
 
     #
     # BUCKET_SIZE = 0.05
     # num_buckets = int(1 / BUCKET_SIZE) + 1
 
-    def run(loader, name, cache_dir, recompute=False):
+    def run(loader, name, cache_dir, range=[0.7, 0.95], recompute=False):
         variation_per_tilesize = []
         tile_sizes = []
         matrix_density = []
@@ -66,6 +68,15 @@ if __name__ == "__main__":
             filename = os.path.basename(path).split('.')[0]
             print(filepath, matrix.shape, end=' ')
 
+            nnz = matrix.to(torch.bool).sum().sum().item()
+            print(nnz, matrix.shape)
+            density = nnz / (matrix.shape[0] * matrix.shape[1])
+            sparsity = round(1 - density, 2)
+            print(path, sparsity)
+
+            if sparsity < range[0] or sparsity > range[1]:
+                continue
+
             cache_dir_tmp = cache_dir + f"/{filepath}"
             os.makedirs(cache_dir_tmp, exist_ok=True)
 
@@ -75,8 +86,15 @@ if __name__ == "__main__":
             else:
                 print("computing")
 
+            working_set_size_cov = []
+            working_set_size_mean = []
+            working_set_size_std = []
+
             for tile_shape in tile_shapes:
                 (tile_rows, tile_cols) = tile_shape
+
+                if (matrix.shape[0]/tile_cols)*(matrix.shape[1]/tile_rows) < 8:
+                    break
 
                 num_tiles, num_empty_tiles, active_rows, active_cols, densities = \
                     torch.ops.spmm_benchmarks.tile_stats_csr_not_binned(tile_rows, tile_cols, matrix)
@@ -93,24 +111,31 @@ if __name__ == "__main__":
                                     + BCOLS * active_rows * tile_rows \
                                     + BCOLS * active_cols * tile_cols
 
-                np.save(cache_dir_tmp + f"/{filename}_working_set_sizes.npy", working_set_sizes)
+                print(path, np.zeros(num_empty_tiles))
+                working_set_sizes = np.concatenate([working_set_sizes, np.zeros(num_empty_tiles)])
+
+                working_set_size_cov.append(variation(working_set_sizes))
+                working_set_size_mean.append(np.mean(working_set_sizes))
+                working_set_size_std.append(np.std(working_set_sizes))
+
                 del working_set_sizes
-                np.save(cache_dir_tmp + f"/{filename}_active_rows.npy", active_rows)
                 del active_rows
-                np.save(cache_dir_tmp + f"/{filename}_active_cols.npy", active_cols)
                 del active_cols
-                np.save(cache_dir_tmp + f"/{filename}_densities.npy", densities)
                 del densities
             del matrix
-
+            np.savez(cache_dir_tmp + f"/{filename}_working_set.npz",
+                     cov=np.array(working_set_size_cov),
+                     mean=np.array(working_set_size_mean),
+                     std=np.array(working_set_size_std),
+                     sparsity=sparsity)
 
     # dlmc_loader = islice(DLMCLoader(loader=load_csr, models=["transformer"],
     #                                 pruning_methods=["magnitude_pruning"], sparsities=[0.7]), 1)
-    # dlmc_loader = DLMCLoader(loader=load_csr)
-    # run(dlmc_loader, "ml", cache_dir=DLMC_CACHE_DIR, recompute=False)
+    dlmc_loader = DLMCLoader(loader=load_csr, random=200)
+    run(dlmc_loader, "ml", cache_dir=DLMC_CACHE_DIR, range=[0.7, 0.98], recompute=False)
 
     # ss_loader = islice(SuiteSparseLoader(matrix_ids=matrix_ids[:SS_MATRICES_TO_PLOT],
     #                                      skip_list=SS_SKIP_LIST, loader=load_csr), 1)
-    ss_loader = SuiteSparseLoader(paths=SUITE_SPARSE_MATRICES_PATHS, skip_list=SS_SKIP_LIST, loader=load_csr)
-    run(ss_loader, "ss", cache_dir=SS_CACHE_DIR, recompute=False)
+    #ss_loader = SuiteSparseLoader(paths=SUITE_SPARSE_MATRICES_PATHS, skip_list=SS_SKIP_LIST, loader=load_csr)
+    run(ss_loader, "ss", cache_dir=SS_CACHE_DIR, range=[0, 1.0], recompute=False)
 
