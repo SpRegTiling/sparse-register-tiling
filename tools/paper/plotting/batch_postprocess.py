@@ -12,7 +12,7 @@ CACHEFOLDER = os.path.join(RESULTS_DIR, "cache",  SUBFOLDER) + "/"
 
 os.makedirs(CACHEFOLDER, exist_ok=True)
 
-PER_FILE_POSTPROCESS = False
+PER_FILE_POSTPROCESS = True
 PER_PART_POSTPROCESS = True
 RESTORE_GROUPS = True
 

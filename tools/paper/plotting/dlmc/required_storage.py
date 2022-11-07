@@ -29,6 +29,7 @@ df["m_tiles"] = np.ceil(df['m'] / df["m_tile"].astype(int))
 df["k_tiles"] = np.ceil(df['k'] / df["k_tile"].astype(int))
 
 df["num_panels"] = df["m_tiles"] * df["k_tiles"]
+# df["sparsity_raw"] = 1 - df["nnz"] / (df["m"] * df["k"])
 
 print(df["config"].unique())
 print(df["m_tile"].unique())
