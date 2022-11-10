@@ -177,7 +177,7 @@ if __name__ == "__main__":
         B = torch.ones((matrix.shape[1], bCols))
         sol = matrix @ B
 
-        def run_patterns(_patterns, _mapping, name):
+        def run_patterns(_patterns, _mapping, name, path):
             acc_N = min(bCols // 16, 2)
             module = sop_driver.make_sop_module(Acc(4, acc_N), _patterns, _mapping)
             print(module.kernel_id)

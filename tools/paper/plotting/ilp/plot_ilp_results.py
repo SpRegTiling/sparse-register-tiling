@@ -12,12 +12,18 @@ import seaborn as sns
 
 files = [
     ('ilp_results/sweep_mappings/ilp/4/ilp_sweep_4_24_128_32.csv', 'ilp4'),
-    ('ilp_results/sweep_mappings/ga/4/ilp_sweep_4_24_128_32.csv', 'ga4'),
     ('ilp_results/sweep_mappings/ilp/6/ilp_sweep_6_24_128_32.csv', 'ilp6'),
-    ('ilp_results/sweep_mappings/ga/6/ilp_sweep_6_24_128_32.csv', 'ga6'),
-    ('ilp_results/sweep_mappings/ga/8/ilp_sweep_8_24_128_32.csv', 'ga8'),
+    ('ilp_results/sweep_mappings/ilp/8/ilp_sweep_8_24_128_32.csv', 'ilp8'),
+    # ('ilp_results/sweep_mappings/ga/4/ilp_sweep_4_24_128_32.csv', 'ga4'),
+    # ('ilp_results/sweep_mappings/ga/6/ilp_sweep_6_24_128_32.csv', 'ga6'),
+    # ('ilp_results/sweep_mappings/ga/8/ilp_sweep_8_24_128_32.csv', 'ga8'),
 ]
 
+best_mapping = [
+    "mapping_9b680.txt",
+    "mapping_34108.txt",
+    "mapping_b7844.txt"
+]
 
 dfs = []
 for file, name in files:
@@ -32,14 +38,22 @@ df["sparsity"] = df["name"].str.extract(r"(\d+)").astype(int)
 print(df["sparsity"] == 70)
 
 color_labels = df['search'].unique()
-rgb_values = sns.color_palette("Set2", 5)
+rgb_values = sns.color_palette("Set2", 6)
 color_map = dict(zip(color_labels, rgb_values))
 
 
 df = filter(df, sparsity=70)
 print(df["tileM"], df["tileN"])
 df["gflops/s"] = 2 * df["tileM"] * df["tileN"] * ((100-df["sparsity"]) / 100) / df["time"]
-ax = df.plot.scatter(x='num_patterns', y='gflops/s', c=df["search"].map(color_map), alpha=0.5, s=10)
+
+df1 = df[~df["mapping_file"].isin(best_mapping)]
+print(df1)
+ax = df1.plot.scatter(x='num_patterns', y='gflops/s', c=df1["search"].map(color_map), alpha=0.5, s=10)
+
+df1 = df[df["mapping_file"].isin(best_mapping)]
+print(df1)
+ax = df1.plot.scatter(x='num_patterns', y='gflops/s', c=df1["search"].map(color_map), alpha=0.5, s=40, marker="x",
+                      ax=ax)
 
 print(list(df.columns))
 print(df.sparsity)

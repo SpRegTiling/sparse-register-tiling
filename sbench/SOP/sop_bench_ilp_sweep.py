@@ -167,7 +167,7 @@ if __name__ == "__main__":
         B = torch.ones((matrix.shape[1], bCols))
         sol = matrix @ B
 
-        def run_patterns(_patterns, _mapping, name, acc_M):
+        def run_patterns(_patterns, _mapping, name, acc_M, path):
             acc_N = min(bCols // 16, 2)
             module = sop_driver.make_sop_module(Acc(acc_M, acc_N), _patterns, _mapping)
             print(module.kernel_id)
@@ -183,7 +183,9 @@ if __name__ == "__main__":
 
             csv_rows.append({
                 "method": f"SOP{M_r}",
-                "submethod": "fSOP{M_r} " + name,
+                "submethod": f"SOP{M_r} " + name,
+                "path": path,
+                "mapping_file": path.split('/')[-1],
                 "time": time,
                 "correct": torch.allclose(result, sol),
                 "padding": sop_tile.padding(),
@@ -196,7 +198,7 @@ if __name__ == "__main__":
 
         for patterns, mapping, path, M_r in ilp_mappings(FOLDER_TO_RUN):
             print(path)
-            run_patterns(patterns, lambda x: mapping[x], "ILP", M_r)
+            run_patterns(patterns, lambda x: mapping[x], "ILP", M_r, path)
 
             df = pd.DataFrame(csv_rows)
             df.to_csv(OUTPUT_DIR + f'/ilp_sweep_{M_r}_{tile_shape[0]}_{tile_shape[1]}_{bCols}.csv')
