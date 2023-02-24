@@ -27,10 +27,13 @@ struct InspectorMetadata {
     int special_p;
 };
 
+
+
 InspectorMetadata<float> inspect(
     int nr0, int nc, int ne,
     int* row_ptrs, int* col_indices, float* values,
-    int NTHREAD
+    int NTHREAD,
+    int ASpT_block_height = 128
 );
 
 void execute(
@@ -38,7 +41,8 @@ void execute(
     int nr0, int nc, int sc,
     int* row_ptrs, int* col_indices, float* values,
     float* vin,
-    float* vout
+    float* vout,
+    int ASpT_block_height = 128
 );
 
 void free(InspectorMetadata<float> &meta);

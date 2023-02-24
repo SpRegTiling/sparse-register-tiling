@@ -41,7 +41,7 @@ total_time_per_threadcount = defaultdict(lambda: {})
 
 
 def Label(x):
-    if x == 0:
+    if x[1] == 0:
         return "XNN Dense"
     return f'{x[0]} ({x[1]})'
 

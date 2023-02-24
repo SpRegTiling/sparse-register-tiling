@@ -97,10 +97,10 @@ def gen_bench_exp(arch, test_methods, filelist, b_cols, num_threads, suffix = ""
 
 
 # All-DLMC Experiments
-for arch in ["AVX512", "NEON"]:
+for arch in ["AVX512"]:
     max_threads_by_arch = {
         "AVX2": [32, 64],
-        "AVX512": [32, 20],
+        "AVX512": [20],
         "NEON": [4]
     }
 
@@ -108,7 +108,7 @@ for arch in ["AVX512", "NEON"]:
         n_threads = {
             4: [1, 4],
             8: [1, 8],
-            20: [1, 20],
+            20: [20],
             64: [1, 16, 32, 64],
         }
 
@@ -118,13 +118,13 @@ for arch in ["AVX512", "NEON"]:
 
             files[(arch, max_thread_count)][pack_name] = [
                 gen_bench_exp(arch, methods, filelist,
-                              b_cols=[32, 128, 256],
+                              b_cols=[32, 128],
                               num_threads=n_threads[max_thread_count],
                               suffix=f"{pack_name}_small_bcols_{max_thread_count}"),
-                gen_bench_exp(arch, methods, filelist,
-                              b_cols=[512, 1024],
-                              num_threads=n_threads[max_thread_count],
-                              suffix=f"{pack_name}_large_bcols_{max_thread_count}"),
+                # gen_bench_exp(arch, methods, filelist,
+                #               b_cols=[512, 1024],
+                #               num_threads=n_threads[max_thread_count],
+                #               suffix=f"{pack_name}_large_bcols_{max_thread_count}"),
             ]
 
 

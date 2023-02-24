@@ -2,6 +2,8 @@ import glob
 import sys
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
+
 from tools.paper.plotting.plot_utils import plot_save
 from matplotlib import rc, rcParams
 from tools.paper.plotting.plot_utils import *
@@ -10,12 +12,12 @@ from tabulate import tabulate
 
 SUBFOLDER = sys.argv[1] + '/'
 NTHREADS = {
-    'cascadelake/': 16,
+    'cascadelake/': 20,
     'raspberrypi/': 4,
 }[SUBFOLDER]
 
 BASLINE = {
-    'cascadelake/': 16,
+    'cascadelake/': 20,
     'raspberrypi/': 4,
 }[SUBFOLDER]
 
@@ -43,31 +45,22 @@ def tabluarize(df_tab):
     return tabulate([vs_dense, vs_sparse, vs_dense_percent, vs_sparse_percent], headers=headers)
 
 
-df = load_dlmc_df(SUBFOLDER, nthreads=16)
-df = df[(df["sparsity"] <= 0.95) & (df["sparsity"] >= 0.6) & (df["n"] < 1024)]
-df = df.reset_index(drop=True)
+for ss in ["ss_small", "ss_large"]:
+    print("=======", ss, "========")
+    for bcols in [32, 128]:
+        print("BCols", bcols, "========")
+        for method in ["mkl", "aspt"]:
+            dfs = []
+            for bcols_str in ["small"]:
+                df = pd.read_csv(RESULTS_DIR + f"rebuttal/aspt_ss/{ss}_AVX512_{ss}_AVX512_{method}_{bcols_str}_bcols_20_32.csv")
+                dfs.append(df)
+            df = pd.concat(dfs)
+            df["gflops"] = 2 * df["n"] * df["nnz"]
+            df["gflops/s"] = (df["gflops"] / (df["time median"] / 1e6)) / 1e9
 
-print("Single-threaded speedup")
-print("Num matrices", df["matrixId"].nunique())
-print("Bcols", df["n"].unique())
-
-for method in list(df["name"].unique()):
-    if "NANO" not in method: continue
-    print()
-    print(method)
-    df_filt = df[(df["name"] == method)]
-    print(tabluarize(df_filt))
-
-
-for method in list(df["name"].unique()):
-    if "NANO" in method: continue
-    print()
-    print(method)
-    df_filt = df[(df["name"] == method)]
-    print(tabluarize(df_filt))
-
-df = filter(df, best_nano=True)
-print()
-print("Best Nano")
-print(tabluarize(df))
-
+            for name in df["name"].unique():
+                print(ss, method, name)
+                df_20 = filter(df, name=name, numThreads=20, correct="correct", n=bcols)
+                print("  mean:", df_20["gflops/s"].mean())
+                print("  min :", df_20["gflops/s"].min())
+                print("  max :", df_20["gflops/s"].max())

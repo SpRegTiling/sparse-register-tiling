@@ -17,7 +17,7 @@
 using additional_options_t = std::map<std::string, std::string>;
 
 #if defined(SPMM_MKL_ENABLED) && SPMM_MKL_ENABLED
-#   define REFERENCE_METHOD "mkl_dense"
+#   define REFERENCE_METHOD "mkl"
 #elif defined(SPMM_ARMPL_ENABLED) && SPMM_ARMPL_ENABLED
 #   define REFERENCE_METHOD "armpl_dense"
 #else

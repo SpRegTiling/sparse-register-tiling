@@ -65,10 +65,12 @@ IF (NOT MKL_FOUND)
     ENDIF()
   ENDIF()
 
-  # If the OneApi root path is given try to use bundled mkl takes precedence over MKL_ROOT_PATH variable
-  IF(MKL_ROOT_PATH AND NOT DEFAULT_INTEL_MKL_DIR AND EXISTS ${MKL_ROOT_PATH})
+  # MKL_ROOT_PATH variable takes precedence
+  IF(MKL_ROOT_PATH AND EXISTS ${MKL_ROOT_PATH})
     SET(DEFAULT_INTEL_MKL_DIR "${MKL_ROOT_PATH}")
   ENDIF()
+
+  MESSAGE(STATUS "DEFAULT_INTEL_MKL_DIR: ${DEFAULT_INTEL_MKL_DIR}")
 
   # Set default value of INTEL_COMPILER_DIR and INTEL_MKL_DIR
   IF(NOT DEFAULT_INTEL_COMPILER_DIR)
@@ -196,6 +198,8 @@ IF (NOT MKL_FOUND)
               "${INTEL_MKL_DIR}/lib")
     ENDIF()
   ENDIF()
+
+  MESSAGE(STATUS "CMAKE_LIBRARY_PATH: ${CMAKE_LIBRARY_PATH}")
 
   IF (EXISTS ${INTEL_OMP_DIR})
     # TODO: diagnostic if dir does not exist

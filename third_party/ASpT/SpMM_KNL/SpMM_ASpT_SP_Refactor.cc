@@ -34,6 +34,12 @@ double time_in_mill_now() {
 #define CEIL(a,b) (((a)+(b)-1)/(b))
 #define FTYPE float
 
+constexpr unsigned floorlog2(unsigned x)
+{
+    return x == 1 ? 0 : 1+floorlog2(x >> 1);
+}
+
+
 #define MFACTOR (32)
 #define LOG_MFACTOR (5)
 #define BSIZE (1024/1)
@@ -41,8 +47,8 @@ double time_in_mill_now() {
 #define INIT_GRP (10000000)
 #define INIT_LIST (-1)
 #define THRESHOLD (16*1)
-#define BH (128*1)
-#define LOG_BH (7)
+#define BH (ASpT_block_height)
+#define LOG_BH (floorlog2(BH))
 #define BW (128*1)
 #define MIN_OCC (BW*3/4)
 //#define MIN_OCC (-1)
@@ -76,30 +82,30 @@ struct v_struct {
 //FTYPE *csr_ev, *csr_ev0;
 ////int *mcsr_v;
 
-int compare0(const void *a, const void *b)
-{
-        if (((struct v_struct *)a)->row - ((struct v_struct *)b)->row > 0) return 1;
-        if (((struct v_struct *)a)->row - ((struct v_struct *)b)->row < 0) return -1;
-        return ((struct v_struct *)a)->col - ((struct v_struct *)b)->col;
-}
-
-int compare1(const void *a, const void *b)
-{
-        if ((((struct v_struct *)a)->row)/BH - (((struct v_struct *)b)->row)/BH > 0) return 1;
-        if ((((struct v_struct *)a)->row)/BH - (((struct v_struct *)b)->row)/BH < 0) return -1;
-        if (((struct v_struct *)a)->col - ((struct v_struct *)b)->col > 0) return 1;
-        if (((struct v_struct *)a)->col - ((struct v_struct *)b)->col < 0) return -1;
-        return ((struct v_struct *)a)->row - ((struct v_struct *)b)->row;
-}
-
-int compare2(const void *a, const void *b)
-{
-        if (((struct v_struct *)a)->row - ((struct v_struct *)b)->row > 0) return 1;
-        if (((struct v_struct *)a)->row - ((struct v_struct *)b)->row < 0) return -1;
-        if (((struct v_struct *)a)->grp - ((struct v_struct *)b)->grp > 0) return 1;
-        if (((struct v_struct *)a)->grp - ((struct v_struct *)b)->grp < 0) return -1;
-        return ((struct v_struct *)a)->col - ((struct v_struct *)b)->col;
-}
+//int compare0(const void *a, const void *b)
+//{
+//        if (((struct v_struct *)a)->row - ((struct v_struct *)b)->row > 0) return 1;
+//        if (((struct v_struct *)a)->row - ((struct v_struct *)b)->row < 0) return -1;
+//        return ((struct v_struct *)a)->col - ((struct v_struct *)b)->col;
+//}
+//
+//int compare1(const void *a, const void *b)
+//{
+//        if ((((struct v_struct *)a)->row)/BH - (((struct v_struct *)b)->row)/BH > 0) return 1;
+//        if ((((struct v_struct *)a)->row)/BH - (((struct v_struct *)b)->row)/BH < 0) return -1;
+//        if (((struct v_struct *)a)->col - ((struct v_struct *)b)->col > 0) return 1;
+//        if (((struct v_struct *)a)->col - ((struct v_struct *)b)->col < 0) return -1;
+//        return ((struct v_struct *)a)->row - ((struct v_struct *)b)->row;
+//}
+//
+//int compare2(const void *a, const void *b)
+//{
+//        if (((struct v_struct *)a)->row - ((struct v_struct *)b)->row > 0) return 1;
+//        if (((struct v_struct *)a)->row - ((struct v_struct *)b)->row < 0) return -1;
+//        if (((struct v_struct *)a)->grp - ((struct v_struct *)b)->grp > 0) return 1;
+//        if (((struct v_struct *)a)->grp - ((struct v_struct *)b)->grp < 0) return -1;
+//        return ((struct v_struct *)a)->col - ((struct v_struct *)b)->col;
+//}
 
 
 //void ready(int argc, char **argv)
@@ -238,7 +244,8 @@ int compare2(const void *a, const void *b)
 InspectorMetadata<FTYPE> inspect(
     int nr0, int nc, int ne,
     int* row_ptrs, int* col_indices, FTYPE* values,
-    int NTHREAD
+    int NTHREAD,
+    int ASpT_block_height
 ) {
     int *special = NULL;
     int *special2 = NULL;
@@ -527,7 +534,8 @@ void execute(
     int nr0, int nc, int sc,
     int* row_ptrs, int* col_indices, FTYPE* values,
     FTYPE* vin,
-    FTYPE* vout
+    FTYPE* vout,
+    int ASpT_block_height
 ) {
     int* csr_e0 = col_indices;
     FTYPE* csr_ev0 = values;

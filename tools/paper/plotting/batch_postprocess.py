@@ -16,6 +16,7 @@ PER_FILE_POSTPROCESS = True
 PER_PART_POSTPROCESS = True
 RESTORE_GROUPS = True
 
+NUM_PARTS=5
 
 ##
 #   Per File Postprocessing
@@ -32,6 +33,7 @@ def per_file_postprocess(filename):
     nano_methods = df['name'].str.contains(r'M[0-9]N[0-9]', regex=True)
     df.loc[nano_methods, 'name'] = "NANO_" + df.loc[nano_methods, 'name']
     df["is_nano"] = df['name'].str.contains("NANO")
+    df["is_aspt"] = df['name'].str.contains("ASpT")
 
     df["gflops"] = 2 * df["n"] * df["nnz"]
     df["gflops/s"] = (df["gflops"] / df["time median"]) / 1e9
@@ -90,6 +92,13 @@ def per_part_postprocess(files, partname):
             x[f'Speed-up vs Sparse'] = baseline / x["time median"]
         return x
 
+    def compute_time_vs_aspt(x):
+        runs = x[x["name"] == 'ASpT']
+        if not runs.empty:
+            baseline = runs.iloc[0]["time median"]
+            x[f'Speed-up vs ASpT'] = baseline / x["time median"]
+        return x
+
     def arm_compute_time_vs_sparse(x):
         runs = x[x["name"] == 'XNN']
         if not runs.empty:
@@ -135,6 +144,14 @@ def per_part_postprocess(files, partname):
             x.loc[x['time median'] == nanos['time median'].min(), "best_nano"] = True
         return x
 
+    def compute_best_aspt(x):
+        x["best_aspt"] = False
+        nanos = x[x["is_aspt"] == True]
+        x["num_aspt"] = len(nanos)
+        if not nanos.empty:
+            x.loc[x['time median'] == nanos['time median'].min(), "best_aspt"] = True
+        return x
+
     print("computing for groups ...")
     speedup_vs_dense = arm_compute_time_vs_dense if "pi" in SUBFOLDER else mkl_compute_time_vs_densemulti
     speedup_vs_sparse = arm_compute_time_vs_sparse if "pi" in SUBFOLDER else mkl_compute_time_vs_sparse
@@ -142,15 +159,15 @@ def per_part_postprocess(files, partname):
 
     os.makedirs('/'.join((CACHEFOLDER + partname).split('/')[:-1]), exist_ok=True)
     df = post_process.compute_for_group(df,
-                                        [speedup_vs_dense, speedup_vs_sparse,
-                                         compute_best, compute_best_nano],
+                                        [speedup_vs_dense, speedup_vs_sparse, compute_time_vs_aspt,
+                                         compute_best, compute_best_nano, compute_best_aspt],
                                         group_by=["matrixId", "n", "numThreads"])
     df.to_csv(CACHEFOLDER + partname + "_per_part.csv")
 
 
 if PER_PART_POSTPROCESS:
     processes = []
-    for i in range(1, 6):
+    for i in range(1, NUM_PARTS+1):
         files = [path.split(f'{SUBFOLDER}')[-1]
                  for path in glob.glob(CACHEFOLDER + f"/**/*dlmc_part{i}_*_per_file.csv", recursive=True)
                  if "profile" not in path]
@@ -183,7 +200,7 @@ def filter(df, **kwargs):
 
 if RESTORE_GROUPS:
     dfs = []
-    dfs = [pd.read_csv(CACHEFOLDER + f"part{i}_per_part.csv") for i in range(1, 6)]
+    dfs = [pd.read_csv(CACHEFOLDER + f"part{i}_per_part.csv") for i in range(1, NUM_PARTS+1)]
 
     df = pd.concat(dfs)
 

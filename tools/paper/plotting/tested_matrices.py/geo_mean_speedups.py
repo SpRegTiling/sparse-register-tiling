@@ -66,7 +66,11 @@ for method in list(df["name"].unique()):
     df_filt = df[(df["name"] == method)]
     print(tabluarize(df_filt))
 
+print()
+print("Best Nano Counts")
 df = filter(df, best_nano=True)
+print(df["name"].value_counts())
+
 print()
 print("Best Nano")
 print(tabluarize(df))

@@ -13,7 +13,7 @@ module load cmake/3.17.3
 module load gcc
 module load metis/5.1.0
 module load papi
-export MKLROOT=/scinet/intel/oneapi/2021u4/mkl/2021.4.0/
+export MKLROOT=/scinet/intel/2018u4/mkl/
 
 # Configure before we submit so that access the internet
 cmake -S $SOURCE_PATH -B $BUILD_PATH -DCMAKE_BUILD_TYPE=Release -DENABLE_AVX512=True ..
@@ -40,10 +40,10 @@ if [ "${INTERACTIVE}" ]; then
 
     append=''
     while read p; do
-      echo "$SPMM_BIN_PATH -e $1 -d $DATASET_DIR_PATH -m $p -o results/dlmc_part${3}_AVX512_${EXPERIMENT_NAME}.csv $append $4"
-      timeout -s SIGKILL 4m $SPMM_BIN_PATH -e $1 -d $DATASET_DIR_PATH -m $p -o results/dlmc_part${3}_AVX512_${EXPERIMENT_NAME}.csv $append $4
+      echo "$SPMM_BIN_PATH -e $1 -d $DATASET_DIR_PATH -m $p -o results/${3}_AVX512_${EXPERIMENT_NAME}_mkl_2018u4.csv $append $4"
+      $SPMM_BIN_PATH -e $1 -d $DATASET_DIR_PATH -m $p -o results/${3}_AVX512_${EXPERIMENT_NAME}_mkl_2018u4.csv $append $4
       append='-a'
-    done < $SCRIPT_DIR/../../filelists/dlmc_part$3.txt
+    done < $SCRIPT_DIR/../../filelists/$3.txt
 
     exit 0
 fi
@@ -72,9 +72,9 @@ export OMP_PROC_BIND=true
 
 append=''
 while read p; do
-  echo "$SPMM_BIN_PATH -e $1 -d $DATASET_DIR_PATH -m \$p -o results/dlmc_part${3}_AVX512_${EXPERIMENT_NAME}.csv \$append $4"
-  timeout -s SIGKILL 4m $SPMM_BIN_PATH -e $1 -d $DATASET_DIR_PATH -m \$p -o results/dlmc_part${3}_AVX512_${EXPERIMENT_NAME}.csv \$append $4
+  echo "$SPMM_BIN_PATH -e $1 -d $DATASET_DIR_PATH -m \$p -o results/${3}_AVX512_${EXPERIMENT_NAME}_mkl_2018u4.csv \$append $4"
+  $SPMM_BIN_PATH -e $1 -d $DATASET_DIR_PATH -m \$p -o results/${3}_AVX512_${EXPERIMENT_NAME}_mkl_2018u4.csv \$append $4
   append='-a'
-done < $SOURCE_PATH/tools/filelists/dlmc_part$3.txt
+done < $SOURCE_PATH/tools/filelists/$3.txt
 
 EOT

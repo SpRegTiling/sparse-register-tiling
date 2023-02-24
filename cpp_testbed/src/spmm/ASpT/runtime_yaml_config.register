@@ -1,5 +1,6 @@
 {"aspt", [](c4::yml::ConstNodeRef options) -> method_factory_t<S> {
-    return [](additional_options_t options, SpMMTask<S>& task) -> SpMMFunctor<S>* {
-    return new SpMMASpT<S>(task);
+    int block_height = 128; options["block_height"] >> block_height;
+    return [block_height](additional_options_t options, SpMMTask<S>& task) -> SpMMFunctor<S>* {
+    return new SpMMASpT<S>(task, block_height);
     };
 }}

@@ -13,7 +13,8 @@ def _register_extensions():
     importlib.invalidate_caches()
 
     # Force find the installed version incase we are in the working tree
-    sbench_installed = importlib.machinery.PathFinder.find_spec("sbench", [path for path in sys.path if path != cwd])
+    sbench_installed = importlib.machinery.PathFinder.find_spec("sbench", [path for path in sys.path if path != cwd] +
+                                                                ['/sdb/codegen/spmm-nano-bench/'])
     extfinder = importlib.machinery.FileFinder(sbench_installed.origin.replace("__init__.py", ""), loader_details)
 
     ext_specs = extfinder.find_spec("_C")

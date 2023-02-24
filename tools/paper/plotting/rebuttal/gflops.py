@@ -47,27 +47,42 @@ df = load_dlmc_df(SUBFOLDER, nthreads=16)
 df = df[(df["sparsity"] <= 0.95) & (df["sparsity"] >= 0.6) & (df["n"] < 1024)]
 df = df.reset_index(drop=True)
 
-print("Single-threaded speedup")
-print("Num matrices", df["matrixId"].nunique())
-print("Bcols", df["n"].unique())
+df["flops"] = 2 * df["n"] * df["nnz"]
+df["rflops"] = 2 * df["n"] * df["m"] * df["k"]
+df["rgflops/s"] = (df["rflops"] / (df["time median"]/1e6)) / 1e9
 
-for method in list(df["name"].unique()):
-    if "NANO" not in method: continue
-    print()
-    print(method)
-    df_filt = df[(df["name"] == method)]
-    print(tabluarize(df_filt))
+print(df["rgflops/s"].value_counts())
+print(df["name"].unique())
+print(filter(df, n=128, name="MKL_Dense mkl", numThreads=16)["rgflops/s"].mean(skipna=True))
+print(filter(df, n=128, name="MKL_Dense mkl", numThreads=16)["rgflops/s"].min(skipna=True))
+print(filter(df, n=128, name="MKL_Dense mkl", numThreads=16)["rgflops/s"].max(skipna=True))
 
 
-for method in list(df["name"].unique()):
-    if "NANO" in method: continue
-    print()
-    print(method)
-    df_filt = df[(df["name"] == method)]
-    print(tabluarize(df_filt))
-
-df = filter(df, best_nano=True)
-print()
-print("Best Nano")
-print(tabluarize(df))
+# print("Single-threaded speedup")
+# print("Num matrices", df["matrixId"].nunique())
+# print("Bcols", df["n"].unique())
+#
+# for method in list(df["name"].unique()):
+#     if "NANO" not in method: continue
+#     print()
+#     print(method)
+#     df_filt = df[(df["name"] == method)]
+#     print(tabluarize(df_filt))
+#
+#
+# for method in list(df["name"].unique()):
+#     if "NANO" in method: continue
+#     print()
+#     print(method)
+#     df_filt = df[(df["name"] == method)]
+#     print(tabluarize(df_filt))
+#
+# print()
+# print("Best Nano Counts")
+# df = filter(df, best_nano=True)
+# print(df["name"].value_counts())
+#
+# print()
+# print("Best Nano")
+# print(tabluarize(df))
 

@@ -13,10 +13,22 @@ from matplotlib import rc, rcParams
 DLMC_DATA = "/sdb/cache/workingset_size/dlmc"
 SS_DATA = "/sdb/cache/workingset_size/ss"
 
+plt.rcParams["font.family"] = "Times New Roman"
+plt.rcParams.update({'font.size': 14})
+plt.rcParams["figure.figsize"] = (7, 6)
+plt.rcParams['axes.xmargin'] = 0
+plt.rcParams['axes.ymargin'] = 0
+
+
+
 SS_SPARSITY_RANGES = [0.7, 1.0]
 DLMC_SPARSITY_RANGES = [0.7, 1.0]
 
 np.random.seed(42)
+
+fig, ax = plt.subplots()
+ax.spines.right.set_visible(False)
+ax.spines.top.set_visible(False)
 
 
 def rand_jitter(arr):
@@ -55,11 +67,14 @@ plt.xticks(tile_sizes[::6], ticks[::6], rotation=45)
 plt.xlabel(r"Tile Size")
 plt.ylabel(r"Coefficient of Variation")
 
-plt.tight_layout()
+#plt.tight_layout()
 
 lgnd = plt.legend(handles=[last_ss, last_dlmc], loc='upper right')
 lgnd.legendHandles[0]._sizes = [10]
 lgnd.legendHandles[1]._sizes = [10]
+#
+plt.margins(x=0)
+plt.tight_layout()
 
 plot_save("working_set_size")
 

@@ -1,5 +1,7 @@
 {"mkl", [](c4::yml::ConstNodeRef options) -> method_factory_t<S> {
-    bool inspector; options["inspector"] >> inspector;
+    bool inspector = false;
+    if (options.valid() && options.has_child("inspector"))
+        options["inspector"] >> inspector;
     return [inspector](additional_options_t options, SpMMTask<S>& task) -> SpMMFunctor<S>* {
         if (inspector) return new SpMMMKL<S, true >(task);
         else           return new SpMMMKL<S, false>(task);
