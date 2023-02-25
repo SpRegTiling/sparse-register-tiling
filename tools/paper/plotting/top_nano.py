@@ -20,7 +20,9 @@ def filter(df, **kwargs):
     return df[bool_index]
 
 
-df = pd.read_csv(SCRIPT_DIR + '/.cache/dlmc_merged_postprocessed_v2.csv')
+df = pd.read_csv(SCRIPT_DIR + '/.cache/dlmc_part1_df_merged_postprocessed_v2.csv')
+print(df["name"].unique())
+
 
 min_num_nano = sorted(df["num_nano"].unique())[-2]
 df = df[df["num_nano"] >= min_num_nano]
