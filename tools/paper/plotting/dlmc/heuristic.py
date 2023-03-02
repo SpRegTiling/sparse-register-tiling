@@ -25,14 +25,18 @@ def report_top(df_tab):
 
     cat_pairs = [(str(x), x) for x in df["sparsity_buckets"].unique()]
     cat_pairs = [(x[0], x[1]) for x in cat_pairs if x[0] != 'nan']
+
+    print(cat_pairs)
     cat_pairs = sorted(cat_pairs, key=lambda x: x[0])
     cat_strs = [x[0] for x in cat_pairs]
     cats = []
 
-    for cat, cat_str in cat_pairs:
-        for bcols in sorted(df_tab["n"].unique()):
-            dff = df_tab[(df_tab["sparsity_buckets"] == cat) & (df_tab[df_tab["n"] == bcols])]
-            print(cat_str, bcols, dff["name"].value_counts().index.tolist()[:2])
+    for cat_str, cat in cat_pairs:
+        df_cat = df_tab[df_tab["sparsity_buckets"] == cat]
+        for bcols in sorted(df_cat["n"].unique()):
+            print(bcols, cat_str)
+            dff = filter(df_cat, best_nano=True, n=bcols)
+            print(cat_str, bcols, dff["name"].value_counts().index.tolist()[:3])
 
 
 def tabluarize(df_tab):
@@ -86,5 +90,6 @@ df["gflops/s"] = (df["flops"] / (df["time median"]/1e6)) / 1e9
 #     df_filt = df[(df["name"] == method)]
 #     print(tabluarize(df_filt))
 
+print("Report Top")
 print(report_top(df))
 

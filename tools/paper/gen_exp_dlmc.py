@@ -7,16 +7,7 @@ import yaml
 import shutil
 
 from tools.paper.method_packs import method_packs
-
-sub_dir = 'dlmc'
-pack_names = set()
-files = defaultdict(lambda: defaultdict(lambda: []))
-dlmc_parts = 5
-
 GENERATED_DIR = SCRIPT_DIR + "/experiments/generated/dlmc/"
-shutil.rmtree(GENERATED_DIR, ignore_errors=True)
-os.makedirs(GENERATED_DIR, exist_ok=True)
-
 
 def flatten(coll):
     for i in coll:
@@ -27,7 +18,10 @@ def flatten(coll):
             yield i
 
 
-def gen_dlmc_bench_exp(arch, test_methods, filelist, b_cols, num_threads, suffix = ""):
+def gen_dlmc_bench_exp(arch, test_methods, filelist, b_cols, num_threads, 
+                       output_path=GENERATED_DIR, suffix = "", 
+                       filelist_path="../../../../../../filelists",
+                       return_full_path=False):
     filelist_name = filelist.split("/")[-1].replace(".txt", "")
 
     if suffix != "" and suffix[0] != "_":
@@ -44,7 +38,7 @@ def gen_dlmc_bench_exp(arch, test_methods, filelist, b_cols, num_threads, suffix
     }
 
     matrices = {
-        "filelist": f'../../../../../../filelists/{filelist_name}.txt',
+        "filelist": f'{filelist_path}/{filelist_name}.txt',
     }
 
     tuning_grids = [
@@ -78,7 +72,7 @@ def gen_dlmc_bench_exp(arch, test_methods, filelist, b_cols, num_threads, suffix
     print("arch", baseline_methods)
 
     experiment_file = f'{filelist_name}_{arch}{suffix}.yaml'
-    dir = f'{GENERATED_DIR}/{arch}/yamls/'
+    dir = f'{output_path}/{arch}/yamls/'
     os.makedirs(dir, exist_ok=True)
 
     with open(dir + experiment_file, 'w+') as f:
@@ -91,40 +85,10 @@ def gen_dlmc_bench_exp(arch, test_methods, filelist, b_cols, num_threads, suffix
             "methods": baseline_methods + test_methods
         }, f)
 
-    return experiment_file
-
-
-# All-DLMC Experiments
-for arch in ["AVX512"]:
-    max_threads_by_arch = {
-        "AVX512": [20],
-        "NEON": [4]
-    }
-
-    for max_thread_count in max_threads_by_arch[arch]:
-        n_threads = {
-            4: [1, 4],
-            8: [1, 8],
-            20: [20],
-            32: [1, 16, 32],
-            64: [1, 16, 32, 64],
-        }
-
-        all_files = []
-        for pack_name, methods in method_packs[arch].items():
-            pack_names.add(pack_name)
-
-            for part in range(1, dlmc_parts+1):
-                files[(arch, max_thread_count)][(pack_name, part)] = [
-                    gen_dlmc_bench_exp(arch, methods, f'dlmc_part{part}',
-                                       b_cols=[32, 256],
-                                       num_threads=n_threads[max_thread_count],
-                                       suffix=f"{pack_name}_small_bcols_{max_thread_count}"),
-                    gen_dlmc_bench_exp(arch, methods, f'dlmc_part{part}',
-                                       b_cols=[128, 512],
-                                       num_threads=n_threads[max_thread_count],
-                                       suffix=f"{pack_name}_large_bcols_{max_thread_count}"),
-                ]
+    if return_full_path:
+        return dir + experiment_file
+    else:
+        return experiment_file
 
 
 def gen_run_script(files, script_name, is_aspt, part):
@@ -141,23 +105,64 @@ def gen_run_script(files, script_name, is_aspt, part):
                 f.write(f"/bin/bash $1 $SCRIPT_DIR/yamls/{file} $2 {part}\n")
 
 
-for (arch, n_threads), packs in files.items():
-    files_for_parts = [[] for x in range(dlmc_parts)]
-    aspt_files_for_part = [[] for x in range(dlmc_parts)]
+if __name__ == "__main__":
+    sub_dir = 'dlmc'
+    pack_names = set()
+    files = defaultdict(lambda: defaultdict(lambda: []))
+    dlmc_parts = 5
 
-    # Create scripts for each pack
-    for (pack_name, part), files in packs.items():
-        gen_run_script(files, f"{GENERATED_DIR}/{arch}/{pack_name}_part{part}.sh", True, part)
-        if "aspt" in pack_name:
-            aspt_files_for_part[part-1] += files
-        else:
-            files_for_parts[part-1] += files
+    shutil.rmtree(GENERATED_DIR, ignore_errors=True)
+    os.makedirs(GENERATED_DIR, exist_ok=True)
 
-    for i in range(1, dlmc_parts+1):
-        gen_run_script(files_for_parts[i-1], f"{GENERATED_DIR}/{arch}/all_part{i}.sh", True, i)
+    # All-DLMC Experiments
+    for arch in ["AVX512"]:
+        max_threads_by_arch = {
+            "AVX512": [20],
+            "NEON": [4]
+        }
 
-    for i in range(1, dlmc_parts+1):
-        gen_run_script(aspt_files_for_part[i-1], f"{GENERATED_DIR}/{arch}/all_aspt_part{i}.sh", True, i)
+        for max_thread_count in max_threads_by_arch[arch]:
+            n_threads = {
+                4: [1, 4],
+                8: [1, 8],
+                20: [20],
+                32: [1, 16, 32],
+                64: [1, 16, 32, 64],
+            }
+
+            all_files = []
+            for pack_name, methods in method_packs[arch].items():
+                pack_names.add(pack_name)
+
+                for part in range(1, dlmc_parts+1):
+                    files[(arch, max_thread_count)][(pack_name, part)] = [
+                        gen_dlmc_bench_exp(arch, methods, f'dlmc_part{part}',
+                                        b_cols=[32, 256],
+                                        num_threads=n_threads[max_thread_count],
+                                        suffix=f"{pack_name}_small_bcols_{max_thread_count}"),
+                        gen_dlmc_bench_exp(arch, methods, f'dlmc_part{part}',
+                                        b_cols=[128, 512],
+                                        num_threads=n_threads[max_thread_count],
+                                        suffix=f"{pack_name}_large_bcols_{max_thread_count}"),
+                    ]
+
+    for (arch, n_threads), packs in files.items():
+        files_for_parts = [[] for x in range(dlmc_parts)]
+        aspt_files_for_part = [[] for x in range(dlmc_parts)]
+
+        # Create scripts for each pack
+        for (pack_name, part), files in packs.items():
+            gen_run_script(files, f"{GENERATED_DIR}/{arch}/{pack_name}_part{part}.sh", True, part)
+            if "aspt" in pack_name:
+                aspt_files_for_part[part-1] += files
+            else:
+                files_for_parts[part-1] += files
+
+        for i in range(1, dlmc_parts+1):
+            gen_run_script(files_for_parts[i-1], f"{GENERATED_DIR}/{arch}/all_part{i}.sh", True, i)
+
+        for i in range(1, dlmc_parts+1):
+            gen_run_script(aspt_files_for_part[i-1], f"{GENERATED_DIR}/{arch}/all_aspt_part{i}.sh", True, i)
 
 
 
