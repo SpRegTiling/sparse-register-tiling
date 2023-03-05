@@ -23,8 +23,7 @@
 #include "sop.h"
 #include "cake_block_dims.h"
 
-#include "MatMulMacro.h"
-
+#include "MatMulSpecialized.h"
 
 //#define PACK_B
 
@@ -55,15 +54,14 @@ struct SOPConfig: ConfigBase {
 };
 
 
-template<typename KernelDesc>
+template<typename KernelDesc, bool DataTransform>
 class SpMM_SOP : public SpMMFunctor<typename KernelDesc::Scalar> {
     using Config = SOPConfig;
 
     using Super  = SpMMFunctor<typename KernelDesc::Scalar>;
     using Scalar = typename KernelDesc::Scalar;
 
-    sop::MatMulSpecialized<KernelDesc>* sop_matmul = nullptr;
-    sop::MatMulMacro<KernelDesc>* sop_matmul_macro = nullptr;
+    sop::MatMulSpecialized<KernelDesc, DataTransform>* sop_matmul = nullptr;
     Config config;
 
     std::string executor_id;
@@ -116,7 +114,7 @@ public:
             tile_config.max_tlb_entries = config.max_tlb_entries;
 
             delete sop_matmul;
-            sop_matmul = new sop::MatMulSpecialized<KernelDesc>(
+            sop_matmul = new sop::MatMulSpecialized<KernelDesc, DataTransform>(
                 t.m(), t.k(), t.n(),
                 t.A->Lx, t.A->Lp, t.A->Li,
                 tile_config, t.nThreads,
@@ -151,7 +149,7 @@ public:
         tile_config.tlb_page_size = config.tlb_page_size;
         tile_config.max_tlb_entries = config.max_tlb_entries;
 
-        sop_matmul = new sop::MatMulSpecialized<KernelDesc>(
+        sop_matmul = new sop::MatMulSpecialized<KernelDesc, DataTransform>(
                 t.m(), t.k(), t.n(),
                 t.A->Lx, t.A->Lp, t.A->Li,
                 tile_config, t.nThreads,

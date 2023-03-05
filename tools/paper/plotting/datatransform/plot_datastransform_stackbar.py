@@ -6,6 +6,7 @@ from tools.paper.plotting.plot_utils import plot_save
 from matplotlib import rc, rcParams
 from tools.paper.plotting.plot_utils import *
 from tools.paper.plotting import post_process
+from tools.paper.plotting.cache_utils import cached_merge_and_load
 
 part = "part1"
 
@@ -130,15 +131,16 @@ files = [
     "/datatransform/transformed/dlmc_part1_AVX512_nano8_bests_part2_large_bcols_32.csv",
     "/datatransform/transformed/dlmc_part1_AVX512_nano8_bests_part2_small_bcols_32.csv",
     #
-    "/datatransform/transformed/dlmc_part1_AVX512_mkl_small_bcols_32.csv",
-    "/datatransform/transformed/dlmc_part1_AVX512_mkl_large_bcols_32.csv",
+    "/cascadelake/original_runs/dlmc_part1_AVX512_mkl_small_bcols_32.csv",
+    "/cascadelake/original_runs/dlmc_part1_AVX512_mkl_large_bcols_32.csv",
 ]
 
+files = ["/sdb/paper_results" + x for x in files]
 
 df, df_reloaded = cached_merge_and_load(files, f"dlmc_{part}_merged_df_v2",
                                         afterload_hook=after_loadhook,
                                         force_use_cache=False)
-df = postprocess(df, df_reloaded)
+df = postprocess(df)
 df = filter(df, num_methods=df["num_methods"].max())
 
 df["include"] = (df["df_best_nano"] | df["nodf_best_nano"] | df["name"].str.contains("MKL_Dense"))
@@ -153,6 +155,16 @@ for numThreads in [1, 16, 32]:
     np.random.seed(0)
     paths = np.random.choice(dftmp["matrixId"].unique(), 20, replace=False)
     merged_chart = None
+
+
+    dftmp2 = filter(dftmp, matrixId=list(paths), n=32)
+    dftmp3 = filter(dftmp2, df_best_nano=True)
+
+    for path in dftmp3["matrixPath"]:
+        print(path)
+
+    for path in dftmp3["name"]:
+        print(path)
 
     for bcols in [32, 128, 256, 512, 1024]:
         dftmp2 = filter(dftmp, matrixId=list(paths), n=bcols)

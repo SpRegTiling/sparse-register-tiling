@@ -1,0 +1,90 @@
+{
+  "(0.0, 0.7]": {
+    "32": [
+      "NANO_M8N2_NKM_alt",
+      "NANO_M8N2_NKM_orig",
+      "NANO_M8N2_KNM_LB_TLB64_SA_alt"
+    ],
+    "128": [
+      "NANO_M4N4_NKM_identity",
+      "NANO_M4N4_NKM_LB_TLB64_SA_identity",
+      "NANO_M4N4_NKM_LB_SA_identity"
+    ],
+    "256": [
+      "NANO_M4N4_NKM_LB_TLB128_SA_identity",
+      "NANO_M4N4_NKM_LB_SA_identity",
+      "NANO_M4N4_NKM_identity"
+    ],
+    "512": [
+      "NANO_M4N4_KNM_LB_TLB128_SA_identity",
+      "NANO_M4N4_NKM_LB_TLB128_SA_identity",
+      "NANO_M8N3_NKM_LB_TLB128_SA_orig"
+    ]
+  },
+  "(0.7, 0.8]": {
+    "32": [
+      "NANO_M8N2_NKM_alt",
+      "NANO_M8N2_NKM_orig",
+      "NANO_M8N2_KNM_LB_TLB128_SA_orig"
+    ],
+    "128": [
+      "NANO_M4N4_NKM_LB_SA_identity",
+      "NANO_M4N4_NKM_LB_TLB64_SA_identity",
+      "NANO_M4N4_NKM_identity"
+    ],
+    "256": [
+      "NANO_M4N4_NKM_LB_TLB128_SA_identity",
+      "NANO_M4N4_NKM_LB_SA_identity",
+      "NANO_M4N4_NKM_identity"
+    ],
+    "512": [
+      "NANO_M4N4_NKM_LB_TLB128_SA_identity",
+      "NANO_M4N4_KNM_LB_TLB128_SA_identity",
+      "NANO_M4N4_NKM_LB_SA_identity"
+    ]
+  },
+  "(0.8, 0.9]": {
+    "32": [
+      "NANO_M8N2_NKM_orig",
+      "NANO_M8N2_NKM_alt",
+      "NANO_M8N2_KNM_LB_TLB128_SA_orig"
+    ],
+    "128": [
+      "NANO_M4N4_NKM_identity",
+      "NANO_M4N4_NKM_LB_SA_identity",
+      "NANO_M4N4_NKM_LB_TLB128_SA_identity"
+    ],
+    "256": [
+      "NANO_M4N4_NKM_LB_TLB128_SA_identity",
+      "NANO_M4N4_NKM_identity",
+      "NANO_M4N4_NKM_LB_SA_identity"
+    ],
+    "512": [
+      "NANO_M4N4_NKM_LB_TLB128_SA_identity",
+      "NANO_M4N4_NKM_LB_SA_identity",
+      "NANO_M4N4_KNM_LB_TLB128_SA_identity"
+    ]
+  },
+  "(0.9, 1.0]": {
+    "32": [
+      "NANO_M8N2_KNM_LB_TLB128_SA_orig",
+      "NANO_M8N2_NKM_orig",
+      "NANO_M8N2_KNM_orig"
+    ],
+    "128": [
+      "NANO_M4N4_NKM_LB_TLB128_SA_identity",
+      "NANO_M4N4_NKM_identity",
+      "NANO_M4N4_NKM_LB_TLB64_SA_identity"
+    ],
+    "256": [
+      "NANO_M4N4_NKM_LB_TLB128_SA_identity",
+      "NANO_M4N4_NKM_identity",
+      "NANO_M4N4_NKM_LB_SA_identity"
+    ],
+    "512": [
+      "NANO_M4N4_NKM_LB_SA_identity",
+      "NANO_M4N4_NKM_LB_TLB128_SA_identity",
+      "NANO_M4N4_NKM_identity"
+    ]
+  }
+}

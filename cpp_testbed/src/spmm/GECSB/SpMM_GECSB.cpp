@@ -39,9 +39,9 @@ static int _inner_loop_csr_tiled_##TILE_SIZE_IN_VECTORS(                        
     int blk_offset,                                                                                             \
     const PtrsType* __restrict__ b_row_ptrs,                                                                    \
     const uint16_t* __restrict__ b_column_indices,                                                              \
-    const float* __restrict__ values,                                                                           \
-    const float* __restrict__ B,                                                                                \
-    float* __restrict__ C,                                                                                      \
+    const Scalar* __restrict__ values,                                                                          \
+    const Scalar* __restrict__ B,                                                                               \
+    Scalar* __restrict__ C,                                                                                     \
     const GECSBConfig& config                                                                                   \
 ) {                                                                                                             \
     int i_start = blk_i * config.mc_tile, i_end = (blk_i + 1) * config.mc_tile;                                 \
@@ -85,9 +85,9 @@ static int _inner_loop_csc_tiled_##TILE_SIZE_IN_VECTORS(                        
     int blk_offset,                                                                                             \
     const PtrsType* __restrict__ b_col_ptrs,                                                                    \
     const uint16_t* __restrict__ b_row_indices,                                                                 \
-    const float* __restrict__ values,                                                                           \
-    const float* __restrict__ B,                                                                                \
-    float* __restrict__ C,                                                                                      \
+    const Scalar* __restrict__ values,                                                                          \
+    const Scalar* __restrict__ B,                                                                               \
+    Scalar* __restrict__ C,                                                                                     \
     const GECSBConfig& config                                                                                   \
 ) {                                                                                                             \
   int k_start = blk_k * config.kc_tile, k_end = (blk_k + 1) * config.kc_tile;                                   \
@@ -146,13 +146,13 @@ static void _kernel(
         Scalar* __restrict__          C,
         const GECSBConfig& config
 ) {
-    using VecType = typename Vec<float, vector_width>::Type;
+    using VecType = typename Vec<Scalar, vector_width>::Type;
 
     int num_m_blks = std::ceil(m / double(config.mc_tile));
     int num_k_blks = std::ceil(k / double(config.kc_tile));
     int total_blks = num_m_blks * num_k_blks;
-    using VecType = typename Vec<float, vector_width>::Type;
-    using ScalarType = float;
+    using VecType = typename Vec<Scalar, vector_width>::Type;
+    using ScalarType = Scalar;
 
     static constexpr int n_tile_in_vecs = n_tile / VecType::size();
 
@@ -303,14 +303,14 @@ static void _dispatch_n_tile_size(
                     b_ptrs, b_inds, b_values,
                     B, C, config);
             return;
-        case 256:
-            _kernel<PtrsType, Scalar, vector_width, storage, 256>(
-                    m, k, n,
-                    row_indices,
-                    block_ptrs,
-                    b_ptrs, b_inds, b_values,
-                    B, C, config);
-            return;
+        // case 256:
+        //     _kernel<PtrsType, Scalar, vector_width, storage, 256>(
+        //             m, k, n,
+        //             row_indices,
+        //             block_ptrs,
+        //             b_ptrs, b_inds, b_values,
+        //             B, C, config);
+        //     return;
         default:
             std::cerr << "Unsupported n_tile size" << std::endl;
             exit(-1);
@@ -360,3 +360,8 @@ _INSTANTIATE(int,  float, 256, GECSB_CSR);
 _INSTANTIATE(int,  float, 512, GECSB_CSC);
 _INSTANTIATE(int,  float, 256, GECSB_CSC);
 
+_INSTANTIATE(int,  double, 512, GECSB_CSR);
+_INSTANTIATE(int,  double, 256, GECSB_CSR);
+
+_INSTANTIATE(int,  double, 512, GECSB_CSC);
+_INSTANTIATE(int,  double, 256, GECSB_CSC);

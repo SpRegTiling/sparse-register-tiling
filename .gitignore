@@ -72,3 +72,5 @@ tools/paper/plotting/handful/*
 *.smtx
 release-build
 *.gz
+
+*.sif

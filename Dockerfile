@@ -20,6 +20,9 @@ RUN wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCT
     apt-get update -y && \
     apt-get install -y intel-oneapi-mkl-devel-2021.4.0
 
+# Install PAPI
+RUN apt-get -y install libpapi-dev
+
 # Install Python3.8
 RUN add-apt-repository -y ppa:deadsnakes/ppa
 RUN apt-get install -y python3.8 python3.8-distutils python3-pip python3-apt
@@ -39,6 +42,6 @@ RUN pip install pandas  \
 		altair altair_saver \
 		scipy \
 		tabulate \
-        pyyaml
+		pyyaml
 
 ENV DATASET_DIR=/datasets

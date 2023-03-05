@@ -19,7 +19,6 @@ for M_r in [4, 6, 8]:
     print("  Computing costs...")
     cost = compute_costs(U, partial(fS, fQ=fQ))
 
-
     print("  Solving setcover...")
     K, mapping, final_cost, status = set_cover(R, U, cost, 2**M_r, force_num_subsets=False)
     assert status == ProblemStatus.PrimalFeasible

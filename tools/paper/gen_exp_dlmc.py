@@ -21,6 +21,9 @@ def flatten(coll):
 def gen_dlmc_bench_exp(arch, test_methods, filelist, b_cols, num_threads, 
                        output_path=GENERATED_DIR, suffix = "", 
                        filelist_path="../../../../../../filelists",
+                       datatransform=True,
+                       extra_csv_columns=[],
+                       profile=False,
                        return_full_path=False):
     filelist_name = filelist.split("/")[-1].replace(".txt", "")
 
@@ -28,13 +31,14 @@ def gen_dlmc_bench_exp(arch, test_methods, filelist, b_cols, num_threads,
         suffix = "_" + suffix
 
     options = {
-        "profile": False,
+        "profile": profile,
+        "datatransform": datatransform,
         "scalar_type": "float",
         "b_cols": b_cols,
         "n_threads": num_threads,
         "output_file": f"results/{filelist_name}_{arch}{suffix}.csv",
-        "save_tuning_results": False,
-        "expand_config_parameters": [ "m_tile", "k_tile", "n_tile", "tiling_strategy", "sparse_a", "beta_10x" ]
+        "expand_config_parameters": [ "m_tile", "k_tile", "n_tile", "tiling_strategy", "sparse_a", "beta_10x" ], 
+        "extra_csv_columns": extra_csv_columns
     }
 
     matrices = {
@@ -68,8 +72,6 @@ def gen_dlmc_bench_exp(arch, test_methods, filelist, b_cols, num_threads,
         ]
     else:
         assert False, "Unknown architecture"
-
-    print("arch", baseline_methods)
 
     experiment_file = f'{filelist_name}_{arch}{suffix}.yaml'
     dir = f'{output_path}/{arch}/yamls/'

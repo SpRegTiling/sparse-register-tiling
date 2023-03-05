@@ -8,7 +8,7 @@ from .load import load_csr
 DATASET_DIR = os.environ.get("DATASET_DIR")
 
 class FilelistPathIterator:
-    def __init__(self, file_list):
+    def __init__(self, file_list, percentage=1.0, random=False):
         self.__file_list = []
 
         if DATASET_DIR is None:
@@ -19,6 +19,15 @@ class FilelistPathIterator:
             for line in f.readlines():
                 if len(line) < 3: continue
                 self.__file_list.append(f'{DATASET_DIR.rstrip("/")}/{line.rstrip()}')
+        
+        if percentage < 1.0:
+            assert percentage > 0
+            files_to_keep = int(len(self.__file_list) * percentage)
+            if random: 
+                import random
+                random.seed(42)
+                random.shuffle(files_to_keep)
+            self.__file_list = self.__file_list[:files_to_keep]
 
     def __iter__(self):
         self.__idx = 0

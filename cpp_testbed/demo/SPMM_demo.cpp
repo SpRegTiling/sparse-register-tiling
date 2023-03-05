@@ -194,6 +194,7 @@ struct Overrides {
     std::optional<int> bCols;
     std::optional<bool> profile;
     std::optional<bool> append;
+    std::optional<bool> best;
 };
 
 template<typename Scalar>
@@ -223,6 +224,7 @@ class SpMMExperiment {
     std::map<std::string, ParameterGrid> tuningParameterGrids;
     std::string outputFile;
     std::vector<std::string> expand_config_parameters;
+    std::vector<std::string> extra_csv_columns;
 
     std::vector<int> perMatrixBColsToTest;
     std::vector<int> globalBColsToTest = { 256 };
@@ -233,6 +235,7 @@ class SpMMExperiment {
     bool profile = false;
     bool save_tuning_results = false;
     bool csv_append = false;
+    bool only_report_best = false;
 
     RowDistance* construct_distance(std::string distance_name, SparsityPattern& pattern) {
         if (!distance_mapping.count(distance_name)) {
@@ -495,9 +498,9 @@ class SpMMExperiment {
                 }
 
                 std::vector<std::string> method_uids;
-                std::map<std::string, csv_row_t> csv_rows;
                 std::map<std::string, SpMMFunctor<Scalar>*> executors;
                 std::map<std::string, bool> should_tune;
+                std::map<std::string, bool> is_correct_map;
                 std::map<std::string, std::string> tuning_grid;
                 std::map<std::string, std::string> names;
 
@@ -531,25 +534,6 @@ class SpMMExperiment {
                     if (method.config) {
                       executor->set_config(method.config.value());
                     }
-
-                    csv_row_t* csv_row_ptr = nullptr;
-                    #pragma omp critical
-                    csv_row_ptr = &csv_rows[method_uid];
-                    auto& csv_row = *csv_row_ptr;
-
-                    csv_row_insert(csv_row, "name", name);
-                    csv_row_insert(csv_row, "matrixPath", matrixPath);
-                    csv_row_insert(csv_row, "numThreads", nThreads);
-
-                    // Push into CSV just to make sure it makes it into the header
-                    for (const auto &parameter: expand_config_parameters) csv_row_insert(csv_row, parameter, "");
-
-                    // Matrix details
-                    csv_row_insert(csv_row, "m", spmm_task.m());
-                    csv_row_insert(csv_row, "k", spmm_task.k());
-                    csv_row_insert(csv_row, "n", spmm_task.n());
-                    csv_row_insert(csv_row, "nnz", spmm_task.A->nz);
-
 
                     //  Register Benchmark
                     #pragma omp critical
@@ -632,8 +616,6 @@ class SpMMExperiment {
 
                 // Test correctness
                 for (const auto& [method_uid, executor] : executors) {
-                    auto &csv_row = csv_rows[method_uid];
-
                     zero(spmm_task.C, spmm_task.cNumel());
                     (*executor)();
 
@@ -642,13 +624,31 @@ class SpMMExperiment {
                     auto is_correct_str = is_correct ? "correct" : "incorrect";
 
                     if (!is_correct) {
-                        std::cout << "Incorrect result for " << csv_row["name"]
+                        std::cout << "Incorrect result for " << names[method_uid]
                                   << " " << executor->get_config_rep() << std::endl;
                         report_mismatches(spmm_task);
                     }
 
-                    csv_row_insert(csv_row, "correct", is_correct_str);
+                    is_correct_map[method_uid] = is_correct;
                 }
+
+                SavedRunsReporter saved_runs_reporter;
+                benchmark::RunSpecifiedBenchmarks(&saved_runs_reporter);
+                benchmark::ClearRegisteredBenchmarks();
+
+
+                double best_time = 1e12;
+                std::string best_method_uid = "";
+                for (auto& runs : saved_runs_reporter.latest_runs) {
+                    for (auto& run : runs) {
+                        if (run.aggregate_name == "median" && run.GetAdjustedRealTime() < best_time) {
+                            best_time = run.GetAdjustedRealTime();
+                            best_method_uid = run.run_name.str();
+                        }
+                    }
+                }
+
+                std::map<std::string, csv_row_t> csv_rows;
 
                 //
                 // Profiling if requested
@@ -657,6 +657,10 @@ class SpMMExperiment {
                 if (profile) {
 #ifdef PAPI_AVAILABLE
                     for (const auto& [method_uid, executor] : executors) {
+                        if (only_report_best && best_method_uid != method_uid) {
+                            continue;
+                        }
+
                         auto &csv_row = csv_rows[method_uid];
 
                         for (int i = 0; i < 3; i++) { (*executor)(); } // Warmup
@@ -670,14 +674,14 @@ class SpMMExperiment {
 #endif
                 }
 
-                SavedRunsReporter saved_runs_reporter;
-                benchmark::RunSpecifiedBenchmarks(&saved_runs_reporter);
-                benchmark::ClearRegisteredBenchmarks();
-
                 for (auto& runs : saved_runs_reporter.latest_runs) {
                     for (auto& run : runs) {
                         const auto &method_uid = run.run_name.str();
                         const auto &name = names[method_uid];
+
+                        if (only_report_best && best_method_uid != method_uid) {
+                            continue;
+                        }
 
                         auto &executor = *executors[method_uid];
                         auto &csv_row = csv_rows[method_uid];
@@ -686,6 +690,30 @@ class SpMMExperiment {
                         csv_row_insert(csv_row, "time cpu " + run.aggregate_name, run.GetAdjustedCPUTime());
                         csv_row_insert(csv_row, "cpufreq", run.counters["cpufreq"]);
                         csv_row_insert(csv_row, "iterations", run.iterations);
+
+                        // Store Config
+                        std::string config_string;
+                        config_string += executor.get_config_rep();
+                        csv_row_insert(csv_row, "config", config_string);
+
+                        csv_row_insert(csv_row, "name", name);
+                        csv_row_insert(csv_row, "matrixPath", matrixPath);
+                        csv_row_insert(csv_row, "numThreads", nThreads);
+
+                        // Push into CSV just to make sure it makes it into the header
+                        for (const auto &parameter: expand_config_parameters) csv_row_insert(csv_row, parameter, "");
+                        for (const auto &column: extra_csv_columns) csv_row_insert(csv_row, column, "");
+
+                        // Matrix details
+                        csv_row_insert(csv_row, "m", spmm_task.m());
+                        csv_row_insert(csv_row, "k", spmm_task.k());
+                        csv_row_insert(csv_row, "n", spmm_task.n());
+                        csv_row_insert(csv_row, "nnz", spmm_task.A->nz);
+
+                        csv_row_insert(csv_row, "correct", is_correct_map[method_uid] ? "correct" : "incorrect");
+
+                        // Store extra info
+                        executor.log_extra_info(csv_row);
 
                     }
                 }
@@ -737,16 +765,7 @@ class SpMMExperiment {
                 std::cout << std::endl;
 #endif
                 for (const auto& [method_uid, executor] : executors) {
-                    auto &csv_row = csv_rows[method_uid];
                     if (executor == nullptr) continue;
-
-                    // Store Config
-                    std::string config_string;
-                    config_string += executor->get_config_rep();
-                    csv_row_insert(csv_row, "config", config_string);
-
-                    // Store extra info
-                    executor->log_extra_info(csv_row);
 
                     // Cleanup
                     delete executor;
@@ -785,6 +804,7 @@ public:
             UNPACK_OPTION("profile", profile);
             UNPACK_OPTION("output_file", outputFile);
             UNPACK_OPTION("expand_config_parameters", expand_config_parameters);
+            UNPACK_OPTION("extra_csv_columns", extra_csv_columns);
             UNPACK_OPTION("save_tuning_results", save_tuning_results);
             UNPACK_OPTION("filelist_has_additional_options", filelist_has_additional_options);
 #undef UNPACK_OPTION
@@ -793,6 +813,7 @@ public:
 
             if (overrides.outputFile) outputFile = *overrides.outputFile;
             if (overrides.append && *overrides.append) mark_file_for_append(outputFile);
+            if (overrides.best) only_report_best = *overrides.best;
 
             if (overrides.bCols) {
                 globalBColsToTest = {*overrides.bCols};
@@ -993,8 +1014,10 @@ int main(int argc, char *argv[]) {
             ("f,file_list", "Path a file containing a list of matrices to process.", cxxopts::value<std::string>())
             ("d,dataset_dir", "Path a folder containing the dataset(s).", cxxopts::value<std::string>()->default_value(""))
             ("o,output", "Output file", cxxopts::value<std::string>())
+            ("s,scalar", "scalar (float or double)", cxxopts::value<std::string>())
             ("t,threads", "Number of parallel threads", cxxopts::value<int>())
             ("b,bcols", "Number of columns in dense matrix for SpMM", cxxopts::value<int>())
+            ("z,best", "Only report the best of the run methods", cxxopts::value<bool>())
             ("p,profile", "Use PAPI to profile");
 
     auto args = options.parse(argc, argv);
@@ -1013,6 +1036,7 @@ int main(int argc, char *argv[]) {
     if (args.count("threads")) overrides.nThreads = args["threads"].as<int>();
     if (args.count("bcols")) overrides.bCols = args["bcols"].as<int>();
     if (args.count("profile")) overrides.profile = args["profile"].as<bool>();
+    if (args.count("best")) overrides.best = args["best"].as<bool>();
 
 
     auto experimentPath = args["experiment"].as<std::string>();
@@ -1024,7 +1048,9 @@ int main(int argc, char *argv[]) {
     ryml::NodeRef root = tree.rootref();
 
     std::string scalar_type = "float";
-    if (root.has_child("options") && root["options"].has_child("scalar_type")) {
+    if (args.count("scalar")) {
+        scalar_type = args["scalar"].as<std::string>(); 
+    } else if (root.has_child("options") && root["options"].has_child("scalar_type")) {
         root["options"]["scalar_type"] >> scalar_type;
     } else {
         std::cerr << "No scalar_type set, defaulting to float" << std::endl;
@@ -1037,9 +1063,9 @@ int main(int argc, char *argv[]) {
         auto experiment = SpMMExperiment<float>(root, { datasetDir, experimentDir }, overrides);
         result = experiment();
     } else if (scalar_type == "double")  {
-        std::cerr << "Double current unsupported by the baselines " << scalar_type << std::endl;
-//        auto experiment = SpMMExperiment<double>(root, config.datasetDir);
-//        result = experiment();
+        std::cerr << "Waring double current unsupported by some baselines " << scalar_type << std::endl;
+        auto experiment = SpMMExperiment<double>(root, { datasetDir, experimentDir }, overrides);
+        result = experiment();
     } else {
         std::cerr << "Unsupported scalar type " << scalar_type << std::endl;
     }

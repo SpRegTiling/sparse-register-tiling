@@ -7,6 +7,7 @@
 
 #include "../SpMMFunctor.h"
 #include "ASpT.h"
+#include "utils/error.h"
 
 template<typename Scalar>
 class SpMMASpT : public SpMMFunctor<Scalar> {
@@ -24,16 +25,22 @@ public:
             this->block_height =  pow(2, ceil(log(this->block_height)/log(2)));
         }
 
-        meta = inspect(
-            task.A->r, task.A->c, task.A->nz,
-            task.A->Lp, task.A->Li, task.A->Lx,
-            task.nThreads,
-            this->block_height
-        );
+        if constexpr (std::is_same_v<Scalar, float>) {
+            meta = inspect(
+                task.A->r, task.A->c, task.A->nz,
+                task.A->Lp, task.A->Li, task.A->Lx,
+                task.nThreads,
+                this->block_height
+            );
+        } else {
+            ERROR_AND_EXIT("ASpT does not support double");
+        }
     }
 
     ~SpMMASpT() {
-        free(meta);
+        if constexpr (std::is_same_v<Scalar, float>) {
+            free(meta);
+        }
     }
 
     // This operator overloading enables calling
@@ -41,13 +48,17 @@ public:
     void operator()() {
         typename Super::Task& t = this->task;
 
-        execute(meta,
-            t.A->r, t.A->c, t.bCols,
-            t.A->Lp, t.A->Li, t.A->Lx,
-            t.B,
-            t.C,
-            block_height
-        );
+        if constexpr (std::is_same_v<Scalar, float>) {
+            execute(meta,
+                t.A->r, t.A->c, t.bCols,
+                t.A->Lp, t.A->Li, t.A->Lx,
+                t.B,
+                t.C,
+                block_height
+            );
+        } else {
+            ERROR_AND_EXIT("ASpT does not support double");
+        }
     }
 };
 

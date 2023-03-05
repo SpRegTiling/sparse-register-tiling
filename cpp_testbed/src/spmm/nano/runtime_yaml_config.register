@@ -35,10 +35,10 @@
         "supported together");
 
       if (load_balance) {
-        return new SpMM_SOP<sop::KD_PIFloatLoadBalanced>
+        return new SpMM_SOP<sop::KD_PILoadBalanced<Scalar>>
           (get_executor_id(mapping_id_mut, arch, vec_width_bits, nr), mapping_id_mut, task, outer_schedule);
       } else {
-        return new SpMM_SOP<sop::KD_PIFloat>
+        return new SpMM_SOP<sop::KD_PI<Scalar>>
           (get_executor_id(mapping_id_mut, arch, vec_width_bits, nr), mapping_id_mut, task, outer_schedule);
       }
 
@@ -67,7 +67,11 @@
     if (options.has_child("outer_schedule"))
       options["outer_schedule"] >> outer_schedule;
 
-    return [arch, vec_width_bits,  nr, packed, load_balance, mapping_id, outer_schedule](
+    bool datatransform = true;
+    if (options.has_child("datatransform"))
+      options["datatransform"] >> datatransform;
+
+    return [arch, vec_width_bits, datatransform, nr, packed, load_balance, mapping_id, outer_schedule](
       additional_options_t options, SpMMTask<S>& task)
         -> SpMMFunctor<S>* {
 
@@ -77,21 +81,21 @@
         mapping_id_mut = options["mapping_id"];
       }
 
-      if (load_balance) {
-        if (packed) {
-          return new SpMM_SOP<sop::KD_IntelFloatLoadBalancedPacked>
-            (get_executor_id(mapping_id_mut, arch, vec_width_bits, nr), mapping_id_mut, task, outer_schedule);
+      if (datatransform) {
+        if (load_balance) {
+            return new SpMM_SOP<sop::KD_IntelLoadBalanced<S>, true>
+              (get_executor_id(mapping_id_mut, arch, vec_width_bits, nr), mapping_id_mut, task, outer_schedule);
         } else {
-          return new SpMM_SOP<sop::KD_IntelFloatLoadBalanced>
-            (get_executor_id(mapping_id_mut, arch, vec_width_bits, nr), mapping_id_mut, task, outer_schedule);
+            return new SpMM_SOP<sop::KD_Intel<S>, true>
+              (get_executor_id(mapping_id_mut, arch, vec_width_bits, nr), mapping_id_mut, task, outer_schedule);
         }
       } else {
-        if (packed) {
-          return new SpMM_SOP<sop::KD_IntelFloatPacked>
-            (get_executor_id(mapping_id_mut, arch, vec_width_bits, nr), mapping_id_mut, task, outer_schedule);
+        if (load_balance) {
+            return new SpMM_SOP<sop::KD_IntelLoadBalanced<S>, false>
+              (get_executor_id(mapping_id_mut, arch, vec_width_bits, nr), mapping_id_mut, task, outer_schedule);
         } else {
-          return new SpMM_SOP<sop::KD_IntelFloat>
-            (get_executor_id(mapping_id_mut, arch, vec_width_bits, nr), mapping_id_mut, task, outer_schedule);
+            return new SpMM_SOP<sop::KD_Intel<S>, false>
+              (get_executor_id(mapping_id_mut, arch, vec_width_bits, nr), mapping_id_mut, task, outer_schedule);
         }
       }
 

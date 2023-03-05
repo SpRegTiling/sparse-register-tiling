@@ -216,4 +216,4 @@ method_mapping_t<S>& get_method_id_mapping() {
 
 template method_mapping_t<float>& get_method_id_mapping<float>();
 // Not yet supported
-//template method_mapping_t<double>& get_method_id_mapping<double>();
+template method_mapping_t<double>& get_method_id_mapping<double>();

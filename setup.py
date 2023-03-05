@@ -1,10 +1,5 @@
 #!/usr/bin/env python3
 
-# Copyright (c) Facebook, Inc. and its affiliates. All rights reserved.
-#
-# This source code is licensed under the BSD license found in the
-# LICENSE file in the root directory of this source tree.
-
 import distutils.command.clean
 import glob
 import os
@@ -38,7 +33,7 @@ def find_version(version_file_path):
         )
         # The following is used to build release packages.
         # Users should never use it.
-        suffix = os.getenv("XFORMERS_VERSION_SUFFIX", "")
+        suffix = os.getenv("SBENCH_VERSION_SUFFIX", "")
         if version_match:
             return version_match.group(1) + suffix
         raise RuntimeError("Unable to find version string.")
