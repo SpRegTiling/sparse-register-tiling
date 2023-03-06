@@ -12,6 +12,9 @@
 build/
 dist/
 
+results/
+plots/
+
 # Pytest verbose output
 test-results/
 

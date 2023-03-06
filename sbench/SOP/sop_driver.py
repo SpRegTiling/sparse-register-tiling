@@ -11,6 +11,7 @@ from sbench.SOP.sop_cost_model import Acc
 from sbench.SOP.sop_utils import Acc, pattern_code
 
 kernel_cache = {}
+os.makedirs('/tmp/sp_reg_python/_C/generated/', exist_ok=True)
 
 cflags = ['-DUSE_JIT=1', '-std=c++17', '-Ofast', '-ffast-math',
           '-march=native', '-mtune=intel', '-mavx512pf',
@@ -22,17 +23,17 @@ include_dirs = [
     f'{SCRIPT_DIR}/../../third_party',
     f'{SCRIPT_DIR}/../../spmm_nano_kernels/third_party/version2/vectorclass',
     f'{SCRIPT_DIR}/../../spmm_nano_kernels/third_party/rte',
-    f'{SCRIPT_DIR}/_C/generated',
-    f'{SCRIPT_DIR}/_C/generated/AVX512/include',
+    f'/tmp/sp_reg_python/_C/generated',
+    f'/tmp/sp_reg_python/_C/generated/AVX512/include',
 ]
 
-sop_sources = glob.glob(f'{SCRIPT_DIR}/../../SOP/src/**/*.cpp', recursive=True)
+sop_sources = glob.glob(f'{SCRIPT_DIR}/../../SOP/src/**/*.cpp', recursive=True) + \
+        glob.glob(f'/tmp/sp_reg_python/_C/generated/**/*.cpp', recursive=True)
 
 csr = load(name=f'csr',
            sources=[f'{SCRIPT_DIR}/_C/pytorch_csr_wrapper.cpp'],
            extra_include_paths=include_dirs, extra_cflags=cflags, extra_cuda_cflags=cflags,
-           build_directory=f'{SCRIPT_DIR}/_C/generated/')
-
+           build_directory=f'/tmp/sp_reg_python/_C/generated/')
 
 class SOPModule:
     def __init__(self, acc: Acc, patterns, pattern_mapping, c_module, kernel_id):
@@ -90,7 +91,7 @@ def make_sop_module(acc: Acc, patterns, pattern_mapping, regen=False) -> SOPModu
 
     pattern_check_sum = sum([0]) + len(patterns)
     codegen = ukernel_codegen.UKernelCodegenBase(Mr=acc.M, nanokernels=list(patterns),
-                                                 output_root=f'{SCRIPT_DIR}/_C/generated')
+                                                 output_root='/tmp/sp_reg_python/_C/generated/')
 
     microkernel_typename = codegen.typename('float', 'AVX512', 512, acc.N)
 
@@ -99,9 +100,9 @@ def make_sop_module(acc: Acc, patterns, pattern_mapping, regen=False) -> SOPModu
     if not regen and microkernel_typename in kernel_cache:
         c_module = kernel_cache[microkernel_typename]
     else:
-        if regen or not os.path.exists(f'{SCRIPT_DIR}/_C/generated/pytorch_wrapper_{microkernel_typename}.cpp'):
-            print(f'Generating: {SCRIPT_DIR}/_C/generated/{microkernel_typename}.h')
-            print(f'Generating: {SCRIPT_DIR}/_C/generated/pytorch_wrapper_{microkernel_typename}.cpp')
+        if regen or not os.path.exists(f'/tmp/sp_reg_python/_C/generated/pytorch_wrapper_{microkernel_typename}.cpp'):
+            print(f'Generating: tmp/sp_reg_python/_C/generated/{microkernel_typename}.h')
+            print(f'Generating: tmp/sp_reg_python/_C/generated/pytorch_wrapper_{microkernel_typename}.cpp')
             codegen.gen_header(acc.N, 'AVX512', 512)
             header_location = f'{codegen.nanokernel_hash}/{microkernel_typename}.h'
 
@@ -115,13 +116,13 @@ def make_sop_module(acc: Acc, patterns, pattern_mapping, regen=False) -> SOPModu
                     .replace("template_NAMESPACE", f'sop_bench_{microkernel_typename}') \
                     .replace("template_MICROKERNEL_TYPENAME", microkernel_typename)
 
-            with open(f'{SCRIPT_DIR}/_C/generated/pytorch_wrapper_{microkernel_typename}.cpp', 'w+') as f:
+            with open(f'/tmp/sp_reg_python/_C/generated/pytorch_wrapper_{microkernel_typename}.cpp', 'w+') as f:
                 f.write(template)
 
         c_module = load(name=f'sop_{microkernel_typename}',
-                        sources=[f'{SCRIPT_DIR}/_C/generated/pytorch_wrapper_{microkernel_typename}.cpp'] + sop_sources,
+                        sources=[f'/tmp/sp_reg_python/_C/generated/pytorch_wrapper_{microkernel_typename}.cpp'] + sop_sources,
                         extra_include_paths=include_dirs, extra_cflags=cflags, extra_cuda_cflags=cflags,
-                        build_directory=f'{SCRIPT_DIR}/_C/generated/')
+                        build_directory=f'/tmp/sp_reg_python/_C/generated/')
 
         kernel_cache[microkernel_typename] = c_module
 

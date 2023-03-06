@@ -41,7 +41,7 @@ def gen_random_sweep_exp(arch, test_methods, filelist, b_cols, num_threads, suff
     os.makedirs(dir, exist_ok=True)
 
     with open(dir + experiment_file, 'w+') as f:
-        yaml.dump({
+        yaml.safe_dump({
             "options": options,
             "matrices": matrices,
             "methods": test_methods

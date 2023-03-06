@@ -27,7 +27,6 @@ dfnt["datatransform"] = False
 
 df = pd.concat([dft, dfnt])
 
-print(df["name"])
 nano_methods = df['name'].str.contains(r'M[0-9]N[0-9]', regex=True)
 df["orig_name"] = df['name']
 df.loc[nano_methods, 'name'] = "Sp. Reg."
@@ -65,11 +64,10 @@ merged_chart = None
 for bcols in range(len(bColsList)):
     df_filtered = filter(dftmp, n=bColsList[bcols])
     df_filtered.sort_values(by=['sparsity'], inplace=True)
-    x = np.arange(len(df_filtered[df_filtered['name2'] == 'transformed']['sparsity'])-2) + 1
-
-    axs[bcols].bar(x, df_filtered[df_filtered['name2'] == 'transformed']['gflops/s'][:-2], dimw, color='royalblue', alpha=alpha, label='unroll-and-sparse-jam + data compression')
-    axs[bcols].bar(x, df_filtered[df_filtered['name2'] == 'not-transformed']['gflops/s'][:-2], dimw, color='salmon', alpha=0.8, label='unroll-and-sparse-jam')
-    axs[bcols].bar(x + dimw/2, df_filtered[df_filtered['name2'] == 'dense']['gflops/s'][:-2], dimw/2, color='green', alpha=alpha, label='MKL (sgemm)')
+    x = np.arange(len(df_filtered[df_filtered['name2'] == 'transformed']['sparsity'])) + 1
+    axs[bcols].bar(x, df_filtered[df_filtered['name2'] == 'transformed']['gflops/s'], dimw, color='royalblue', alpha=alpha, label='unroll-and-sparse-jam + data compression')
+    axs[bcols].bar(x, df_filtered[df_filtered['name2'] == 'not-transformed']['gflops/s'], dimw, color='salmon', alpha=0.8, label='unroll-and-sparse-jam')
+    axs[bcols].bar(x + dimw/2, df_filtered[df_filtered['name2'] == 'dense']['gflops/s'], dimw/2, color='green', alpha=alpha, label='MKL (sgemm)')
     if bcols == 0:
         handles.extend(axs[bcols].get_legend_handles_labels()[0])
         labels.extend(axs[bcols].get_legend_handles_labels()[1])
@@ -86,9 +84,8 @@ axs[0].set_ylabel('Effective GFLOP/s')
 plt.subplots_adjust(hspace=0.4, wspace=0.3)
 
 fig.legend(handles, labels, loc='upper center', framealpha=0.3, ncol=len(handles))
-filepath = SCRIPT_DIR + 'data_transform.pdf'
-filepath = filepath.replace(".pdf", "") + ".jpeg"
-os.makedirs(os.path.dirname(filepath), exist_ok=True)
+filepath = PLOTS_DIR + 'figure10.pdf'
+filepath = filepath.replace(".pdf", "") + ".jpg"
 plt.margins(x=0)
 plt.tight_layout(rect=(0,0,1,0.92))
 plt.savefig(filepath)

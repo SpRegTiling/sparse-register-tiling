@@ -6,6 +6,18 @@ import hashlib
 import json
 import os; SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__)) + "/"
 
+BASH_SCRIPT=None
+def set_bash_script(bash_script):
+    global BASH_SCRIPT
+    try:
+        os.remove(bash_script)
+    except OSError:
+        pass
+    BASH_SCRIPT = bash_script
+    with open(bash_script, "a+") as f:
+            f.write("#!/bin/bash\n")
+
+
 DATASET_DIR = "/datasets/"
 TMP_FOLDER = "/tmp/"
 SOURCE_ROOT = SCRIPT_DIR + "../"
@@ -38,7 +50,11 @@ def run_experiment(experiment_file, matrix_file, output_file, scalar_type, appen
     append = append_override if append_override is not None else append
     if append: command += ['-a']
     print(" ".join(command))
-    subprocess.run(command)
+    if BASH_SCRIPT is None:
+        subprocess.run(command)
+    else:
+        with open(BASH_SCRIPT, "a+") as f:
+            f.write(" ".join(command) + "\n")
     append = True
 
 
@@ -59,18 +75,30 @@ def matrix_sparsity(matrix_file):
             rows, cols, nnz = [int(x) for x in firstline.split(",")]
         return 1 - (nnz / (rows * cols))
 
-def run_sp_reg(bcols, threads, matrix_file, output_file, scalar_type):
+def run_sp_reg(bcols, threads, matrix_file, output_file, scalar_type, methods_to_test=None, method_idx=None):
     global loaded_heuristics
-    for thread_count in threads:
-        if not thread_count in loaded_heuristics:
-            loaded_heuristics[thread_count] = load_heuristic(thread_count)
-        heuristic = loaded_heuristics[thread_count]
 
-        sparsity = round(matrix_sparsity(matrix_file), 2)
-        for sparsity_range, h in heuristic.items():
-            if sparsity_range[0] < sparsity and sparsity <= sparsity_range[1]:
-                for bcol in bcols:
-                    run_experiment(h[bcol], matrix_file, output_file, scalar_type, extra_args=['-z'])
+    if methods_to_test is None:
+        for thread_count in threads:
+            if not thread_count in loaded_heuristics:
+                loaded_heuristics[thread_count] = load_heuristic(thread_count)
+            heuristic = loaded_heuristics[thread_count]
+
+            sparsity = round(matrix_sparsity(matrix_file), 2)
+            for sparsity_range, h in heuristic.items():
+                if sparsity_range[0] < sparsity and sparsity <= sparsity_range[1]:
+                    for bcol in bcols:
+                        run_experiment(h[bcol], matrix_file, output_file, scalar_type, extra_args=['-z'])
+    else:
+        for thread_count in threads:
+            for bcol in bcols:
+                if method_idx is not None:
+                    x = methods_to_test[thread_count][bcol][method_idx]
+                else:
+                    x = methods_to_test[thread_count][bcol]
+                exp_file = gen_dlmc_exp_file([nano_from_name("AVX512", x)], 
+                                [int(bcol)], [threads], "no_filelist.txt")
+        
 
 def load_heuristic(threads):
     if threads == 1:

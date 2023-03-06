@@ -1,5 +1,4 @@
 import torch
-import gmpy
 from dataclasses import dataclass
 from typing import List
 
@@ -20,6 +19,8 @@ class CodeletDict(dict):
         ret = self[key] = Codelet(nnz=key, cols=0)
         return ret
 
+def popcount(x):
+    return bin(x).count("1")
 
 def pattern_code(vec):
     vec = vec.to(dtype=torch.int)
@@ -32,7 +33,7 @@ def pattern_code(vec):
 def get_codelets_from_panel(panel: torch.Tensor) -> List[Codelet]:
     codelets = CodeletDict()
     for row in panel.t():
-        nnz = gmpy.popcount(pattern_code(row))
+        nnz = popcount(pattern_code(row))
         if nnz == 0: continue
         codelets[nnz].cols += 1
 

@@ -44,4 +44,11 @@ RUN pip install pandas  \
 		tabulate \
 		pyyaml
 
+RUN wget -qO /usr/local/bin/ninja.gz https://github.com/ninja-build/ninja/releases/latest/download/ninja-linux.zip; \
+    gunzip /usr/local/bin/ninja.gz; \
+    chmod a+x /usr/local/bin/ninja
+
+RUN echo ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true | sudo debconf-set-selections; \
+    apt-get install -y ttf-mscorefonts-installer
+
 ENV DATASET_DIR=/datasets

@@ -1,5 +1,8 @@
-import gmpy
 import torch
+
+def popcount(x):
+    return bin(x).count("1")
+
 
 class SOPOrig:
     def __init__(self, merge_patterns, split_patterns, split_cost=1.1, merge_cost=1, min_merge=2, recursive=False):
@@ -17,7 +20,7 @@ class SOPOrig:
         if pat_code == 0: return [0]
 
         pat_code = int(pat_code)
-        if gmpy.popcount(pat_code) < self.min_merge:
+        if popcount(pat_code) < self.min_merge:
             return [pat_code]
 
         best_pattern = None
@@ -28,8 +31,8 @@ class SOPOrig:
         for pattern in self.merge_patterns:
             if pattern & cant_overlap > 0: continue
 
-            padding = gmpy.popcount(pattern) - gmpy.popcount(pattern & pat_code)
-            split = gmpy.popcount(~pattern & pat_code)
+            padding = popcount(pattern) - popcount(pattern & pat_code)
+            split = popcount(~pattern & pat_code)
             cost = self.split_cost * split + self.merge_cost * padding
             if cost < min_cost:
                 best_pattern = pattern
@@ -69,7 +72,7 @@ def gen_all_combos(vec_height, nnz):
     combos = set()
     for pat in gen_all_combos(vec_height, nnz-1):
         for pat1 in gen_all_combos(vec_height, 1):
-            if gmpy.popcount(pat | pat1) == nnz:
+            if popcount(pat | pat1) == nnz:
                 combos.add(pat | pat1)
 
     return list(combos)

@@ -84,7 +84,7 @@ def gen_bench_exp(arch, test_methods, filelist, b_cols, num_threads, suffix = ""
     os.makedirs(dir, exist_ok=True)
 
     with open(dir + experiment_file, 'w+') as f:
-        yaml.dump({
+        yaml.safe_dump({
             "options": options,
             "tuning": {
                 "parameter_grids": tuning_grids,

@@ -2,7 +2,6 @@ import math
 import torch
 import sop_driver
 import numpy as np
-import gmpy
 import pandas as pd
 import scipy
 import sys
@@ -193,15 +192,12 @@ if __name__ == "__main__":
                 **csv_row_params
             })
 
-        OUTPUT_DIR = FOLDER_TO_RUN.replace('SOP', 'SOP/results/')
-        os.makedirs(OUTPUT_DIR, exist_ok=True)
-
         for patterns, mapping, path, M_r in ilp_mappings(FOLDER_TO_RUN):
             print(path)
             run_patterns(patterns, lambda x: mapping[x], "ILP", M_r, path)
 
             df = pd.DataFrame(csv_rows)
-            df.to_csv(OUTPUT_DIR + f'/ilp_sweep_{M_r}_{tile_shape[0]}_{tile_shape[1]}_{bCols}.csv')
+            df.to_csv(sys.argv[3] + f'/ilp_sweep_{M_r}_{tile_shape[0]}_{tile_shape[1]}_{bCols}.csv')
             print(df)
 
 

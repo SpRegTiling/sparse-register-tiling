@@ -26,7 +26,7 @@ BASLINE = {
 def gen_empirical_heuristic(df_tab, save_file=None):
     headers = ["Sparsity Range"]
     empirical_heuristic_dict = defaultdict(lambda: defaultdict(lambda: []))
-    methods_to_try = 3
+    methods_to_try = 6
 
     cat_pairs = [(str(x), x) for x in df["sparsity_buckets"].unique()]
     cat_pairs = [(x[0], x[1]) for x in cat_pairs if x[0] != 'nan']
@@ -80,7 +80,7 @@ df["sparsity_buckets"] = pd.cut(df["sparsity"], sparsity_buckets)
 df["flops"] = 2 * df["n"] * df["nnz"]
 df["gflops/s"] = (df["flops"] / (df["time median"]/1e6)) / 1e9
 
-gen_empirical_heuristic(df, SCRIPT_DIR + "/emperical_heuristic_single_threaded.json")
+gen_empirical_heuristic(df, SCRIPT_DIR + "/empirical_heuristic_single_threaded.json")
 
 
 df = load_dlmc_df(SUBFOLDER, nthreads=16)
@@ -91,7 +91,7 @@ df["sparsity_buckets"] = pd.cut(df["sparsity"], sparsity_buckets)
 df["flops"] = 2 * df["n"] * df["nnz"]
 df["gflops/s"] = (df["flops"] / (df["time median"]/1e6)) / 1e9
 
-gen_empirical_heuristic(df, SCRIPT_DIR + "/emperical_heuristic_multi_threaded.json")
+gen_empirical_heuristic(df, SCRIPT_DIR + "/empirical_heuristic_multi_threaded.json")
 
 
 # for method in list(df["name"].unique()):

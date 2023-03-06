@@ -94,7 +94,7 @@ def gen_dlmc_bench_exp(vec_width, filelist, b_cols, num_threads, suffix = ""):
 
     experiment_file = f'{filelist_name}_{vec_width}{suffix}.yaml'
     with open(SCRIPT_DIR + f"/experiments/generated/{experiment_file}", 'w+') as f:
-        yaml.dump({
+        yaml.safe_dump({
             "options": options,
             "tuning": {
                 "parameter_grids": tuning_grids,
@@ -182,7 +182,7 @@ def gen_random_sweep_exp(vec_width, filelist,
 
     experiment_file = f'{filelist_name}_{vec_width}{suffix}.yaml'
     with open(SCRIPT_DIR + f"/experiments/generated/{experiment_file}", 'w+') as f:
-        yaml.dump({
+        yaml.safe_dump({
             "options": options,
             "matrices": matrices,
             "methods": baseline_methods + test_methods

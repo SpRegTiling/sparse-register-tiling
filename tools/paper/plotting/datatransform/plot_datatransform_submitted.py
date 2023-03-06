@@ -186,8 +186,15 @@ for numThreads in range(len(numThreadsList)):
 
         df_filtered.sort_values(by=['sparsity'], inplace=True)
         
-        for path in df_filtered[df_filtered['name2'] == 'transformed']['matrixPath'][:-2]:
-            print(path)
+        # for path in df_filtered[df_filtered['name2'] == 'transformed']['matrixPath'][:-2]:
+        #     print(path)
+
+                
+        for name in df_filtered[df_filtered['name2'] == 'transformed']['name'][:-2]:
+            print(name)
+        for name in df_filtered[df_filtered['name2'] == 'not-transformed']['name'][:-2]:
+            print(name)
+
 
         # x = [val for val in range(len(df_filtered[df_filtered['name2'] == 'transformed']['sparsity']))]
         x = np.arange(len(df_filtered[df_filtered['name2'] == 'transformed']['sparsity'])-2) + 1

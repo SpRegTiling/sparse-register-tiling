@@ -38,7 +38,7 @@
 namespace template_NAMESPACE {
 
 using VecType = Vec<float, 512>;
-using MicroKernel = sop::template_MICROKERNEL_TYPENAME;
+using MicroKernel = sop::template_MICROKERNEL_TYPENAME_true;
 using _MicroKernelDesc = MicroKernelDesc<MicroKernel>;
 
 static int num_nkern = MicroKernel::num_nkern_patterns();
@@ -99,7 +99,7 @@ std::tuple<torch::Tensor, torch::Tensor> sort_and_encode_patterns(const torch::T
 
 
 struct SOPTile : torch::CustomClassHolder {
-    std::vector<sop::MicroKernelPackedData> panel_descs;
+    std::vector<sop::MicroKernelPackedData<float>> panel_descs;
     std::vector<bool> panel_packed;
     int64_t rows;
     int64_t cols;
@@ -117,7 +117,7 @@ struct SOPTile : torch::CustomClassHolder {
         if (tile_packed) free(buffer);
         else {
             for (int panel_id = 0; panel_id < num_panels; panel_id++) {
-                if (panel_packed[panel_id]) panel_descs[panel_id].free();
+                if (panel_packed[panel_id]) panel_descs[panel_id].free(true);
             }
         }
     }
@@ -266,7 +266,7 @@ template<typename Scalar>
 __ALWAYS_INLINE static void sop_multiple_panel_executor(
     int N_c,
     uint32_t m, uint32_t k, uint32_t n,
-    const sop::MicroKernelPackedData* panel_descs, uint32_t num_panels,
+    const sop::MicroKernelPackedData<float>* panel_descs, uint32_t num_panels,
     const Scalar *__restrict__ B,
     Scalar *__restrict__ C,
     const bool load_c
@@ -291,6 +291,7 @@ __ALWAYS_INLINE static void sop_multiple_panel_executor(
                 C + j + (t * MicroKernel::M_r) * n, n,
                 C + j + (t * MicroKernel::M_r) * n, n,
                 B + j, n,
+                k,
                 pattern_counts, col_indices, values,
                 load_c, false
             );
@@ -308,7 +309,7 @@ template<typename Scalar>
 double profile(
     int64_t N_c,
     uint32_t m, uint32_t k, uint32_t n,
-    const sop::MicroKernelPackedData* panel_descs, uint32_t num_panels,
+    const sop::MicroKernelPackedData<float>* panel_descs, uint32_t num_panels,
     const Scalar *__restrict__ B,
     Scalar *__restrict__ C,
     int64_t num_runs

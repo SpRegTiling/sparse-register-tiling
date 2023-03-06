@@ -8,19 +8,23 @@ from .load import load_csr
 DATASET_DIR = os.environ.get("DATASET_DIR")
 
 class FilelistPathIterator:
-    def __init__(self, file_list, percentage=1.0, random=False):
+    def __init__(self, file_list, percentage=1.0, random=False, datatset_dir=None, range=None):
         self.__file_list = []
 
-        if DATASET_DIR is None:
+        if datatset_dir is None and DATASET_DIR is None:
             print("Please set the `DATASET_DIR` environment variable")
             import sys; sys.exit()
+
+        if datatset_dir is None:
+            datatset_dir = DATASET_DIR
 
         with open(file_list) as f:
             for line in f.readlines():
                 if len(line) < 3: continue
-                self.__file_list.append(f'{DATASET_DIR.rstrip("/")}/{line.rstrip()}')
+                self.__file_list.append(f'{datatset_dir.rstrip("/")}/{line.rstrip()}')
         
         if percentage < 1.0:
+            assert range is None
             assert percentage > 0
             files_to_keep = int(len(self.__file_list) * percentage)
             if random: 
@@ -28,6 +32,9 @@ class FilelistPathIterator:
                 random.seed(42)
                 random.shuffle(files_to_keep)
             self.__file_list = self.__file_list[:files_to_keep]
+        
+        if range is not None:
+            self.__file_list = self.__file_list[range[0]:range[1]]
 
     def __iter__(self):
         self.__idx = 0
@@ -38,7 +45,7 @@ class FilelistPathIterator:
         path = self.__file_list[self.__idx]
         self.__idx += 1
         if path[0] != "/":
-            path = DATASET_DIR + "/" + path
+            path = datatset_dir + "/" + path
         return path
 
     def deterministic_hash(self):

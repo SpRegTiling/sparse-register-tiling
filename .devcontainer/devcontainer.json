@@ -16,7 +16,9 @@
 	"workspaceMount": "source=/sdb/codegen/,target=/workspace,type=bind,consistency=cached",
 	"mounts": [
 		"source=/sdb/paper_results,target=/sdb/paper_results,type=bind,consistency=cached",
-		"source=/sdb/datasets,target=/datasets,type=bind,consistency=cached"
+		"source=/sdb/datasets,target=/datasets,type=bind,consistency=cached",
+		"source=/sdb/artifact/results,target=/results,type=bind,consistency=cached",
+		"source=/sdb/artifact/plots,target=/plots,type=bind,consistency=cached"
 	]
 
 	// Features to add to the dev container. More info: https://containers.dev/features.
