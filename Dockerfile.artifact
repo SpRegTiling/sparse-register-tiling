@@ -25,7 +25,7 @@ RUN apt-get -y install libpapi-dev
 
 # Install Python3.8
 RUN add-apt-repository -y ppa:deadsnakes/ppa
-RUN apt-get install -y python3.8 python3.8-distutils python3-pip python3-apt
+RUN apt-get install -y python3.8-dev python3.8-distutils python3-pip python3-apt
 
 ENV VIRTUAL_ENV=/opt/venv
 RUN python3.8 -m pip install virtualenv
