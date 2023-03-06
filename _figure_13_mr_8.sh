@@ -11,12 +11,12 @@ $SBATCH <<EOT
 
 #SBATCH --cpus-per-task=40
 #SBATCH --export=ALL
-#SBATCH --job-name="log_figure12"
+#SBATCH --job-name="log_figure13"
 #SBATCH --nodes=1
 #SBATCH --account=def-kazem
-#SBATCH --output="log_figure12.%j.%N.out"
+#SBATCH --output="log_figure13.%j.%N.out"
 #SBATCH -t 4:00:00
 #SBATCH --constraint=cascade
 
-singularity exec -B ../:/datasets -B ../results:/results spreg.sif python sbench/SOP/sop_bench_ilp_sweep.py sbench/SOP/sweep_mappings/ilp/8 8 /results/
+singularity exec -B ../:/datasets -B ../results:/results spreg.sif python /spmm-nano-bench/sbench/SOP/sop_bench_ilp_sweep.py sbench/SOP/sweep_mappings/ilp/8 8 /results/
 EOT

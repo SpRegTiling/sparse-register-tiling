@@ -39,7 +39,7 @@ def run_dlmc_experiments(method_packs, outfile, scalar_type, threads_to_test, da
 
 transformed_methods = defaultdict(lambda: {})
 not_transformed_methods = defaultdict(lambda: {})
-with open(SCRIPT_DIR + 'ordered_methods.txt', 'r+') as f:
+with open(SCRIPT_DIR + 'ordered_methods.txt', 'r') as f:
     ordered_methods = [x.rstrip() for x in f.readlines()]
     bcols = [32, 128, 256, 512]
     for i, bcol in enumerate(bcols):

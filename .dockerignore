@@ -14,6 +14,8 @@ dist/
 
 results/
 plots/
+artifact.tgz
+test.txt
 
 # Pytest verbose output
 test-results/
