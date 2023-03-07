@@ -14,8 +14,8 @@ from artifact.utils import *
 
 files = [
     ('ilp_sweep_4_24_128_32.csv', 'ilp4'),
-    #('ilp_sweep_6_24_128_32.csv', 'ilp6'),
-    #('ilp_sweep_8_24_128_32.csv', 'ilp8'),
+    ('ilp_sweep_6_24_128_32.csv', 'ilp6'),
+    ('ilp_sweep_8_24_128_32.csv', 'ilp8'),
 ]
 
 dfs = []

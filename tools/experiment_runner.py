@@ -81,7 +81,7 @@ def run_sp_reg(bcols, threads, matrix_file, output_file, scalar_type, methods_to
     if methods_to_test is None:
         for thread_count in threads:
             if not thread_count in loaded_heuristics:
-                assert not datatransform 
+                assert datatransform 
                 loaded_heuristics[thread_count] = load_heuristic(thread_count)
             heuristic = loaded_heuristics[thread_count]
 
