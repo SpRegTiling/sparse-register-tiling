@@ -39,10 +39,6 @@ df["k_tiles"] = np.ceil(df['k'] / df["k_tile"].astype(int))
 df["num_panels"] = df["m_tiles"] * df["k_tiles"]
 # df["sparsity_raw"] = 1 - df["nnz"] / (df["m"] * df["k"])
 
-print(df["config"].unique())
-print(df["m_tile"].unique())
-print(df["k_tile"].unique())
-
 #
 #   Correct for miscalculation of storage when recording, recorded floats and ints as 8 bytes (size of ptr)
 #     recorded extra overhead that is not actually needed (df["num_panels"] * 3 * 64) for alignment
@@ -58,9 +54,6 @@ df['csr_required_storage_pct'] = \
     (df["nnz"] * 4 * 2 + (df["m"] + 1) * 4) \
     / (df['m'] * df['k'] * 4)
 
-
-print("pct_lower", len(df[df["required_storage_pct"] < df["csr_required_storage_pct"]]) / len(df))
-
 fig, ax = plt.subplots()
 sc1 = plt.scatter(x=rand_jitter(df["sparsity_raw"]), y=df["required_storage_pct"], alpha=0.5, color='deepskyblue', s=1, label="Sparse Reg Tiling")
 sc2 = plt.scatter(x=rand_jitter(df["sparsity_raw"]), y=df["csr_required_storage_pct"], alpha=0.5, color='firebrick', s=1, label='CSR')
@@ -75,3 +68,4 @@ plt.xlabel('Sparsity')
 plt.margins(x=0)
 plt.tight_layout()
 plt.savefig(PLOTS_DIR + f"/figure9.jpg")
+print("Created:", PLOTS_DIR + f"/figure9.jpg")

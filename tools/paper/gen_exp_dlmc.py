@@ -30,9 +30,12 @@ def gen_dlmc_bench_exp(arch, test_methods, filelist, b_cols, num_threads,
     if suffix != "" and suffix[0] != "_":
         suffix = "_" + suffix
 
+    for test_method in test_methods:
+        if test_method["method_id"] == "nano":
+            test_method["options"]["datatransform"] = datatransform
+
     options = {
         "profile": profile,
-        "datatransform": datatransform,
         "scalar_type": "float",
         "b_cols": b_cols,
         "n_threads": num_threads,

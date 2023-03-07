@@ -64,8 +64,6 @@ def pivot(df, bcols, num_threads):
 
 def gen_post_processed_files():
     files = glob.glob(RESULTS_DIR + "/figure7_to_9_results*.csv")
-    for file in files:
-        print("Found:",file)
 
     os.makedirs('/tmp/figure7_to_9_pivoted/', exist_ok=True)
     def pivot_process(file):
@@ -75,7 +73,6 @@ def gen_post_processed_files():
             for bcols in df["n"].unique():
                 dfw = pivot(df, bcols, thread_count)
                 gend_file = f'/tmp/figure7_to_9_pivoted/{file.split("/")[-1]}.bcols{bcols}.threads{thread_count}'
-                print('created:', gend_file)
                 dfw.to_csv(gend_file)
 
 

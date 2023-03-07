@@ -75,12 +75,13 @@ def matrix_sparsity(matrix_file):
             rows, cols, nnz = [int(x) for x in firstline.split(",")]
         return 1 - (nnz / (rows * cols))
 
-def run_sp_reg(bcols, threads, matrix_file, output_file, scalar_type, methods_to_test=None, method_idx=None):
+def run_sp_reg(bcols, threads, matrix_file, output_file, scalar_type, methods_to_test=None, method_idx=None, datatransform=True):
     global loaded_heuristics
 
     if methods_to_test is None:
         for thread_count in threads:
             if not thread_count in loaded_heuristics:
+                assert not datatransform 
                 loaded_heuristics[thread_count] = load_heuristic(thread_count)
             heuristic = loaded_heuristics[thread_count]
 
@@ -97,7 +98,8 @@ def run_sp_reg(bcols, threads, matrix_file, output_file, scalar_type, methods_to
                 else:
                     x = methods_to_test[thread_count][bcol]
                 exp_file = gen_dlmc_exp_file([nano_from_name("AVX512", x)], 
-                                [int(bcol)], [threads], "no_filelist.txt")
+                                [int(bcol)], [int(thread_count)], "no_filelist.txt", datatransform=datatransform)
+                run_experiment(exp_file, matrix_file, output_file, scalar_type, extra_args=['-z'])
         
 
 def load_heuristic(threads):

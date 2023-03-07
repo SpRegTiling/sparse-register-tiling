@@ -223,9 +223,8 @@ axs[0].set_ylabel('Effective GFLOP/s')
 plt.subplots_adjust(hspace=0.4, wspace=0.3)
 
 fig.legend(handles, labels, loc='upper center', framealpha=0.3, ncol=len(handles))
-# plt.show()
-filepath = '/sdb/paper_plots/' + 'data_transform.pdf'
-filepath = filepath.replace(".pdf", "") + ".pdf"
+filepath = 'plots/' + 'data_transform.pdf'
+filepath = filepath.replace(".pdf", "") + ".jpg"
 os.makedirs(os.path.dirname(filepath), exist_ok=True)
 plt.margins(x=0)
 # plt.tight_layout()

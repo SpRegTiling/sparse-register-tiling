@@ -11,6 +11,10 @@ import os; SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__)) + "/"
 
 from artifact.utils import *
 
+#
+#   TODO: Fix papi issues in container
+#
+
 plt.rcParams["font.family"] = "Times New Roman"
 plt.rcParams.update({'font.size': 30})
 plt.rcParams["figure.figsize"] = (20, 7)
@@ -63,7 +67,7 @@ merged_chart = None
 
 for bcols in range(len(bColsList)):
     df_filtered = filter(dftmp, n=bColsList[bcols])
-    df_filtered.sort_values(by=['sparsity'], inplace=True)
+    df_filtered = df_filtered.sort_values(by=['sparsity'])
     x = np.arange(len(df_filtered[df_filtered['name2'] == 'transformed']['sparsity'])) + 1
     axs[bcols].bar(x, df_filtered[df_filtered['name2'] == 'transformed']['gflops/s'], dimw, color='royalblue', alpha=alpha, label='unroll-and-sparse-jam + data compression')
     axs[bcols].bar(x, df_filtered[df_filtered['name2'] == 'not-transformed']['gflops/s'], dimw, color='salmon', alpha=0.8, label='unroll-and-sparse-jam')
@@ -89,3 +93,4 @@ filepath = filepath.replace(".pdf", "") + ".jpg"
 plt.margins(x=0)
 plt.tight_layout(rect=(0,0,1,0.92))
 plt.savefig(filepath)
+print("Created:", filepath)

@@ -104,7 +104,7 @@ def make_sop_module(acc: Acc, patterns, pattern_mapping, regen=False) -> SOPModu
             print(f'Generating: tmp/sp_reg_python/_C/generated/{microkernel_typename}.h')
             print(f'Generating: tmp/sp_reg_python/_C/generated/pytorch_wrapper_{microkernel_typename}.cpp')
             codegen.gen_header(acc.N, 'AVX512', 512)
-            header_location = f'{codegen.nanokernel_hash}/{microkernel_typename}.h'
+            header_location = f'{codegen.nanokernel_hash}/{microkernel_typename}_datatransform_true.h'
 
             with open(f'{SCRIPT_DIR}/_C/pytorch_wrapper_intrin.cpp.template') as f:
                 template = f.read()

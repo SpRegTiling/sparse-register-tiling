@@ -65,8 +65,6 @@ def figure8():
     bColsList = bcols_list()
     bColsList.sort()
 
-    print(bColsList)
-
     df = get_df(bColsList[0], numThreadsList[0])
 
     x_labels = ['60%-69.9%', '70%-79.9%', '80%-89.9%', '90%-95%']
@@ -125,10 +123,6 @@ def figure8():
             for method in methods:
                 df[f'Speed-up {method} vs. {baseline}'] = df[f"time cpu median|{baseline}"] / df[f"time cpu median|{method}"]
 
-            if (bColsList[j] == 256) and (numThreadsList[i] == 1):
-                print(df[(df['sparsity']>=0*0.1+0.6)&(df['sparsity']<(0+1)*0.1+0.6)][f'Speed-up Sp. Reg. vs. {baseline}'])
-                print(df[(df['sparsity']>=0*0.1+0.6)&(df['sparsity']<(0+1)*0.1+0.6)][f'correct|Sp. Reg.'])
-
             axs[i, j].plot([0.5, len(x_labels)+0.5],[1, 1], color='purple')
             plots = []
 
@@ -138,8 +132,6 @@ def figure8():
                             &(~df[f'Speed-up {method} vs. {baseline}'].isna())
                             &(df[f'Speed-up {method} vs. {baseline}'] < limit)
                             ][f'Speed-up {method} vs. {baseline}'].tolist() for spBucket in range(len(x_labels))]
-                if (bColsList[j] == 256) and (numThreadsList[i] == 1):
-                    print(method, data[:5])
                 plots.append(plot(axs[i, j], colors[mi], 0.15*mi, data))
             
             if (i, j) == (0, 0):
@@ -164,6 +156,7 @@ def figure8():
     plt.tight_layout(rect=(0,0,1,0.88)) # For cascadelake
     # plt.tight_layout(rect=(0,0,1,0.96))
     plt.savefig(PLOTS_DIR + "/figure8.jpg")
+    print("Created:", PLOTS_DIR + "/figure8.jpg")
 
 if __name__ == "__main__":
     figure8()

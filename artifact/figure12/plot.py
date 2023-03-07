@@ -35,7 +35,6 @@ def create_chart_grid_and_save(charts, row_width):
 
     if col:
         charts_merged = charts_row if charts_merged is None else charts_merged & charts_row
-    print("charts_merged", charts_merged)
     return charts_merged
 
 
@@ -58,7 +57,7 @@ def subtract_mkl_flops(df, name, group_by=["matrixPath", "n", "numThreads"]):
         x[f'SP_FLOPS_TOTAL-mkl'] = x["SP_FLOPS_TOTAL"] - baseline
         return x
 
-    df = df.groupby(group_by).apply(compute_time_vs).reset_index(drop=True)
+    df = df.groupby(group_by, group_keys=False).apply(compute_time_vs).reset_index(drop=True)
     return df
 
 df = subtract_mkl_flops(df, 'MKL_Sparse')
@@ -145,3 +144,4 @@ filepath = PLOTS_DIR + 'figure12.jpg'
 plt.margins(x=0)
 plt.tight_layout(rect=(0,0,1,0.9))
 plt.savefig(filepath)
+print("Created:", filepath)

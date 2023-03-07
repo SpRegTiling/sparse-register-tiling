@@ -1,1 +1,1 @@
-tar -czvf artifact.tgz figure_7_to_9_run_sbatch.sh figure_10_sbatch.sh figure_12_sbatch.sh figure_13_sbatch.sh _figure_7_to_9_run.sh _figure_13_mr_4_6.sh _figure_13_mr_8.sh s_setup.sh s_run.sh s_plot.sh spreg.sif
+tar -czvf artifact.tgz figure_7_to_9_run_sbatch.sh figure_10_sbatch.sh figure_12_sbatch.sh figure_13_sbatch.sh _figure_7_to_9_run.sh _figure_13_mr_4.sh _figure_13_mr_6.sh _figure_13_mr_8.sh s_setup.sh s_run.sh s_plot.sh spreg.sif

@@ -43,3 +43,4 @@ for name, color in color_map.items():
 
 plt.legend(handles=markers)
 plt.savefig(PLOTS_DIR + "figure13.jpg")
+print("Created:", PLOTS_DIR + "figure13.jpg")

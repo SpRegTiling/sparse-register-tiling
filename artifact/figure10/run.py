@@ -31,7 +31,7 @@ def run_dlmc_experiments(method_packs, outfile, scalar_type, threads_to_test, da
 
     for i, matrix_file in enumerate(FilelistPathIterator(MATRIX_FILELIST)):
         run_sp_reg(BCOLS_TO_TEST, threads_to_test, matrix_file, outfile, scalar_type, 
-                   methods_to_test=methods_to_test, method_idx=i)
+                   methods_to_test=methods_to_test, method_idx=i, datatransform=datatransform)
 
         for experiment in experiment_files:
             run_experiment(experiment, matrix_file, outfile, scalar_type)
@@ -45,7 +45,6 @@ with open(SCRIPT_DIR + 'ordered_methods.txt', 'r') as f:
     for i, bcol in enumerate(bcols):
         transformed_methods[1][bcol] = ordered_methods[(2*i + 0) * 18: (2*i + 1) * 18]
         not_transformed_methods[1][bcol] = ordered_methods[(2*i + 1) * 18: (2*i + 2) * 18]
-
 
 
 # only run mkl_dense once, we will merge the files after
