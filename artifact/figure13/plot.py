@@ -13,9 +13,9 @@ from artifact.utils import *
 
 
 files = [
-    ('ilp_sweep_4_24_128_32.csv', 'ilp4'),
-    ('ilp_sweep_6_24_128_32.csv', 'ilp6'),
-    ('ilp_sweep_8_24_128_32.csv', 'ilp8'),
+    ('ilp_sweep_4_24_128_32.csv', 'Ti = 4'),
+    ('ilp_sweep_6_24_128_32.csv', 'Ti = 6'),
+    ('ilp_sweep_8_24_128_32.csv', 'Ti = 8'),
 ]
 
 dfs = []
@@ -34,7 +34,7 @@ rgb_values = sns.color_palette("Set2", 5)
 color_map = dict(zip(color_labels, rgb_values))
 
 df = filter(df, sparsity=70)
-df["gflops/s"] = 2 * df["tileM"] * df["tileN"] * ((100-df["sparsity"]) / 100) / df["time"]
+df["gflops/s"] = 2 * df["tileM"] * df["tileN"] * ((100-df["sparsity"]) / 100) / df["time"] * df['bCols']
 ax = df.plot.scatter(x='num_patterns', y='gflops/s', c=df["search"].map(color_map), alpha=0.5, s=10)
 
 markers = []

@@ -1,3 +1,6 @@
 [submodule "spmm_nano_kernels"]
 	path = spmm_nano_kernels
 	url = git@github.com:LucasWilkinson/spmm-nano-kernels.git
+[submodule "third_party/ssgetpy"]
+	path = third_party/ssgetpy
+	url = https://github.com/drdarshan/ssgetpy
