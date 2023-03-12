@@ -131,8 +131,10 @@ public:
             config.k_tile = tile_config.K_c;
             config.tiling_strategy = tile_config.tiling_strategy;
 
-            delete sop_matmul;
-            sop_matmul = nullptr;
+            sop_matmul->allocate_executor(t.n());
+
+            // delete sop_matmul;
+            // sop_matmul = nullptr;
         }
         return true;
     }

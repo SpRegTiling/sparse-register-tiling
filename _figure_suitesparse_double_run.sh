@@ -20,6 +20,6 @@ $SBATCH <<EOT
 
 echo singularity exec -B ../:/datasets -B ../results:/results spreg.sif  "python /spmm-nano-bench/artifact/suitesparse/run.py --mtx_range $1 --threads $2; /tmp/experiment_scripts/figure_suitesparse_$1_$2.sh"
 singularity exec -B ../:/datasets -B ../results:/results spreg.sif python /spmm-nano-bench/artifact/suitesparse/run.py  --mtx_range $1 --threads $2
-singularity exec -B ../:/datasets -B ../results:/results spreg.sif sh /tmp/experiment_scripts/figure_suitesparse_$1_$2.sh
+singularity exec -B ../:/datasets -B ../results:/results spreg.sif sh /tmp/experiment_scripts/suitesparse_$1_$2.sh
 
 EOT

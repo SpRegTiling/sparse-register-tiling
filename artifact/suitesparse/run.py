@@ -26,14 +26,14 @@ args = parser.parse_args()
 os.makedirs("/tmp/experiment_scripts", exist_ok=True)
 bash_script = f"/tmp/experiment_scripts/suitesparse_{str(args.mtx_range)}_{str(args.threads)}.sh"
 set_bash_script(bash_script)
-set_timeout("5m")
+set_timeout("8m")
 
 mtx_range = None
 if args.mtx_range is not None:
     mtx_range = [int(x) for x in args.mtx_range.split("_")]
     assert len(mtx_range) == 2
 
-threads = [1,20]
+threads = [20]
 if args.threads is not None:
     threads = [int(x) for x in args.threads.split("_")]
 
