@@ -7,6 +7,8 @@ import json
 import os; SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__)) + "/"
 
 BASH_SCRIPT=None
+TIMEOUT=None
+
 def set_bash_script(bash_script):
     global BASH_SCRIPT
     try:
@@ -17,6 +19,9 @@ def set_bash_script(bash_script):
     with open(bash_script, "a+") as f:
             f.write("#!/bin/bash\n")
 
+def set_timeout(timeout):
+    global TIMEOUT
+    TIMEOUT = timeout
 
 DATASET_DIR = "/datasets/"
 TMP_FOLDER = "/tmp/"
@@ -53,8 +58,11 @@ def run_experiment(experiment_file, matrix_file, output_file, scalar_type, appen
     if BASH_SCRIPT is None:
         subprocess.run(command)
     else:
+        timout_str = ""
+        if TIMEOUT is not None:
+            timout_str = f"timeout {TIMEOUT} "
         with open(BASH_SCRIPT, "a+") as f:
-            f.write(" ".join(command) + "\n")
+            f.write(timout_str + " ".join(command) + "\n")
     append = True
 
 
@@ -67,9 +75,7 @@ def matrix_sparsity(matrix_file):
     with open(matrix_file, "r+") as f:
         firstline = f.readline()
         if "%%MatrixMarket" in firstline:
-            print(firstline)
-            while "%" in (line := f.readline()): print(line)
-            print(line)
+            while "%" in (line := f.readline()): pass
             rows, cols, nnz = [int(x) for x in line.rstrip().split(" ")]
         else:
             rows, cols, nnz = [int(x) for x in firstline.split(",")]

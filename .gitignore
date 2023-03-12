@@ -73,6 +73,7 @@ cmake-build-*
 tools/paper/plotting/handful/*
 *.smtx
 release-build
+debug-build
 *.gz
 
 *.sif

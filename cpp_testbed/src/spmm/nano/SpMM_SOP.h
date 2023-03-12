@@ -119,7 +119,8 @@ public:
                 t.A->Lx, t.A->Lp, t.A->Li,
                 tile_config, t.nThreads,
                 executor_id,
-                mapping_id
+                mapping_id,
+                true
             );
 
             tile_config = sop_matmul->get_config();
@@ -154,7 +155,8 @@ public:
                 t.A->Lx, t.A->Lp, t.A->Li,
                 tile_config, t.nThreads,
                 executor_id,
-                mapping_id
+                mapping_id,
+                true
         );
 
         sop_matmul->allocate_executor(t.n());

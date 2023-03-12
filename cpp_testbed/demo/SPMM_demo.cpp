@@ -452,7 +452,8 @@ class SpMMExperiment {
         std::string csv_file = outputFile;
 
         const int max_bCols = *std::max_element(bColsToTest.begin(), bColsToTest.end());
-        const int max_numel_C = As.r * max_bCols;
+        const int padded_row_count = As.r + (8 - As.r % 8); // round_up
+        const int max_numel_C = padded_row_count * max_bCols;
 
         SpMMTask<Scalar> spmm_task;
         spmm_task.A = &As;
@@ -558,7 +559,7 @@ class SpMMExperiment {
 
 
                 // Setup the executors
-                #pragma omp parallel for
+                //#pragma omp parallel for
                 for (int i = 0; i < methods.size(); i++) {
                     const auto& method = methods[i];
                     if (method.method_id != "mkl") {
@@ -607,7 +608,7 @@ class SpMMExperiment {
                 }
 
                 // Setup the executors after tuning in parallel
-                #pragma omp parallel for
+               // #pragma omp parallel for
                 for (int i = 0; i < method_uids.size(); i++) {
                     const auto& method_uid = method_uids[i];
                     auto& executor = executors[method_uid];
