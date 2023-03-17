@@ -9,7 +9,7 @@ from tools.paper.plotting.plot_utils import *
 from scipy.stats import gmean
 
 from artifact.utils import *
-from artifact.double.post_process_results import get_df, thread_list, bcols_list
+from artifact.double.post_process_results import get_df, thread_list, bcols_list, ARCH
 
 plt.rcParams["font.family"] = "Times New Roman"
 plt.rcParams.update({'font.size': 15})
@@ -138,7 +138,7 @@ def plot_main():
             
             if (i, j) == (0, 0):
                 handles.extend([plot["boxes"][0] for plot in plots])
-                labels.extend(['Sparse Reg Tiling', METHOD2_name, 'PSC'])
+                labels.extend(['Sparse Reg Tiling', METHOD2_name, 'LCM I/E'])
             axs[i, j].set_xticks(x_ticks)
             axs[i, j].set_xticklabels(x_labels, rotation=22)
             axs[i, j].set_xlim([0.5, len(x_labels)+0.5])
@@ -157,8 +157,8 @@ def plot_main():
     plt.margins(x=0)
     plt.tight_layout(rect=(0,0,1,0.88)) # For cascadelake
     # plt.tight_layout(rect=(0,0,1,0.96))
-    plt.savefig(PLOTS_DIR + "/psc.jpg")
-    print("Created:", PLOTS_DIR + "/psc.jpg")
+    plt.savefig(PLOTS_DIR + f"/psc_{ARCH}.jpg")
+    print("Created:", PLOTS_DIR + f"/psc_{ARCH}.jpg")
 
 if __name__ == "__main__":
     plot_main()

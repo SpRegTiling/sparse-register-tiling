@@ -34,7 +34,7 @@ if __name__ == "__main__":
     SS_MATRICES_TO_SELECT_FROM = 10000
     # Matrices that consume too much ram for our current setup
     SS_SKIP_LIST = ["mc2depi", "wikipedia-20051105", "circuit5M_dc", "memchip", "mycielskian19", "mycielskian20", "333SP", "ss"]
-    MAX_SS_MATRIX_SIZE = 5e5S
+    MAX_SS_MATRIX_SIZE = 5e5
 
     import ssgetpy
     matrix_list = ssgetpy.search(rowbounds=[0, MAX_SS_MATRIX_SIZE],

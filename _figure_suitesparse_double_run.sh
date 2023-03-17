@@ -13,7 +13,7 @@ $SBATCH <<EOT
 #SBATCH --export=ALL
 #SBATCH --job-name="double_$1 threads_$2"
 #SBATCH --nodes=1
-#SBATCH --account=def-kazem
+#SBATCH --account=def-mmehride
 #SBATCH --output="log_double_suitesparse.$1.$2.%j.%N.out"
 #SBATCH -t 23:00:00
 #SBATCH --constraint=cascade

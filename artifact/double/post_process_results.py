@@ -6,16 +6,16 @@ from multiprocessing import Process
 from artifact.utils import *
 from tools.paper.plotting.plot_utils import filter
 
+ARCH='cascade'
+
 def get_df(bcols, thread_count):
-    tmp_files = glob.glob(f"/tmp/double/figure_double*.bcols{bcols}.threads{thread_count}")
-    print(tmp_files)
+    tmp_files = glob.glob(f"/tmp/double/{ARCH}/figure_double*.bcols{bcols}.threads{thread_count}")
     dfs = []
     for file in tmp_files:
         dfs.append(pd.read_csv(file))
     sp_df = pd.concat(dfs)
 
-    tmp_files = glob.glob(f"/tmp/double/psc*.bcols{bcols}.threads{thread_count}")
-    print(tmp_files)
+    tmp_files = glob.glob(f"/tmp/double/{ARCH}/psc_{ARCH}*.bcols{bcols}.threads{thread_count}")
     dfs = []
     for file in tmp_files:
         dfs.append(pd.read_csv(file))
@@ -28,14 +28,14 @@ def get_df(bcols, thread_count):
 
 
 def thread_list():
-    tmp_files = glob.glob(f"/tmp/double/*.bcols*.threads*")
+    tmp_files = glob.glob(f"/tmp/double/{ARCH}/*.bcols*.threads*")
     thread_list = set()
     for file in tmp_files:
         thread_list.add(int(file.split("threads")[-1]))
     return list(thread_list)
 
 def bcols_list():
-    tmp_files = glob.glob(f"/tmp/double/*.bcols*.threads*")
+    tmp_files = glob.glob(f"/tmp/double/{ARCH}/*.bcols*.threads*")
     thread_list = set()
     for file in tmp_files:
         thread_list.add(int(file.split("bcols")[-1].split(".")[0]))
@@ -111,16 +111,16 @@ def pivot(df, bcols, num_threads):
     return dfw
 
 def gen_post_processed_files():
-    files = glob.glob(RESULTS_DIR + "/figure_double_results*.csv")
+    files = glob.glob(RESULTS_DIR + f"{ARCH}/figure_double_results*.csv")
 
-    os.makedirs('/tmp/double/', exist_ok=True)
+    os.makedirs(f'/tmp/double/{ARCH}', exist_ok=True)
     def pivot_process(file):
         df = pd.read_csv(file)
         df = post_process(df)
         for thread_count in df["numThreads"].unique():
             for bcols in df["n"].unique():
                 dfw = pivot(df, bcols, thread_count)
-                gend_file = f'/tmp/double/{file.split("/")[-1]}.bcols{bcols}.threads{thread_count}'
+                gend_file = f'/tmp/double/{ARCH}/{file.split("/")[-1]}.bcols{bcols}.threads{thread_count}'
                 dfw.to_csv(gend_file)
 
 
@@ -131,13 +131,13 @@ def gen_post_processed_files():
     for process in processes:
         process.join()
 
-    df = pd.read_csv(RESULTS_DIR + "/psc_4_bcols.csv")
+    df = pd.read_csv(RESULTS_DIR + f"{ARCH}/psc_4_bcols_{ARCH}.csv")
     df = post_process_psc(df)
     for thread_count in df["numThreads"].unique():
         for bcols in df["n"].unique():
             print(df["time median"], "Index===>", df["time median"].index)
             dfw = pivot(df, bcols, thread_count)
-            gend_file = f'/tmp/double/psc.csv.bcols{bcols}.threads{thread_count}'
+            gend_file = f'/tmp/double/{ARCH}/psc_{ARCH}.csv.bcols{bcols}.threads{thread_count}'
             dfw.to_csv(gend_file)
             print(dfw["time median|PSC"], "Index===>", dfw["time median|PSC"].index)
 

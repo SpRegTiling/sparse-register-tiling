@@ -90,3 +90,17 @@ if (PAPI_FOUND)
     target_compile_options(SPMM_demo PRIVATE -DPAPI_AVAILABLE)
     target_link_libraries(SPMM_demo ${PAPI_LIBRARIES})
 endif()
+
+####
+#   Tile cov
+####
+
+add_executable(tile_cov tile_cov.cpp
+        ${SRC}
+        ${SOP_SOURCES}
+)
+
+target_compile_options(tile_cov PRIVATE -save-temps=obj -funroll-loops ${SPMM_METHODS_CXX_FLAGS} -lpthreads)
+target_include_directories(tile_cov PUBLIC  ${SPMM_DEMO_INCLUDES} ${SOP_ALL_INCLUDES})
+target_link_directories(tile_cov PUBLIC /home/pi/arm_compute-v22.08-bin-linux-arm64-v8a-neon/lib/arm64-v8a-neon/)
+target_link_libraries(tile_cov ${SPMM_METHODS_LIBRARIES} ${SPMM_DEMO_LIBS}  -lstdc++fs benchmark ryml::ryml -lpthread) # stdc++fs for c++ filesystem
