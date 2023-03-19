@@ -35,10 +35,10 @@
         "supported together");
 
       if (load_balance) {
-        return new SpMM_SOP<sop::KD_PILoadBalanced<Scalar>, true>
+        return new SpMM_SOP<sop::KD_PILoadBalanced<S>, true>
           (get_executor_id(mapping_id_mut, arch, vec_width_bits, nr), mapping_id_mut, task, outer_schedule);
       } else {
-        return new SpMM_SOP<sop::KD_PI<Scalar>, true>
+        return new SpMM_SOP<sop::KD_PI<S>, true>
           (get_executor_id(mapping_id_mut, arch, vec_width_bits, nr), mapping_id_mut, task, outer_schedule);
       }
 
