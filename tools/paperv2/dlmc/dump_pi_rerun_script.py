@@ -21,6 +21,16 @@ for bcol in [32, 128, 256, 512]:
     adfs.append(read_cache("raspberrypi", "all", bcols=bcol, threads=4))
 adf = pd.concat(adfs)
 
+baselines = [
+    {
+        "name": "XNN",
+        "method_id": "xnn",
+    },
+    {
+        "name": "ARMCL",
+        "method_id": "armcl_dense",
+    }
+]
 
 for bcols in [32, 128, 256, 512]:
     for threads in [1, 4]:
