@@ -1063,12 +1063,12 @@ int main(int argc, char *argv[]) {
     if (scalar_type == "float") {
         auto experiment = SpMMExperiment<float>(root, { datasetDir, experimentDir }, overrides);
         result = experiment();
-// #if !defined(RASPBERRY_PI) && !defined(__arm__) && !defined(ENABLE_NEON)
-//     } else if (scalar_type == "double")  {
-//         std::cerr << "Waring double current unsupported by some baselines " << scalar_type << std::endl;
-//         auto experiment = SpMMExperiment<double>(root, { datasetDir, experimentDir }, overrides);
-//         result = experiment();
-// #endif
+#if !defined(RASPBERRY_PI) && !defined(ENABLE_NEON)
+    } else if (scalar_type == "double")  {
+        std::cerr << "Waring double current unsupported by some baselines " << scalar_type << std::endl;
+        auto experiment = SpMMExperiment<double>(root, { datasetDir, experimentDir }, overrides);
+        result = experiment();
+#endif
     } else {
         std::cerr << "Unsupported scalar type " << scalar_type << std::endl;
     }
