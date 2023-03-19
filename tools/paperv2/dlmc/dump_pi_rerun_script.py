@@ -34,7 +34,7 @@ baselines = [
     }
 ]
 
-for bcols in [256]:
+for bcols in [32, 128, 256, 512]:
     for threads in [1, 4]:
         outfile = f"/home/pi/pi_rerun_{bcols}_{threads}.csv"
         bash_script = f"/tmp/pi_rerun_scripts/pi_rerun_{bcols}_{threads}.sh"
