@@ -33,6 +33,7 @@ for numThreads in [1, 20]:
 
 for numThreads in [1, 4]:
     df = pd.read_csv(RESULTS_DIR + f"cache/raspberrypi/dlmc_nthreads_{numThreads}.csv")
+    df = df[(df.best_nano ==True) | (df.is_nano ==False)]
     dense_locs = df["name"].str.contains(r"MKL_Dense", regex=True)
     df.loc[dense_locs, "name"] = "MKL_Dense"
     df = post_process(df)

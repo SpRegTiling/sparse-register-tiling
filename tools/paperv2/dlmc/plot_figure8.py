@@ -42,22 +42,11 @@ def figure8(chipset = "cascade"):
         
         return m
 
-    print(df.columns)
-
     if chipset == "raspberrypi":
-        mcl = [
-            ("ARMCL", "lightcoral", "ARMCL (sgemm)"),
-            ("XNN", "darkolivegreen", "XNNPACK (spmm, 16x1)"),
-            ("Sp. Reg.", "steelblue", "Sparse Reg Tiling"),
-        ]
+        mcl = arm_mcl
         limits = [(0, 2.5), (0, 8)]
     else:
-        mcl = [
-            ("MKL_Sparse", "darkmagenta", "MKL Sparse (csr)"),
-            ("MKL_Dense", "forestgreen", "MKL Dense (sgemm)"),
-            ("ASpT Best", "goldenrod", "ASpT"),
-            ("Sp. Reg.", "steelblue", "Sparse Reg Tiling"),
-        ]
+        mcl = intel_mcl
         limits = [(0, 80), (0, 800)]
 
     box_width = 0.15
@@ -76,20 +65,12 @@ def figure8(chipset = "cascade"):
             #whis=(10,90),
             widths=0.15)
         
-    fig, axs = plt.subplots(len(numThreadsList), len(bColsList), figsize=(16,8), squeeze=False)
+    fig, axs = plt.subplots(len(numThreadsList), len(bColsList), figsize=(16,7.5), squeeze=False)
 
     for i in range(len(numThreadsList)):
         for j in range(len(bColsList)):
             df = read_cache(chipset, "all", bcols=bColsList[j], threads=numThreadsList[i])
-            df = df[(df['pruningMethod'] == 'magnitude_pruning')|(df['pruningMethod'] == 'random_pruning')]
-            
-            if chipset == "cascade":
-                df.loc[~(df["correct|ASpT_increased_parallelism"] == "correct"), "time cpu median|ASpT_increased_parallelism"] = 1e16
-                df.loc[~(df["correct|ASpT_increased_parallelism"] == "correct"), "gflops/s|ASpT_increased_parallelism"] = 0
-            
-                df["time cpu median|ASpT Best"] = df[["time cpu median|ASpT", "time cpu median|ASpT_increased_parallelism"]].min(axis=1)
-                df["gflops/s|ASpT Best"] = df[["gflops/s|ASpT", "gflops/s|ASpT_increased_parallelism"]].max(axis=1)
-                df["correct|ASpT Best"] = df["correct|ASpT"]
+            if chipset == "cascade": df = compute_aspt_best(df)
 
             # for method, _, _ in mcl:
             #     df[f'Speed-up {method} vs. {baseline}'] = df[f"time cpu median|{baseline}"] / df[f"time cpu median|{method}"]
@@ -109,7 +90,7 @@ def figure8(chipset = "cascade"):
             handles = [plot["boxes"][0] for plot in plots]
 
             axs[i, j].set_xticks(x_ticks)
-            axs[i, j].set_xticklabels(x_labels, rotation=22)
+            axs[i, j].set_xticklabels(x_labels, rotation=18)
             axs[i, j].set_xlim([0.5, len(x_labels)+0.5])
             if i == len(numThreadsList)-1:
                 axs[i, j].set_xlabel('Sparsity')
@@ -125,11 +106,11 @@ def figure8(chipset = "cascade"):
             
                 
     fig.legend(handles, labels, loc='upper center', ncol=len(handles))
-    plt.subplots_adjust(hspace=0.4, wspace=0.2) # For cascadelake
+    plt.subplots_adjust(hspace=0.4, wspace=0.1) # For cascadelake
+    plt.gcf().align_ylabels(axs[:, 0])
     plt.margins(x=0)
     plt.tight_layout(rect=(0,0,1,0.95)) # For cascadelake
-    plt.savefig(PLOTS_DIR + f"/figure8_v2_{chipset}.pdf")
-    print("Created:", PLOTS_DIR + f"/figure8_v2_{chipset}.pdf")
+    savefig(f"/figure8_v2_{chipset}.pdf")
 
 if __name__ == "__main__":
     figure8("cascade")

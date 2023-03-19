@@ -74,7 +74,7 @@ def post_process_psc(df, ss=False):
 
     # Rescale 
     df["time median"] = df["time median"] * 1e6
-    df["time cpu median"] = df["time median"] * 1e6
+    df["time cpu median"] = df["time median"]
     df["cov"] = -1
     
     return df

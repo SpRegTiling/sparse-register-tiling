@@ -24,6 +24,28 @@ schedules ={
     "M": 14,
 }
 
+def neon_nano_from_name(s, config):
+    assert "tuned" not in s
+
+    mapping = s.split("_")[2]
+    packed = "packed" in s
+    load_balance = "load_balanced" in s
+    sparse_a = False
+    mr_nr = re.search(r'(\d)x(\d)', s)
+    size = int(mr_nr.group(1))
+    nr = int(mr_nr.group(2))
+    outer_schedule = s.split("_")[4]
+    tlb_comp = 64
+    beta = float(re.search(r'_B(\d+)', s).group(1)) / 10 if '_B' in s else 1.0
+
+    extra_config = {
+        "k_tile": int(re.search(r'k_tile:(\d+)', config).group(1)),
+        "m_tile": int(re.search(r'k_tile:(\d+)', config).group(1)),
+        "n_tile": int(re.search(r'k_tile:(\d+)', config).group(1))
+    }
+    
+    return nano("NEON", size, nr, mapping, outer_schedule, packed, load_balance, None, tlb_comp, sparse_a, beta)
+
 
 def nano_from_name(arch, s):
     assert "tuned" not in s
@@ -43,7 +65,8 @@ def nano_from_name(arch, s):
 
 
 def nano(arch, size, nr, mapping, outer_schedule,
-         packed=False, load_balance=False, tune=None, tlb_comp=None, sparse_a=False, beta=1.0):
+         packed=False, load_balance=False, tune=None, tlb_comp=None, 
+         sparse_a=False, beta=1.0, extra_config=None):
     name = f"M{size}N{nr}_{outer_schedule}"
     beta_10x = int(round(beta * 10))
 
@@ -95,6 +118,9 @@ def nano(arch, size, nr, mapping, outer_schedule,
         if tlb_comp is not None:
             method["config"]["max_tlb_entries"] = tlb_comp
             method["config"]["tiling_strategy"] = 2
+    
+    if extra_config is not None:
+        method["config"].update(extra_config)
 
     return method
 

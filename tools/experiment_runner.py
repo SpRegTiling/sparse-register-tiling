@@ -106,7 +106,11 @@ def run_sp_reg(bcols, threads, matrix_file, output_file, scalar_type, methods_to
                 exp_file = gen_dlmc_exp_file([nano_from_name("AVX512", x)], 
                                 [int(bcol)], [int(thread_count)], "no_filelist.txt", datatransform=datatransform)
                 run_experiment(exp_file, matrix_file, output_file, scalar_type, extra_args=['-z'])
-        
+
+def run_sp_reg_single(bcols, threads, matrix_file, output_file, scalar_type, methods_to_test, datatransform=True):
+    exp_file = gen_dlmc_exp_file(methods_to_test, 
+                    [int(bcols)], [int(threads)], "no_filelist.txt", datatransform=datatransform)
+    run_experiment(exp_file, matrix_file, output_file, scalar_type, extra_args=['-z'])
 
 def load_heuristic(threads):
     if threads == 1:

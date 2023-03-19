@@ -20,15 +20,13 @@ plt.rcParams['axes.ymargin'] = 0
 def figure8():
     handles = []
     labels = []
-    # x_labels = ['0.6', '0.7', '0.8', '0.9', '0.95', '0.98']
 
     chipset = "cascade"
-    
     
     if chipset == "raspberrypi":
         numThreads = 4
     else:
-        numThreads = 20
+        numThreads = 1
     bcols = 128
     
     df = read_cache(chipset, "all", bcols=bcols, threads=numThreads)
@@ -50,22 +48,11 @@ def figure8():
         
         return geo_mean
 
-    print(df.columns)
-
     if chipset == "raspberrypi":
-        mcl = [
-            ("ARMCL", "lightcoral", "ARMCL (sgemm)"),
-            ("XNN", "darkolivegreen", "XNNPACK (spmm, 16x1)"),
-            ("Sp. Reg.", "steelblue", "Sparse Reg Tiling"),
-        ]
+        mcl = arm_mcl
         limits = [(0, 2.5), (0, 8)]
     else:
-        mcl = [
-            ("MKL_Sparse", "darkmagenta", "MKL Sparse (CSR)"),
-            ("MKL_Dense", "forestgreen", "MKL Dense (SGEMM)"),
-            #("ASpT Best", "goldenrod", "ASpT"),
-            ("Sp. Reg.", "steelblue", "Sparse Reg Tiling"),
-        ]
+        mcl = intel_mcl_no_aspt
         limits = [(0, 80), (0, 800)]
 
     BOX_WIDTH = 0.15
@@ -81,7 +68,6 @@ def figure8():
             flierprops=dict(color=color, markeredgecolor=color, marker='o', markersize=0.5),
             medianprops=dict(color='black'),
             showfliers=True,
-            #whis=(10,90),
             widths=box_width)
         
     fig, axs = plt.subplots(len(models), max_prune_count, figsize=(16,8), squeeze=False)
@@ -103,23 +89,12 @@ def figure8():
                 sparsity_buckets =  [(x*0.1 + 0.6, (x+1)*0.1 + 0.6) for x in range(len(x_labels))]
                 x_ticks = [i+1 for i in range(len(x_labels))]
             else:
-                # plot_type = "box"
-                # x_labels = ['60%-69.9%', '70%-79.9%', '80%-89.9%', '90%-95%']
-                # sparsity_buckets =  [(x*0.1 + 0.6, (x+1)*0.1 + 0.6) for x in range(len(x_labels))]
-                # x_ticks = [i+1 for i in range(len(x_labels))]
                 plot_type = "box"
                 x_labels = ['80%', '91%']
                 sparsity_buckets =  [(0.79, 0.81), (0.9, 0.92)]
                 x_ticks = [i+1 for i in range(len(x_labels))]
-            
-            print(pruning_methods[i][j], df["pruningModelTargetSparsity"].unique())           
-            if chipset == "cascade":
-                df.loc[~(df["correct|ASpT_increased_parallelism"] == "correct"), "time cpu median|ASpT_increased_parallelism"] = 1e16
-                df.loc[~(df["correct|ASpT_increased_parallelism"] == "correct"), "gflops/s|ASpT_increased_parallelism"] = 0
-            
-                df["time cpu median|ASpT Best"] = df[["time cpu median|ASpT", "time cpu median|ASpT_increased_parallelism"]].min(axis=1)
-                df["gflops/s|ASpT Best"] = df[["gflops/s|ASpT", "gflops/s|ASpT_increased_parallelism"]].max(axis=1)
-                df["correct|ASpT Best"] = df["correct|ASpT"]
+                      
+            if chipset == "cascade": df = compute_aspt_best(df)
 
             # for method, _, _ in mcl:
             #     df[f'Speed-up {method} vs. {baseline}'] = df[f"time cpu median|{baseline}"] / df[f"time cpu median|{method}"]
@@ -131,8 +106,7 @@ def figure8():
             for mi, (method, color, label) in enumerate(mcl):
                 if plot_type == "box":
                     box_width = BOX_WIDTH * len(sparsity_buckets) / 4
-                    print(box_width)
-                    
+
                     data = [df[(df['sparsity']>=spBucket[0])&(df['sparsity']<spBucket[1])
                                 &(df[f'correct|{method}'] == "correct")
                                 &(~df[f'gflops/s|{method}'].isna())
@@ -145,7 +119,7 @@ def figure8():
                     dff.plot.scatter(x='sparsity', y=f'gflops/s|{method}', c=color, ax=axs[i, j])
                     
             MODEL_STRINGS = {
-                "rn50": "Resnet50 (im2col)",
+                "rn50": "Resnet50",
                 "transformer": "Transformer"
             }
             
@@ -162,10 +136,6 @@ def figure8():
             handles = [plot["boxes"][0] for plot in plots if "boxes" in plot]
             
             ax = axs[i, j]
-            print(ax.bbox.transformed(ax.transAxes).height)
-            
-            print(axs[i, j].get_window_extent().y1)
-
             ax.set_xticks(x_ticks)
             axs[i, j].set_xticklabels(x_labels, rotation=22)
             axs[i, j].set_xlim([0.5, len(x_labels)+0.5])
@@ -179,22 +149,19 @@ def figure8():
                     transform=ax.transAxes,
                     fontsize=20)    
             
-                
             axs[i, j].set_title(f'{PRUNING_STRINGS[pruning_methods[i][j]]}', fontsize=16)
             axs[i, j].spines.right.set_visible(False)
             axs[i, j].spines.top.set_visible(False)    
-            axs[i, j].set_ylim(limits[1])
-        
-            # if chipset == "raspberrypi" and bColsList[j] == 32:
-            #     axs[i, j].set_ylim((0,6) if numThreadsList[i] == 1 else (0,20))
-            
-                
+            axs[i, j].set_ylim(limits[0])
+    
+    for i in range(len(models)):
+        plt.gcf().align_xlabels(axs[i, :])
+    
     fig.legend(handles, labels, loc='upper center', ncol=len(handles))
-    plt.subplots_adjust(hspace=0.4, wspace=0.2) # For cascadelake
+    plt.subplots_adjust(hspace=0.05, wspace=0.05) # For cascadelake
     plt.margins(x=0)
-    plt.tight_layout(rect=(0,0,1,0.97)) # For cascadelake
-    plt.savefig(PLOTS_DIR + f"/figure_prune_v2_{chipset}.pdf")
-    print("Created:", PLOTS_DIR + f"/figure_prune_v2_{chipset}.pdf")
+    plt.tight_layout(rect=(0,0,1,1)) # For cascadelake
+    savefig(f"/figure_prune_v2_{chipset}.pdf")
 
 if __name__ == "__main__":
     figure8()

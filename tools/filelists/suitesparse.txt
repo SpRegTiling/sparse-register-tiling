@@ -1,5 +1,6 @@
 suitesparse/raefsky2/raefsky2.mtx
 suitesparse/nug08-3rd/nug08-3rd.mtx
+suitesparse/jazz/jazz.mtx
 suitesparse/n4c6-b7/n4c6-b7.mtx
 suitesparse/dielFilterV2real/dielFilterV2real.mtx
 suitesparse/venkat01/venkat01.mtx
@@ -8,6 +9,7 @@ suitesparse/me2010/me2010.mtx
 suitesparse/SiO2/SiO2.mtx
 suitesparse/e18/e18.mtx
 suitesparse/soc-sign-Slashdot090221/soc-sign-Slashdot090221.mtx
+suitesparse/rotor1/rotor1.mtx
 suitesparse/GL7d16/GL7d16.mtx
 suitesparse/ga2010/ga2010.mtx
 suitesparse/Baumann/Baumann.mtx
@@ -22,19 +24,24 @@ suitesparse/hvdc2/hvdc2.mtx
 suitesparse/psmigr_1/psmigr_1.mtx
 suitesparse/Wordnet3/Wordnet3.mtx
 suitesparse/sctap1-2r/sctap1-2r.mtx
+suitesparse/p0201/p0201.mtx
 suitesparse/HV15R/HV15R.mtx
 suitesparse/Goodwin_054/Goodwin_054.mtx
 suitesparse/rajat21/rajat21.mtx
 suitesparse/TSC_OPF_300/TSC_OPF_300.mtx
+suitesparse/mcca/mcca.mtx
+suitesparse/football/football.mtx
 suitesparse/n4c6-b6/n4c6-b6.mtx
 suitesparse/F1/F1.mtx
 suitesparse/lowThrust_10/lowThrust_10.mtx
 suitesparse/pds-80/pds-80.mtx
 suitesparse/soc-sign-epinions/soc-sign-epinions.mtx
+suitesparse/lock_700/lock_700.mtx
 suitesparse/hvdc1/hvdc1.mtx
 suitesparse/Goodwin_023/Goodwin_023.mtx
 suitesparse/para-10/para-10.mtx
 suitesparse/c-66b/c-66b.mtx
+suitesparse/msc00726/msc00726.mtx
 suitesparse/TSOPF_RS_b162_c3/TSOPF_RS_b162_c3.mtx
 suitesparse/JP/JP.mtx
 suitesparse/crystk02/crystk02.mtx
@@ -60,17 +67,20 @@ suitesparse/TSOPF_FS_b162_c3/TSOPF_FS_b162_c3.mtx
 suitesparse/g7jac040/g7jac040.mtx
 suitesparse/ch7-8-b4/ch7-8-b4.mtx
 suitesparse/CurlCurl_3/CurlCurl_3.mtx
+suitesparse/kl02/kl02.mtx
 suitesparse/mawi_201512020330/mawi_201512020330.mtx
 suitesparse/case39/case39.mtx
 suitesparse/CurlCurl_0/CurlCurl_0.mtx
 suitesparse/webbase-1M/webbase-1M.mtx
 suitesparse/nv1/nv1.mtx
+suitesparse/HFE18_96_in/HFE18_96_in.mtx
 suitesparse/pds-70/pds-70.mtx
 suitesparse/GL7d23/GL7d23.mtx
 suitesparse/SiH4/SiH4.mtx
 suitesparse/stat96v5/stat96v5.mtx
 suitesparse/af_shell2/af_shell2.mtx
 suitesparse/ulevimin/ulevimin.mtx
+suitesparse/lp_scagr7/lp_scagr7.mtx
 suitesparse/TSOPF_FS_b39_c30/TSOPF_FS_b39_c30.mtx
 suitesparse/mark3jac120sc/mark3jac120sc.mtx
 suitesparse/lhr17c/lhr17c.mtx
@@ -86,10 +96,13 @@ suitesparse/Zd_Jac3/Zd_Jac3.mtx
 suitesparse/c-67/c-67.mtx
 suitesparse/stormg2-125/stormg2-125.mtx
 suitesparse/nemeth06/nemeth06.mtx
+suitesparse/Oregon-1/Oregon-1.mtx
 suitesparse/cage11/cage11.mtx
 suitesparse/raefsky5/raefsky5.mtx
 suitesparse/Ill_Stokes/Ill_Stokes.mtx
 suitesparse/wiki-RfA/wiki-RfA.mtx
+suitesparse/cis-n4c6-b2/cis-n4c6-b2.mtx
+suitesparse/n4c5-b5/n4c5-b5.mtx
 suitesparse/Zd_Jac6_db/Zd_Jac6_db.mtx
 suitesparse/nemswrld/nemswrld.mtx
 suitesparse/scsd8-2r/scsd8-2r.mtx
@@ -109,6 +122,7 @@ suitesparse/cavity20/cavity20.mtx
 suitesparse/ma2010/ma2010.mtx
 suitesparse/jan99jac060/jan99jac060.mtx
 suitesparse/t2dah/t2dah.mtx
+suitesparse/dwt_209/dwt_209.mtx
 suitesparse/g7jac060sc/g7jac060sc.mtx
 suitesparse/jan99jac060sc/jan99jac060sc.mtx
 suitesparse/rim/rim.mtx
@@ -116,6 +130,7 @@ suitesparse/cavity21/cavity21.mtx
 suitesparse/fome13/fome13.mtx
 suitesparse/scircuit/scircuit.mtx
 suitesparse/wang3/wang3.mtx
+suitesparse/ch5-5-b1/ch5-5-b1.mtx
 suitesparse/ch7-8-b3/ch7-8-b3.mtx
 suitesparse/F2/F2.mtx
 suitesparse/mark3jac120/mark3jac120.mtx
@@ -143,6 +158,7 @@ suitesparse/benzene/benzene.mtx
 suitesparse/TSOPF_FS_b9_c6/TSOPF_FS_b9_c6.mtx
 suitesparse/soc-sign-Slashdot081106/soc-sign-Slashdot081106.mtx
 suitesparse/or2010/or2010.mtx
+suitesparse/gent113/gent113.mtx
 suitesparse/gen4/gen4.mtx
 suitesparse/nemeth07/nemeth07.mtx
 suitesparse/bcsstk39/bcsstk39.mtx
@@ -177,6 +193,7 @@ suitesparse/jan99jac080sc/jan99jac080sc.mtx
 suitesparse/barrier2-1/barrier2-1.mtx
 suitesparse/venkat25/venkat25.mtx
 suitesparse/mhd4800a/mhd4800a.mtx
+suitesparse/adder_dcop_52/adder_dcop_52.mtx
 suitesparse/bayer01/bayer01.mtx
 suitesparse/epb3/epb3.mtx
 suitesparse/rajat17/rajat17.mtx
@@ -202,6 +219,7 @@ suitesparse/af_shell6/af_shell6.mtx
 suitesparse/TSOPF_RS_b162_c4/TSOPF_RS_b162_c4.mtx
 suitesparse/raefsky3/raefsky3.mtx
 suitesparse/lhr71c/lhr71c.mtx
+suitesparse/dwt_310/dwt_310.mtx
 suitesparse/mark3jac060/mark3jac060.mtx
 suitesparse/cavity16/cavity16.mtx
 suitesparse/pds-30/pds-30.mtx
@@ -214,7 +232,9 @@ suitesparse/Delor338K/Delor338K.mtx
 suitesparse/mark3jac140/mark3jac140.mtx
 suitesparse/c-53/c-53.mtx
 suitesparse/gas_sensor/gas_sensor.mtx
+suitesparse/conf6_0-4x4-20/conf6_0-4x4-20.mtx
 suitesparse/cvxqp3/cvxqp3.mtx
+suitesparse/bfwb62/bfwb62.mtx
 suitesparse/ts-palko/ts-palko.mtx
 suitesparse/lhr34c/lhr34c.mtx
 suitesparse/majorbasis/majorbasis.mtx
@@ -223,6 +243,7 @@ suitesparse/lp_maros_r7/lp_maros_r7.mtx
 suitesparse/rajat28/rajat28.mtx
 suitesparse/water_tank/water_tank.mtx
 suitesparse/fxm4_6/fxm4_6.mtx
+suitesparse/reorientation_6/reorientation_6.mtx
 suitesparse/cont1_l/cont1_l.mtx
 suitesparse/lhr07/lhr07.mtx
 suitesparse/nemeth24/nemeth24.mtx
@@ -247,6 +268,7 @@ suitesparse/mo2010/mo2010.mtx
 suitesparse/lung2/lung2.mtx
 suitesparse/f855_mat9/f855_mat9.mtx
 suitesparse/nemeth08/nemeth08.mtx
+suitesparse/Sieber/Sieber.mtx
 suitesparse/rel9/rel9.mtx
 suitesparse/sme3Da/sme3Da.mtx
 suitesparse/il2010/il2010.mtx
@@ -262,6 +284,7 @@ suitesparse/nemeth05/nemeth05.mtx
 suitesparse/nemeth25/nemeth25.mtx
 suitesparse/nlpkkt120/nlpkkt120.mtx
 suitesparse/g7jac120sc/g7jac120sc.mtx
+suitesparse/gams60am/gams60am.mtx
 suitesparse/g7jac050sc/g7jac050sc.mtx
 suitesparse/af_shell9/af_shell9.mtx
 suitesparse/nemeth02/nemeth02.mtx
@@ -290,6 +313,7 @@ suitesparse/nemeth13/nemeth13.mtx
 suitesparse/Goodwin_095/Goodwin_095.mtx
 suitesparse/stokes128/stokes128.mtx
 suitesparse/piston/piston.mtx
+suitesparse/dynamicSoaringProblem_3/dynamicSoaringProblem_3.mtx
 suitesparse/mawi_201512020030/mawi_201512020030.mtx
 suitesparse/ASIC_680k/ASIC_680k.mtx
 suitesparse/wa2010/wa2010.mtx
@@ -298,6 +322,7 @@ suitesparse/lhr10c/lhr10c.mtx
 suitesparse/darcy003/darcy003.mtx
 suitesparse/heart3/heart3.mtx
 suitesparse/t3dh_a/t3dh_a.mtx
+suitesparse/nd3k/nd3k.mtx
 suitesparse/para-7/para-7.mtx
 suitesparse/c-62ghs/c-62ghs.mtx
 suitesparse/nemeth14/nemeth14.mtx
@@ -329,6 +354,7 @@ suitesparse/EternityII_Etilde/EternityII_Etilde.mtx
 suitesparse/shar_te2-b3/shar_te2-b3.mtx
 suitesparse/Hardesty3/Hardesty3.mtx
 suitesparse/trans4/trans4.mtx
+suitesparse/oscil_dcop_44/oscil_dcop_44.mtx
 suitesparse/sls/sls.mtx
 suitesparse/c-52/c-52.mtx
 suitesparse/c-41/c-41.mtx
@@ -342,11 +368,13 @@ suitesparse/invextr1_new/invextr1_new.mtx
 suitesparse/c-50/c-50.mtx
 suitesparse/c-51/c-51.mtx
 suitesparse/internet/internet.mtx
+suitesparse/will57/will57.mtx
 suitesparse/atmosmodj/atmosmodj.mtx
 suitesparse/av41092/av41092.mtx
 suitesparse/cavity17/cavity17.mtx
 suitesparse/lowThrust_6/lowThrust_6.mtx
 suitesparse/sgpf5y6/sgpf5y6.mtx
+suitesparse/rkat7_mat5/rkat7_mat5.mtx
 suitesparse/HTC_336_9129/HTC_336_9129.mtx
 suitesparse/karted/karted.mtx
 suitesparse/TSOPF_FS_b300_c2/TSOPF_FS_b300_c2.mtx
@@ -364,6 +392,7 @@ suitesparse/af_shell5/af_shell5.mtx
 suitesparse/rajat22/rajat22.mtx
 suitesparse/cavity24/cavity24.mtx
 suitesparse/rajat18/rajat18.mtx
+suitesparse/adder_dcop_04/adder_dcop_04.mtx
 suitesparse/ifiss_mat/ifiss_mat.mtx
 suitesparse/c-69/c-69.mtx
 suitesparse/crystk03/crystk03.mtx
@@ -371,6 +400,7 @@ suitesparse/mawi_201512020000/mawi_201512020000.mtx
 suitesparse/dc3/dc3.mtx
 suitesparse/mark3jac100/mark3jac100.mtx
 suitesparse/CO/CO.mtx
+suitesparse/bibd_20_10/bibd_20_10.mtx
 suitesparse/xenon2/xenon2.mtx
 suitesparse/ML_Laplace/ML_Laplace.mtx
 suitesparse/c-64/c-64.mtx
@@ -381,6 +411,7 @@ suitesparse/TSOPF_RS_b678_c1/TSOPF_RS_b678_c1.mtx
 suitesparse/TF18/TF18.mtx
 suitesparse/Si10H16/Si10H16.mtx
 suitesparse/patents_main/patents_main.mtx
+suitesparse/lp_pilot87/lp_pilot87.mtx
 suitesparse/case9/case9.mtx
 suitesparse/GaAsH6/GaAsH6.mtx
 suitesparse/GL7d18/GL7d18.mtx
@@ -404,6 +435,7 @@ suitesparse/south31/south31.mtx
 suitesparse/barrier2-12/barrier2-12.mtx
 suitesparse/scsd8-2b/scsd8-2b.mtx
 suitesparse/laminar_duct3D/laminar_duct3D.mtx
+suitesparse/GD97_a/GD97_a.mtx
 suitesparse/d_pretok/d_pretok.mtx
 suitesparse/mc2depi/mc2depi.mtx
 suitesparse/cavity19/cavity19.mtx
@@ -413,9 +445,11 @@ suitesparse/bcircuit/bcircuit.mtx
 suitesparse/rail507/rail507.mtx
 suitesparse/Freescale2/Freescale2.mtx
 suitesparse/kkt_power/kkt_power.mtx
+suitesparse/robot/robot.mtx
 suitesparse/nemeth12/nemeth12.mtx
 suitesparse/kron_g500-logn18/kron_g500-logn18.mtx
 suitesparse/boyd1/boyd1.mtx
+suitesparse/G5/G5.mtx
 suitesparse/sinc15/sinc15.mtx
 suitesparse/nlpkkt80/nlpkkt80.mtx
 suitesparse/scsd8-2c/scsd8-2c.mtx
@@ -423,18 +457,22 @@ suitesparse/pds-90/pds-90.mtx
 suitesparse/CurlCurl_2/CurlCurl_2.mtx
 suitesparse/shyy161/shyy161.mtx
 suitesparse/TSOPF_RS_b39_c7/TSOPF_RS_b39_c7.mtx
+suitesparse/cavity03/cavity03.mtx
 suitesparse/Maragal_6/Maragal_6.mtx
 suitesparse/sx-superuser/sx-superuser.mtx
 suitesparse/sd2010/sd2010.mtx
 suitesparse/lhr34/lhr34.mtx
 suitesparse/c-71/c-71.mtx
 suitesparse/rlfdual/rlfdual.mtx
+suitesparse/bibd_9_5/bibd_9_5.mtx
 suitesparse/para-8/para-8.mtx
 suitesparse/kron_g500-logn17/kron_g500-logn17.mtx
 suitesparse/language/language.mtx
 suitesparse/venkat50/venkat50.mtx
 suitesparse/cage10/cage10.mtx
 suitesparse/c-63/c-63.mtx
+suitesparse/bibd_12_5/bibd_12_5.mtx
+suitesparse/Olivetti_norm_10NN/Olivetti_norm_10NN.mtx
 suitesparse/neos1/neos1.mtx
 suitesparse/appu/appu.mtx
 suitesparse/epb2/epb2.mtx
@@ -451,6 +489,8 @@ suitesparse/c-48/c-48.mtx
 suitesparse/TSOPF_RS_b2383/TSOPF_RS_b2383.mtx
 suitesparse/ted_A/ted_A.mtx
 suitesparse/goodwin/goodwin.mtx
+suitesparse/fpga_dcop_51/fpga_dcop_51.mtx
+suitesparse/s3dkq4m2/s3dkq4m2.mtx
 suitesparse/ex19/ex19.mtx
 suitesparse/circuit5M/circuit5M.mtx
 suitesparse/Chebyshev4/Chebyshev4.mtx
@@ -472,6 +512,7 @@ suitesparse/EternityII_A/EternityII_A.mtx
 suitesparse/c-66/c-66.mtx
 suitesparse/a2nnsnsl/a2nnsnsl.mtx
 suitesparse/specular/specular.mtx
+suitesparse/bibd_11_5/bibd_11_5.mtx
 suitesparse/heart2/heart2.mtx
 suitesparse/hangGlider_4/hangGlider_4.mtx
 suitesparse/tp-6/tp-6.mtx
@@ -495,6 +536,7 @@ suitesparse/rlfprim/rlfprim.mtx
 suitesparse/atmosmodl/atmosmodl.mtx
 suitesparse/FEM_3D_thermal1/FEM_3D_thermal1.mtx
 suitesparse/atmosmodd/atmosmodd.mtx
+suitesparse/us04/us04.mtx
 suitesparse/xenon1/xenon1.mtx
 suitesparse/kron_g500-logn20/kron_g500-logn20.mtx
 suitesparse/ri2010/ri2010.mtx
@@ -505,6 +547,7 @@ suitesparse/ok2010/ok2010.mtx
 suitesparse/std1_Jac2/std1_Jac2.mtx
 suitesparse/TSOPF_RS_b39_c19/TSOPF_RS_b39_c19.mtx
 suitesparse/TEM152078/TEM152078.mtx
+suitesparse/M80PI_n/M80PI_n.mtx
 suitesparse/fp/fp.mtx
 suitesparse/nd2010/nd2010.mtx
 suitesparse/windtunnel_evap2d/windtunnel_evap2d.mtx
@@ -522,7 +565,9 @@ suitesparse/garon2/garon2.mtx
 suitesparse/c-73b/c-73b.mtx
 suitesparse/rajat30/rajat30.mtx
 suitesparse/lowThrust_8/lowThrust_8.mtx
+suitesparse/ibm32/ibm32.mtx
 suitesparse/LargeRegFile/LargeRegFile.mtx
+suitesparse/lp_afiro/lp_afiro.mtx
 suitesparse/bratu3d/bratu3d.mtx
 suitesparse/lhr14c/lhr14c.mtx
 suitesparse/rail582/rail582.mtx
@@ -531,6 +576,7 @@ suitesparse/af23560/af23560.mtx
 suitesparse/windtunnel_evap3d/windtunnel_evap3d.mtx
 suitesparse/poisson3Db/poisson3Db.mtx
 suitesparse/ecl32/ecl32.mtx
+suitesparse/oscil_dcop_38/oscil_dcop_38.mtx
 suitesparse/twotone/twotone.mtx
 suitesparse/ecology1/ecology1.mtx
 suitesparse/gsm_106857/gsm_106857.mtx
@@ -574,6 +620,7 @@ suitesparse/c-54/c-54.mtx
 suitesparse/ncvxqp3/ncvxqp3.mtx
 suitesparse/c-61/c-61.mtx
 suitesparse/dixmaanl/dixmaanl.mtx
+suitesparse/testbig/testbig.mtx
 suitesparse/co2010/co2010.mtx
 suitesparse/TSOPF_RS_b162_c1/TSOPF_RS_b162_c1.mtx
 suitesparse/Zd_Jac2_db/Zd_Jac2_db.mtx
@@ -604,6 +651,7 @@ suitesparse/Si87H76/Si87H76.mtx
 suitesparse/Ga3As3H12/Ga3As3H12.mtx
 suitesparse/lp_ken_18/lp_ken_18.mtx
 suitesparse/cz40948/cz40948.mtx
+suitesparse/cage/cage.mtx
 suitesparse/n4c6-b12/n4c6-b12.mtx
 suitesparse/nemeth16/nemeth16.mtx
 suitesparse/ckt11752_tr_0/ckt11752_tr_0.mtx
@@ -615,12 +663,14 @@ suitesparse/mark3jac040sc/mark3jac040sc.mtx
 suitesparse/cyl6/cyl6.mtx
 suitesparse/ACTIVSg10K/ACTIVSg10K.mtx
 suitesparse/largebasis/largebasis.mtx
+suitesparse/pwt/pwt.mtx
 suitesparse/c-64b/c-64b.mtx
 suitesparse/pds-40/pds-40.mtx
 suitesparse/sx-stackoverflow/sx-stackoverflow.mtx
 suitesparse/barrier2-3/barrier2-3.mtx
 suitesparse/Long_Coup_dt6/Long_Coup_dt6.mtx
 suitesparse/bas1lp/bas1lp.mtx
+suitesparse/dw8192/dw8192.mtx
 suitesparse/mk12-b4/mk12-b4.mtx
 suitesparse/fl2010/fl2010.mtx
 suitesparse/rail4284/rail4284.mtx
@@ -628,6 +678,7 @@ suitesparse/ncvxqp7/ncvxqp7.mtx
 suitesparse/stokes64s/stokes64s.mtx
 suitesparse/mac_econ_fwd500/mac_econ_fwd500.mtx
 suitesparse/blockqp1/blockqp1.mtx
+suitesparse/3elt_dual/3elt_dual.mtx
 suitesparse/hangGlider_5/hangGlider_5.mtx
 suitesparse/la2010/la2010.mtx
 suitesparse/FEM_3D_thermal2/FEM_3D_thermal2.mtx
@@ -638,8 +689,10 @@ suitesparse/nemeth01/nemeth01.mtx
 suitesparse/psmigr_3/psmigr_3.mtx
 suitesparse/ex35/ex35.mtx
 suitesparse/Zd_Jac3_db/Zd_Jac3_db.mtx
+suitesparse/ramage02/ramage02.mtx
 suitesparse/ch8-8-b3/ch8-8-b3.mtx
 suitesparse/nemeth04/nemeth04.mtx
+suitesparse/Kaufhold/Kaufhold.mtx
 suitesparse/cage13/cage13.mtx
 suitesparse/jan99jac100/jan99jac100.mtx
 suitesparse/nemeth23/nemeth23.mtx
@@ -662,6 +715,7 @@ suitesparse/rlfddd/rlfddd.mtx
 suitesparse/c-55/c-55.mtx
 suitesparse/rajat31/rajat31.mtx
 suitesparse/lp_osa_07/lp_osa_07.mtx
+suitesparse/p0040/p0040.mtx
 suitesparse/stat96v1/stat96v1.mtx
 suitesparse/TSOPF_RS_b300_c1/TSOPF_RS_b300_c1.mtx
 suitesparse/mk13-b5/mk13-b5.mtx
@@ -669,17 +723,20 @@ suitesparse/power197k/power197k.mtx
 suitesparse/ar2010/ar2010.mtx
 suitesparse/sc205-2r/sc205-2r.mtx
 suitesparse/oh2010/oh2010.mtx
+suitesparse/cz148/cz148.mtx
 suitesparse/fxm3_16/fxm3_16.mtx
 suitesparse/nemsemm1/nemsemm1.mtx
 suitesparse/mesh_deform/mesh_deform.mtx
 suitesparse/CurlCurl_4/CurlCurl_4.mtx
 suitesparse/graphics/graphics.mtx
+suitesparse/n2c6-b2/n2c6-b2.mtx
 suitesparse/2D_27628_bjtcai/2D_27628_bjtcai.mtx
 suitesparse/Cube_Coup_dt0/Cube_Coup_dt0.mtx
 suitesparse/GL7d24/GL7d24.mtx
 suitesparse/para-9/para-9.mtx
 suitesparse/mn2010/mn2010.mtx
 suitesparse/poisson3Da/poisson3Da.mtx
+suitesparse/caidaRouterLevel/caidaRouterLevel.mtx
 suitesparse/soc-sign-Slashdot090216/soc-sign-Slashdot090216.mtx
 suitesparse/brainpc2/brainpc2.mtx
 suitesparse/cavity18/cavity18.mtx
@@ -716,6 +773,7 @@ suitesparse/raefsky6/raefsky6.mtx
 suitesparse/mt2010/mt2010.mtx
 suitesparse/model10/model10.mtx
 suitesparse/onetone1/onetone1.mtx
+suitesparse/lp_share2b/lp_share2b.mtx
 suitesparse/g7jac180/g7jac180.mtx
 suitesparse/TSC_OPF_1047/TSC_OPF_1047.mtx
 suitesparse/chem_master1/chem_master1.mtx
@@ -733,6 +791,7 @@ suitesparse/id2010/id2010.mtx
 suitesparse/lowThrust_9/lowThrust_9.mtx
 suitesparse/TF19/TF19.mtx
 suitesparse/ch7-7-b5/ch7-7-b5.mtx
+suitesparse/olm2000/olm2000.mtx
 suitesparse/TSOPF_RS_b39_c30/TSOPF_RS_b39_c30.mtx
 suitesparse/atmosmodm/atmosmodm.mtx
 suitesparse/ncvxbqp1/ncvxbqp1.mtx
@@ -751,6 +810,7 @@ suitesparse/rajat16/rajat16.mtx
 suitesparse/bloweya/bloweya.mtx
 suitesparse/rajat20/rajat20.mtx
 suitesparse/onetone2/onetone2.mtx
+suitesparse/lp_grow7/lp_grow7.mtx
 suitesparse/sc2010/sc2010.mtx
 suitesparse/GL7d15/GL7d15.mtx
 suitesparse/mawi_201512020130/mawi_201512020130.mtx
@@ -765,5 +825,6 @@ suitesparse/Na5/Na5.mtx
 suitesparse/kron_g500-logn16/kron_g500-logn16.mtx
 suitesparse/Rucci1/Rucci1.mtx
 suitesparse/mouse_gene/mouse_gene.mtx
+suitesparse/Goodwin_010/Goodwin_010.mtx
 suitesparse/c-42/c-42.mtx
 suitesparse/shermanACb/shermanACb.mtx

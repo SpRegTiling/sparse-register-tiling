@@ -55,7 +55,7 @@ def pivot(df, drop_dupes=False, **kwargs):
         df = df.drop_duplicates(index + columns)
     
     dfw = pd.pivot(df, index=index, columns=columns,
-        values=["gflops/s", "time cpu median", "time median", "correct", "required_storage", "config"])
+        values=["gflops/s", "time cpu median", "time median", "correct", "required_storage", "config", "orig_name"])
 
     dfw.index.names = ['Matrix', "MatrixPath", "Rows", "Cols", "NNZ", "Bcols", "numThreads", "sparsity",  "sparsity_raw", "pruningModelTargetSparsity",  "model", "pruningMethod",  "matrixName", "gflops"]
     dfw.columns = ['|'.join(col) for col in dfw.columns.values]
