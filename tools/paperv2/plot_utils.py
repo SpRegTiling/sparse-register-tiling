@@ -5,6 +5,8 @@ import numpy as np
 import pandas as pd
 import glob
 
+from tools.paperv2.utils import *
+
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 
 RESULTS_DIR = "/sdb/paperv2_results/"
@@ -62,14 +64,14 @@ def create_chart_grid(charts, row_width):
 
 
 def chart_save(chart, filename):
-    filepath = PLOT_DIR + filename
+    filepath = PLOTS_DIR + filename
     filepath = filepath.replace(".png", "") + ".png"
     os.makedirs(os.path.dirname(filepath), exist_ok=True)
     altair_saver.save(chart, filepath, fmt="png", scale_fator=4)
 
 
 def plot_save(filename):
-    filepath = PLOT_DIR + filename
+    filepath = PLOTS_DIR + filename
     filepath = filepath.replace(".pdf", "") + ".pdf"
     os.makedirs(os.path.dirname(filepath), exist_ok=True)
     plt.savefig(filepath)

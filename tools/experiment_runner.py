@@ -9,14 +9,16 @@ import os; SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__)) + "/"
 BASH_SCRIPT=None
 TIMEOUT=None
 
+append = False
 def set_bash_script(bash_script):
-    global BASH_SCRIPT
+    global BASH_SCRIPT,append
+    BASH_SCRIPT = bash_script
+    append = False
     try:
-        os.remove(bash_script)
+        os.remove(BASH_SCRIPT)
     except OSError:
         pass
-    BASH_SCRIPT = bash_script
-    with open(bash_script, "a+") as f:
+    with open(BASH_SCRIPT, "a+") as f:
             f.write("#!/bin/bash\n")
 
 def set_timeout(timeout):
@@ -45,8 +47,6 @@ def gen_dlmc_exp_file(methods, bcols, threads, matrix_filelist, datatransform=Tr
                         profile=profile,
                         suffix=id)
 
-
-append = False
 def run_experiment(experiment_file, matrix_file, output_file, scalar_type, append_override=None, extra_args=[]):
     global append
     command = [CPP_BENCH_BINARY, "-e", experiment_file, "-m", matrix_file, "-d", DATASET_DIR, "-s", scalar_type]
@@ -61,6 +61,7 @@ def run_experiment(experiment_file, matrix_file, output_file, scalar_type, appen
         timout_str = ""
         if TIMEOUT is not None:
             timout_str = f"timeout {TIMEOUT} "
+        print(BASH_SCRIPT)
         with open(BASH_SCRIPT, "a+") as f:
             f.write(timout_str + " ".join(command) + "\n")
     append = True
@@ -110,7 +111,7 @@ def run_sp_reg(bcols, threads, matrix_file, output_file, scalar_type, methods_to
 def run_sp_reg_single(bcols, threads, matrix_file, output_file, scalar_type, methods_to_test, datatransform=True):
     exp_file = gen_dlmc_exp_file(methods_to_test, 
                     [int(bcols)], [int(threads)], "no_filelist.txt", datatransform=datatransform)
-    run_experiment(exp_file, matrix_file, output_file, scalar_type, extra_args=['-z'])
+    run_experiment(exp_file, matrix_file, output_file, scalar_type)
 
 def load_heuristic(threads):
     if threads == 1:

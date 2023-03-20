@@ -32,7 +32,7 @@ ARMCL_COLOR = 'lightcoral'
 # mcl is method, colour, label
 arm_mcl = [
     ("ARMCL", ARMCL_COLOR, "ARMCL SGEMM"),
-    ("XNN", XNN_COLOR, "XNNPACK"),
+    ("XNN", XNN_COLOR, "XNN SpMM"),
     ("Sp. Reg.", SP_REG_COLOR, "Sparse Register Tiling"),
 ]
 

@@ -57,7 +57,7 @@ ax = axs[0]
 idf.plot(kind='scatter', x='flops', y='Speed-up vs Sparse', c='sparsity', colormap='cividis', alpha=0.5, s=1, ax=ax, colorbar=False)
 ax.set_xscale('log')
 ax.set_ylim(0, 8)
-ax.set_ylabel('Speed-Up', fontsize=14)
+ax.set_ylabel('Speedup', fontsize=14)
 ax.axhline(y=1.0, color='r', linestyle='-')
 ax.spines.right.set_visible(False)
 ax.spines.top.set_visible(False)

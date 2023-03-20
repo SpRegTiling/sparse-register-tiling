@@ -27,24 +27,28 @@ schedules ={
 def neon_nano_from_name(s, config):
     assert "tuned" not in s
 
-    mapping = s.split("_")[2]
+    mapping = s.split("_")[2 if "split" in s else -1]
     packed = "packed" in s
     load_balance = "load_balanced" in s
     sparse_a = False
-    mr_nr = re.search(r'(\d)x(\d)', s)
+    mr_nr = re.search(r'M(\d)N(\d)', s)
+    if mr_nr is None:
+        mr_nr = re.search(r'(\d)x(\d)', s)
+    print(s, mapping)
     size = int(mr_nr.group(1))
     nr = int(mr_nr.group(2))
-    outer_schedule = s.split("_")[4]
+    outer_schedule = s.split("_")[4 if "split" in s else 2]
     tlb_comp = 64
     beta = float(re.search(r'_B(\d+)', s).group(1)) / 10 if '_B' in s else 1.0
 
     extra_config = {
         "k_tile": int(re.search(r'k_tile:(\d+)', config).group(1)),
-        "m_tile": int(re.search(r'k_tile:(\d+)', config).group(1)),
-        "n_tile": int(re.search(r'k_tile:(\d+)', config).group(1))
+        "m_tile": int(re.search(r'm_tile:(\d+)', config).group(1)),
+        "n_tile": int(re.search(r'n_tile:(\d+)', config).group(1)),
+        "tiling_strategy": 0
     }
     
-    return nano("NEON", size, nr, mapping, outer_schedule, packed, load_balance, None, tlb_comp, sparse_a, beta)
+    return nano("NEON", size, nr, mapping, outer_schedule, packed, load_balance, None, tlb_comp, sparse_a, beta, extra_config=extra_config)
 
 
 def nano_from_name(arch, s):
@@ -57,7 +61,7 @@ def nano_from_name(arch, s):
     mr_nr = re.search(r'M(\d)N(\d)', s)
     size = int(mr_nr.group(1))
     nr = int(mr_nr.group(2))
-    outer_schedule = s.split("_")[2]
+    outer_schedule = s.split("_")[2 if "NANO" in s else 1]
     tlb_comp = int(re.search(r'TLB(\d+)', s).group(1)) if 'TLB' in s else None
     beta = float(re.search(r'_B(\d+)', s).group(1)) / 10 if '_B' in s else 1.0
 

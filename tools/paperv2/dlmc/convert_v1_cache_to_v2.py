@@ -1,5 +1,6 @@
 from tools.paperv2.utils import *
 from tools.paperv2.dlmc.utils import *
+from tools.paperv2.old_post_process import per_file_postprocess
 
 import pandas as pd
 import glob
@@ -38,12 +39,26 @@ for numThreads in [1, 4]:
     df.loc[dense_locs, "name"] = "MKL_Dense"
     df = post_process(df)
     
-    for bcols in [32, 128, 256, 512]:
+    for bcols in [32, 128, 512]:
         out_file = cache_file_name("raspberrypi" ,"all", bcols=bcols, threads=numThreads)
         dfw = pivot(df, drop_dupes=True, numThreads=numThreads, n=bcols)
         assert len(dfw)
         dfw.to_csv(out_file)
         print("Wrote:", out_file)
+    
+    for bcols in [256]:
+        out_file = cache_file_name("raspberrypi" ,"all", bcols=bcols, threads=numThreads)
+        df = pd.read_csv(RESULTS_DIR + f"/pi_rerun/pi_rerun_{bcols}_{numThreads}.csv")
+        print(RESULTS_DIR + f"/pi_rerun/pi_rerun_{bcols}_{numThreads}.csv", len(df))
+        df = per_file_postprocess(df, "pi")
+        df = df[(df.best_nano ==True) | (df.is_nano ==False)]
+        df = post_process(df)
+    
+        dfw = pivot(df, drop_dupes=True, numThreads=numThreads, n=bcols)
+        assert len(dfw)
+        dfw.to_csv(out_file)
+        print("Wrote:", out_file)
+        
 
 
 # Use Rebutal Data

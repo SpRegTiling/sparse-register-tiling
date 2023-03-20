@@ -104,3 +104,19 @@ target_compile_options(tile_cov PRIVATE -save-temps=obj -funroll-loops ${SPMM_ME
 target_include_directories(tile_cov PUBLIC  ${SPMM_DEMO_INCLUDES} ${SOP_ALL_INCLUDES})
 target_link_directories(tile_cov PUBLIC /home/pi/arm_compute-v22.08-bin-linux-arm64-v8a-neon/lib/arm64-v8a-neon/)
 target_link_libraries(tile_cov ${SPMM_METHODS_LIBRARIES} ${SPMM_DEMO_LIBS}  -lstdc++fs benchmark ryml::ryml -lpthread) # stdc++fs for c++ filesystem
+
+
+####
+#   nkern count
+####
+
+add_executable(count_nkerns count_nkerns.cpp
+        ${SRC}
+        ${SOP_SOURCES}
+        ${SOP_GENERATED_SRCS}
+)
+
+target_compile_options(count_nkerns PRIVATE -save-temps=obj -funroll-loops ${SPMM_METHODS_CXX_FLAGS} -lpthreads)
+target_include_directories(count_nkerns PUBLIC  ${SPMM_DEMO_INCLUDES} ${SOP_ALL_INCLUDES})
+target_link_directories(count_nkerns PUBLIC /home/pi/arm_compute-v22.08-bin-linux-arm64-v8a-neon/lib/arm64-v8a-neon/)
+target_link_libraries(count_nkerns ${SPMM_METHODS_LIBRARIES} ${SPMM_DEMO_LIBS}  -lstdc++fs benchmark ryml::ryml -lpthread) # stdc++fs for c++ filesystem

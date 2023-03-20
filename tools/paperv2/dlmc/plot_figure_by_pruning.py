@@ -119,7 +119,7 @@ def figure8():
                     dff.plot.scatter(x='sparsity', y=f'gflops/s|{method}', c=color, ax=axs[i, j])
                     
             MODEL_STRINGS = {
-                "rn50": "Resnet50",
+                "rn50": "ResNet50",
                 "transformer": "Transformer"
             }
             

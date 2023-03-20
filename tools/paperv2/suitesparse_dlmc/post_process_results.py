@@ -46,6 +46,7 @@ def post_process_psc(df, ss=False):
                      value_name='time median').reset_index()
     # Renaming
     df["matrixPath"] = df["Matrix"]
+    df["orig_name"] = 'PSC'
     df["m"] = df["nRows"]
     df["k"] = df["nCols"]
     df["n"] = df["bcols"].str.split('=').str[-1].astype(int)
@@ -93,7 +94,7 @@ def pivot(df, num_threads):
 
     dfw = pd.pivot(df, index=["matrixId", "matrixPath", "m", "k", "nnz", "n", "sparsity", "sparsity_raw", "matrixName", "gflops"], 
         columns=["Method"],
-        values=["gflops/s", "time median", "time cpu median", "correct", "required_storage", "cov", "config"])
+        values=["gflops/s", "time median", "time cpu median", "correct", "required_storage", "cov", "config", "orig_name"])
 
     print("post-pivot", len(dfw))
 
