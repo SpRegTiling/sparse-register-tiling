@@ -49,11 +49,11 @@ make -j 16 -Crelease-build SPMM_demo
 ## Running a single matrix
 
 ```
-python3 artifact/run_matrix.py -m ../dlmc/transformer/magnitude_pruning/0.8/body_decoder_layer_0_ffn_conv1_fully_connected.smtx -t 8 -b 512 -o results.csv -d
+python3 run_matrix.py -m ../dlmc/transformer/magnitude_pruning/0.8/body_decoder_layer_0_ffn_conv1_fully_connected.smtx -t 8 -b 512 -o results.csv -d
 ```
 see:
 ```
-python3 artifact/run_matrix.py --help
+python3 run_matrix.py --help
 ```
 for more details
 
