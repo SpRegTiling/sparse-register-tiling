@@ -72,8 +72,8 @@ cmake-build-*
 *.csv#
 tools/paper/plotting/handful/*
 *.smtx
-release-build
-debug-build
+*-build
 *.gz
+*.tgz
 
 *.sif
