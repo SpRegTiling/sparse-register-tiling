@@ -1,33 +1,3 @@
-# Running containerized artifact (this is by far the easiest way)
-
-Running the using prebuilt singularity container, can be found in `artifact.tgz` here: [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.7774964.svg)](https://doi.org/10.5281/zenodo.7774964)
-
-install singularity: 
-https://docs.sylabs.io/guides/3.0/user-guide/installation.html
-
-ensure your machine has avx512vl
-```
-lscpu | grep avx512vl
-```
-
-if running local, run:
-```
-s_setup.sh
-s_run.sh
-s_plot.sh
-```
-
-if running a cluster (niagara) with slurm, run: 
-
-```
-s_setup.sh
-s_run.sh
-
-# Wait for all the jobs to finish then run: 
-
-s_plot.sh
-```
-
 # Building and running from source
 
 ensure your machine has avx512vl
