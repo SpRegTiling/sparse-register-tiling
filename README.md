@@ -1,8 +1,15 @@
+> **Warning** We intend on creating a more accessible api for integrating the SpMM kernels into other projects and recommend waiting for that (over working with that codebase) if possible.
+
 # Building and running from source
 
 ensure your machine has avx512vl
 ```
 lscpu | grep avx512vl
+```
+
+clone the repo
+```
+git clone https://github.com/SpRegTiling/sparse-register-tiling.git --recurse-submodules
 ```
 
 ## Download DLMC
@@ -18,6 +25,10 @@ sh download_dlmc.sh
 ```
 pip3 install torch
 pip3 install -e .
+pip3 install pandas  \
+     matplotlib \
+     scipy \
+     pyyaml
 export PYTHONPATH=$(pwd):$PYTHONPATH
 ```
 
@@ -31,7 +42,7 @@ wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PU
     apt-get install -y intel-oneapi-mkl-devel-2021.4.0
 ```
 
-## Generating executor/scheduler pairs used in the paper
+## Generating executor/scheduler pairs (used in the paper)
 from `spmm-nano-kernels`, run the following:
 ```
 cd spmm-nano-kernels
@@ -46,7 +57,7 @@ cmake -Brelease-build -DCMAKE_BUILD_TYPE=Release -DENABLE_AVX512=True .
 make -j 16 -Crelease-build SPMM_demo
 ```
 
-## Running a single matrix
+## Benchmarking a matrix
 
 ```
 python3 run_matrix.py -m ../dlmc/transformer/magnitude_pruning/0.8/body_decoder_layer_0_ffn_conv1_fully_connected.smtx -t 8 -b 512 -o results.csv -d
