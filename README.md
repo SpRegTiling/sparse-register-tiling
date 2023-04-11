@@ -1,3 +1,5 @@
+> **warning** This artifact matches the originally submitted version of the paper, the published version of the paper had additional figures added during the review process resulting in some of the figure numbers not match exactly, namely Figure 10 here is Figure 13 in the paper, Figure 12 here is Figure 14 in the paper and Figure 13 here is Figure 16 in the paper. 
+
 # Running containerized artifact (this is by far the easiest way)
 
 Running the using prebuilt singularity container, can be found in `artifact.tgz` here: [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.7774964.svg)](https://doi.org/10.5281/zenodo.7774964)
