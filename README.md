@@ -10,7 +10,14 @@ lscpu | grep avx512vl
 clone the repo
 ```
 git clone https://github.com/SpRegTiling/sparse-register-tiling.git --recurse-submodules
+cd sparse-register-tiling
 ```
+
+If cloning submodules fails, e.g. due to github key setup, you may clone the the submodule manually by:
+```
+git clone https://github.com/LucasWilkinson/spmm-nano-kernels.git spmm_nano_kernels
+```
+
 
 ## Download DLMC
 
@@ -43,12 +50,13 @@ wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PU
 ```
 
 ## Generating executor/scheduler pairs (used in the paper)
-from `spmm-nano-kernels`, run the following:
+from `spmm_nano_kernels`, run the following:
 ```
-cd spmm-nano-kernels
+cd spmm_nano_kernels
 python3 -m codegen.generate_ukernels
 cd ..
 ```
+
 
 ## Building the demo code
 ```
