@@ -1,4 +1,6 @@
-> **Warning** We intend on creating a more accessible api for integrating the SpMM kernels into other projects and recommend waiting for that (over working with this codebase) if possible.
+# **Warning**
+
+We intend on creating a more accessible api for integrating the SpMM kernels into other projects and recommend waiting for that (over working with this codebase) if possible.
 
 # Building and running from source
 
