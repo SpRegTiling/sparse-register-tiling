@@ -4,6 +4,7 @@ from collections import defaultdict
 import subprocess
 import hashlib
 import json
+import bisect
 import os; SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__)) + "/"
 
 BASH_SCRIPT=None
@@ -82,7 +83,7 @@ def matrix_sparsity(matrix_file):
             rows, cols, nnz = [int(x) for x in firstline.split(",")]
         return 1 - (nnz / (rows * cols))
 
-def run_sp_reg(bcols, threads, matrix_file, output_file, scalar_type, methods_to_test=None, method_idx=None, datatransform=True):
+def run_sp_reg(bcols, threads, matrix_file, output_file, scalar_type, methods_to_test=None, method_idx=None, datatransform=True, extra_args=[]):
     global loaded_heuristics
 
     if methods_to_test is None:
@@ -95,8 +96,11 @@ def run_sp_reg(bcols, threads, matrix_file, output_file, scalar_type, methods_to
             sparsity = round(matrix_sparsity(matrix_file), 2)
             for sparsity_range, h in heuristic.items():
                 if sparsity_range[0] < sparsity and sparsity <= sparsity_range[1]:
+                    h_keys = sorted(list(h.keys()))
                     for bcol in bcols:
-                        run_experiment(h[bcol], matrix_file, output_file, scalar_type, extra_args=['-z'])
+                        # Find closest heuristic entry with less b-columns
+                        h_keys_idx = bisect.bisect_right(h_keys, bcol)
+                        run_experiment(h[h_keys[h_keys_idx - 1]], matrix_file, output_file, scalar_type, extra_args=['-z'] + extra_args)
     else:
         for thread_count in threads:
             for bcol in bcols:
@@ -106,7 +110,7 @@ def run_sp_reg(bcols, threads, matrix_file, output_file, scalar_type, methods_to
                     x = methods_to_test[thread_count][bcol]
                 exp_file = gen_dlmc_exp_file([nano_from_name("AVX512", x)], 
                                 [int(bcol)], [int(thread_count)], "no_filelist.txt", datatransform=datatransform)
-                run_experiment(exp_file, matrix_file, output_file, scalar_type, extra_args=['-z'])
+                run_experiment(exp_file, matrix_file, output_file, scalar_type, extra_args=['-z'] + extra_args)
 
 def run_sp_reg_single(bcols, threads, matrix_file, output_file, scalar_type, methods_to_test, datatransform=True):
     exp_file = gen_dlmc_exp_file(methods_to_test, 

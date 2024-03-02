@@ -1,5 +1,7 @@
 {"taco", [](c4::yml::ConstNodeRef options) -> method_factory_t<S> {
-    int width; options["width"] >> width;
+    int width = 4; 
+    if (options.tree() && options.has_child("width"))
+        options["width"] >> width;
     return [width](additional_options_t options, SpMMTask<S>& task) -> SpMMFunctor<S>* {
         return new SpMMTACO<S>(task, width);
     };

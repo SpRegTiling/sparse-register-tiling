@@ -20,6 +20,8 @@ using additional_options_t = std::map<std::string, std::string>;
 #   define REFERENCE_METHOD "mkl"
 #elif defined(SPMM_ARMPL_ENABLED) && SPMM_ARMPL_ENABLED
 #   define REFERENCE_METHOD "armpl_dense"
+#elif defined(SPMM_TACO_ENABLED) && SPMM_TACO_ENABLED
+#   define REFERENCE_METHOD "taco"
 #else
     static_assert(false, "Cannot find a reasonable reference method to use");
 #endif

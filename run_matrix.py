@@ -38,14 +38,14 @@ args = parser.parse_args()
 
 os.makedirs("/tmp/experiment_scripts", exist_ok=True)
 
-run_sp_reg([args.bcols], [args.threads], str(args.matrix.resolve()), args.outcsv, 'float')
+run_sp_reg([args.bcols], [args.threads], str(args.matrix.resolve()), args.outcsv, 'float', extra_args=['-b', str(args.bcols)])
 
 baselines = mkl_sparse
 if args.dense:
     baselines += mkl_dense
 
 baslines_exp = gen_dlmc_exp_file(baselines, [args.bcols], [args.threads], "no-filelist.txt")
-run_experiment(baslines_exp, str(args.matrix.resolve()), args.outcsv, 'float')
+run_experiment(baslines_exp, str(args.matrix.resolve()), args.outcsv, 'float', extra_args=['-b', str(args.bcols)])
 
 print("======== Results ========")
 with open(args.outcsv, newline='') as csvfile:
